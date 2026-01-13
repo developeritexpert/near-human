@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #000000;
+  --color-foreground: #ffffff;
+  --color-primary: #00ebca;
+  --color-muted: #808080;
+  --font-sans: "Inter", var(--font-geist-sans), sans-serif;
+}
+
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+  --primary: #00ebca;
+  --muted: #808080;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.text-gradient {
+  background: linear-gradient(to bottom, #ffffff 30%, #808080 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.section-padding {
+  @apply px-6 py-32 md:px-12 lg:px-24;
+}
+
+.container-custom {
+  @apply mx-auto w-full max-w-7xl;
+}
+
+/* Notched Transitions */
+.notched-section {
+  position: relative;
+  background: black;
+}
+
+.notched-top {
+  clip-path: polygon(
+    0 40px,
+    40px 0,
+    calc(50% - 60px) 0,
+    calc(50% - 40px) 20px,
+    calc(50% + 40px) 20px,
+    calc(50% + 60px) 0,
+    calc(100% - 40px) 0,
+    100% 40px,
+    100% 100%,
+    0 100%
+  );
+}
+
+.notched-bottom {
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - 40px),
+    calc(100% - 40px) 100%,
+    calc(50% + 60px) 100%,
+    calc(50% + 40px) calc(100% - 20px),
+    calc(50% - 40px) calc(100% - 20px),
+    calc(50% - 60px) 100%,
+    40px 100%,
+    0 calc(100% - 40px)
+  );
+}
+
+/* GSAP Specific */
+.reveal-text {
+  opacity: 0;
+  transform: translateY(20px);
+}
