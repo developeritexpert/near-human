@@ -15,19 +15,8 @@
   --muted: #808080;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-}
+
 
 .text-gradient {
   background: linear-gradient(to bottom, #ffffff 30%, #808080 100%);
@@ -84,4 +73,82 @@ body {
 .reveal-text {
   opacity: 0;
   transform: translateY(20px);
+}
+
+@font-face {
+  font-family: "Suisse Int";
+  src: url("/font/SuisseIntl-Light.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Suisse Int";
+  src: url("/font/SuisseIntl-Regular.woff") format("woff");
+  font-weight: 450;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Suisse Int";
+  src: url("/font/SuisseIntl-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Suisse Int";
+  src: url("/font/SuisseIntl-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+
+body {
+  font-family: "Suisse Int", Arial, sans-serif;
+  font-weight: 450 !important;
+  color: #111;
+  background: #fff;
+}
+
+h1,h2,h3,h4,h5,h6{
+line-height:1.2;
+}
+
+
+@media (min-width:1600px){
+.container{
+  max-width: 1440px;
+  margin-inline:auto;
+}
+}
+
+.scrollbar-hidden {
+  -ms-overflow-style: none;  
+  scrollbar-width: none;     
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;             
+}
+
+
+
+@keyframes mov-x{
+  0%,100%{
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-20%);
+  }
+ 
+}
+
+
+.move-lft {
+  animation: mov-x 10s ease infinite;
 }

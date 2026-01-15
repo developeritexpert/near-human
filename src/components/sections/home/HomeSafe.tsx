@@ -18,7 +18,7 @@ const FRAME_INDICES = [
 const FRAME_PATH = (frame: number) =>
   `/truck-frames/hero_anim_desktop_60_${frame}.webp`;
 
-const TEXT_WAVES = [
+// const TEXT_WAVES = [
   // {
   //     title: "The future isn’t more apps.",
   //     subtitle: "A NEW ERA OF DIGITAL INTERACTION",
@@ -34,7 +34,7 @@ const TEXT_WAVES = [
   //     subtitle: "POWERED BY NEARHUMAN INTELLIGENCE",
   //     color: "#00B0B2"
   // },
-];
+// ];
 
 export default function Hero() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -160,48 +160,48 @@ export default function Hero() {
       );
 
       // Text Animations
-      TEXT_WAVES.forEach((_, i) => {
-        const el = textRefs.current[i];
-        if (!el) return;
+      // TEXT_WAVES.forEach((_, i) => {
+      //   const el = textRefs.current[i];
+      //   if (!el) return;
 
-        const chars = el.querySelectorAll(".char");
-        const subChars = el.querySelectorAll(".sub-char");
+      //   const chars = el.querySelectorAll(".char");
+      //   const subChars = el.querySelectorAll(".sub-char");
 
-        const sceneScale = 1 / TEXT_WAVES.length;
-        const sceneStart = i * sceneScale;
-        const sceneEnd = (i + 1) * sceneScale;
-        // Adjusted timings to ensure text is readable longer
-        const fadeOutStart = sceneEnd - sceneScale * 0.15;
+      //   const sceneScale = 1 / TEXT_WAVES.length;
+      //   const sceneStart = i * sceneScale;
+      //   const sceneEnd = (i + 1) * sceneScale;
+      //   // Adjusted timings to ensure text is readable longer
+      //   const fadeOutStart = sceneEnd - sceneScale * 0.15;
 
-        masterTl.fromTo(
-          [chars, subChars],
-          { opacity: 0, y: 40, filter: "blur(12px)" },
-          {
-            opacity: 1,
-            y: 0,
-            filter: "blur(0px)",
-            stagger: { each: 0.015, from: "start" },
-            duration: 0.5,
-            ease: "power3.out",
-          },
-          sceneStart
-        );
+      //   masterTl.fromTo(
+      //     [chars, subChars],
+      //     { opacity: 0, y: 40, filter: "blur(12px)" },
+      //     {
+      //       opacity: 1,
+      //       y: 0,
+      //       filter: "blur(0px)",
+      //       stagger: { each: 0.015, from: "start" },
+      //       duration: 0.5,
+      //       ease: "power3.out",
+      //     },
+      //     sceneStart
+      //   );
 
-        if (i < TEXT_WAVES.length - 1) {
-          masterTl.to(
-            [chars, subChars],
-            {
-              opacity: 0,
-              y: -40,
-              filter: "blur(12px)",
-              stagger: { each: 0.01, from: "start" },
-              duration: 0.3,
-              ease: "power2.in",
-            },
-            fadeOutStart
-          );
-        }
-      });
+      //   if (i < TEXT_WAVES.length - 1) {
+      //     masterTl.to(
+      //       [chars, subChars],
+      //       {
+      //         opacity: 0,
+      //         y: -40,
+      //         filter: "blur(12px)",
+      //         stagger: { each: 0.01, from: "start" },
+      //         duration: 0.3,
+      //         ease: "power2.in",
+      //       },
+      //       fadeOutStart
+      //     );
+      //   }
+      // });
 
       masterTl.to(".scroll-progress", { scaleX: 1, ease: "none" }, 0);
     }, containerRef);
@@ -276,7 +276,7 @@ export default function Hero() {
 
         {/* Main Text System - Now using the restored TEXT_WAVES */}
         <div className="pointer-events-none relative z-10 h-full w-full">
-          {TEXT_WAVES.map((wave, i) => (
+          {/* {TEXT_WAVES.map((wave, i) => (
             <div
               key={i}
               ref={(el) => {
@@ -313,7 +313,7 @@ export default function Hero() {
                 </h1>
               </div>
             </div>
-          ))}
+          ))} */}
         </div>
 
         {/* Bottom HUD */}
