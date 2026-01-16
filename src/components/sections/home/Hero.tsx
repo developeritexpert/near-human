@@ -8,257 +8,287 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-const FRAME_INDICES = [
-  0, 1, 9, 17, 25, 33, 41, 49, 57, 65, 73, 81, 89, 97, 105, 113, 121, 129, 137,
-  145, 153, 161, 169, 177, 185, 193, 201, 209, 217, 225, 233, 241, 249, 257,
-  265, 273, 281, 289, 297, 305, 313, 321, 329, 337, 345, 353, 361,
+const THEME_COLORS = {
+  highlight1: "#00B0B2",
+  highlight2: "#FF6B9D",
+  textPrimary: "#FFFFFF",
+};
+
+// Hero frames from animation-radiunt directory (timecode-based naming)
+const FRAME_NAMES = [
+  "frame_0_00_0f", "frame_0_00_2f", "frame_0_00_4f", "frame_0_00_6f", "frame_0_00_8f",
+  "frame_0_00_10f", "frame_0_00_12f", "frame_0_00_14f", "frame_0_00_16f", "frame_0_00_18f",
+  "frame_0_00_20f", "frame_0_00_22f", "frame_0_00_24f", "frame_0_00_26f", "frame_0_00_28f",
+  "frame_0_01_0f", "frame_0_01_2f", "frame_0_01_4f", "frame_0_01_6f", "frame_0_01_8f",
+  "frame_0_01_10f", "frame_0_01_12f", "frame_0_01_15f", "frame_0_01_17f", "frame_0_01_19f",
+  "frame_0_01_21f", "frame_0_01_23f", "frame_0_01_25f", "frame_0_01_27f", "frame_0_01_29f",
+  "frame_0_02_1f", "frame_0_02_3f", "frame_0_02_5f", "frame_0_02_7f", "frame_0_02_9f",
+  "frame_0_02_11f", "frame_0_02_13f", "frame_0_02_15f", "frame_0_02_17f", "frame_0_02_19f",
+  "frame_0_02_21f", "frame_0_02_23f", "frame_0_02_26f", "frame_0_02_28f",
+  "frame_0_03_0f", "frame_0_03_2f", "frame_0_03_4f", "frame_0_03_6f", "frame_0_03_8f",
+  "frame_0_03_10f", "frame_0_03_13f", "frame_0_03_15f", "frame_0_03_17f", "frame_0_03_19f",
+  "frame_0_03_21f", "frame_0_03_23f", "frame_0_03_25f", "frame_0_03_27f", "frame_0_03_29f",
+  "frame_0_04_1f", "frame_0_04_3f", "frame_0_04_5f", "frame_0_04_7f", "frame_0_04_9f",
+  "frame_0_04_11f", "frame_0_04_13f", "frame_0_04_15f", "frame_0_04_17f", "frame_0_04_19f",
+  "frame_0_04_21f", "frame_0_04_23f", "frame_0_04_25f", "frame_0_04_27f", "frame_0_04_29f",
+  "frame_0_05_1f", "frame_0_05_3f", "frame_0_05_6f", "frame_0_05_8f", "frame_0_05_10f",
+  "frame_0_05_12f", "frame_0_05_14f", "frame_0_05_16f", "frame_0_05_18f", "frame_0_05_20f",
+  "frame_0_05_22f", "frame_0_05_24f", "frame_0_05_26f", "frame_0_05_28f",
+  "frame_0_06_0f", "frame_0_06_2f", "frame_0_06_4f", "frame_0_06_6f", "frame_0_06_8f",
+  "frame_0_06_10f", "frame_0_06_12f", "frame_0_06_14f", "frame_0_06_16f", "frame_0_06_18f",
+  "frame_0_06_20f", "frame_0_06_22f", "frame_0_06_24f", "frame_0_06_26f", "frame_0_06_28f",
+  "frame_0_07_0f", "frame_0_07_2f", "frame_0_07_4f", "frame_0_07_6f", "frame_0_07_8f",
+  "frame_0_07_10f", "frame_0_07_12f", "frame_0_07_14f", "frame_0_07_16f", "frame_0_07_18f",
+  "frame_0_07_20f", "frame_0_07_22f", "frame_0_07_24f", "frame_0_07_26f", "frame_0_07_28f",
+  "frame_0_08_1f", "frame_0_08_3f", "frame_0_08_5f", "frame_0_08_7f", "frame_0_08_9f",
+  "frame_0_08_11f", "frame_0_08_13f", "frame_0_08_15f", "frame_0_08_17f", "frame_0_08_19f",
+  "frame_0_08_21f", "frame_0_08_23f", "frame_0_08_25f", "frame_0_08_27f", "frame_0_08_29f",
+  "frame_0_09_1f", "frame_0_09_3f", "frame_0_09_5f", "frame_0_09_7f", "frame_0_09_9f",
+  "frame_0_09_11f", "frame_0_09_13f", "frame_0_09_15f", "frame_0_09_17f", "frame_0_09_20f",
+  "frame_0_09_22f", "frame_0_09_24f", "frame_0_09_26f", "frame_0_09_28f",
+  "frame_0_10_0f", "frame_0_10_2f", "frame_0_10_4f", "frame_0_10_6f", "frame_0_10_8f",
+  "frame_0_10_10f", "frame_0_10_13f", "frame_0_10_15f", "frame_0_10_17f", "frame_0_10_19f",
+  "frame_0_10_21f", "frame_0_10_23f", "frame_0_10_25f", "frame_0_10_27f", "frame_0_10_29f",
+  "frame_0_11_1f", "frame_0_11_3f", "frame_0_11_5f", "frame_0_11_7f", "frame_0_11_9f",
+  "frame_0_11_11f", "frame_0_11_13f", "frame_0_11_15f", "frame_0_11_17f", "frame_0_11_19f",
+  "frame_0_11_21f", "frame_0_11_23f", "frame_0_11_25f", "frame_0_11_27f", "frame_0_11_29f",
+  "frame_0_12_1f", "frame_0_12_3f", "frame_0_12_5f", "frame_0_12_7f", "frame_0_12_9f",
+  "frame_0_12_11f", "frame_0_12_13f", "frame_0_12_15f", "frame_0_12_17f", "frame_0_12_19f",
+  "frame_0_12_21f", "frame_0_12_23f", "frame_0_12_25f", "frame_0_12_27f", "frame_0_12_29f",
+  "frame_0_13_1f", "frame_0_13_3f", "frame_0_13_5f", "frame_0_13_7f", "frame_0_13_9f",
+  "frame_0_13_11f", "frame_0_13_13f", "frame_0_13_15f", "frame_0_13_17f", "frame_0_13_19f",
+  "frame_0_13_21f", "frame_0_13_23f", "frame_0_13_25f", "frame_0_13_27f", "frame_0_13_29f",
+  "frame_0_14_1f", "frame_0_14_3f", "frame_0_14_5f", "frame_0_14_7f", "frame_0_14_9f",
+  "frame_0_14_11f", "frame_0_14_13f", "frame_0_14_15f", "frame_0_14_17f", "frame_0_14_19f",
+  "frame_0_14_21f", "frame_0_14_23f", "frame_0_14_25f", "frame_0_14_27f", "frame_0_14_29f",
+  "frame_0_15_1f", "frame_0_15_3f", "frame_0_15_5f", "frame_0_15_7f", "frame_0_15_9f",
+  "frame_0_15_11f", "frame_0_15_13f", "frame_0_15_15f", "frame_0_15_17f", "frame_0_15_19f",
+  "frame_0_15_21f", "frame_0_15_23f", "frame_0_15_25f", "frame_0_15_27f", "frame_0_15_29f",
+  "frame_0_16_0f",
 ];
 
-const FRAME_PATH = (frame: number) =>
-  `/truck-frames/hero_anim_desktop_60_${frame}.webp`;
+const FRAME_PATH = (index: number) =>
+  `/animation-radiunt/${FRAME_NAMES[index]}.jpeg`;
+
+const TEXT_STEPS = [
+  {
+    id: 1,
+    text: "The Future isn't",
+    highlightIndex: 2,
+    highlightColor: THEME_COLORS.highlight1,
+  },
+  {
+    id: 2,
+    text: "more apps",
+    highlightIndex: -1,
+    highlightColor: "",
+  },
+  {
+    id: 3,
+    text: "",
+    highlightIndex: -1,
+    highlightColor: "",
+  },
+  {
+    id: 4,
+    text: "It's a conversation",
+    highlightIndex: -1,
+    highlightColor: "",
+  },
+  {
+    id: 5,
+    text: "with the world around you.",
+    highlightIndex: 4,
+    highlightColor: THEME_COLORS.highlight2,
+  },
+  {
+    id: 6,
+    text: "",
+    highlightIndex: -1,
+    highlightColor: "",
+  },
+];
 
 export default function Hero() {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
-  const [loaded, setLoaded] = useState<boolean>(false);
+  const [loaded, setLoaded] = useState(false);
   const frameIndexRef = useRef(0);
 
-  // Preload all frames
   useEffect(() => {
     let loadedCount = 0;
-    const totalFrames = FRAME_INDICES.length;
-
-    FRAME_INDICES.forEach((frame, i) => {
+    FRAME_NAMES.forEach((_, i) => {
       const img = new Image();
-      img.src = FRAME_PATH(frame);
+      img.src = FRAME_PATH(i);
       img.onload = () => {
         loadedCount++;
-        if (loadedCount === totalFrames) {
-          setLoaded(true);
-        }
-      };
-      img.onerror = () => {
-        console.error(`Failed to load frame: ${frame}`);
-        loadedCount++;
-        if (loadedCount === totalFrames) {
-          setLoaded(true);
-        }
+        if (loadedCount === FRAME_NAMES.length) setLoaded(true);
       };
       imagesRef.current[i] = img;
     });
   }, []);
 
-  // Canvas animation setup
   useEffect(() => {
     if (!loaded || !containerRef.current || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d", { alpha: false });
-    if (!ctx) return;
+    const ctx = canvas.getContext("2d", { alpha: false })!;
+    let rw = 0;
+    let rh = 0;
+    let ratio = 1;
 
-    let renderWidth = 0;
-    let renderHeight = 0;
-    let imageRatio = 0;
+    const renderFrame = (i: number) => {
+      const index = Math.round(i);
+      if (index === frameIndexRef.current) return;
+      frameIndexRef.current = index;
+      const img = imagesRef.current[index];
+      if (!img) return;
 
-    const renderFrame = (index: number) => {
-      const frameIndex = Math.round(index);
-      if (frameIndex === frameIndexRef.current) return; // Skip if same frame
+      const cr = rw / rh;
+      let dw = rw,
+        dh = rh,
+        dx = 0,
+        dy = 0;
 
-      frameIndexRef.current = frameIndex;
-      const img = imagesRef.current[frameIndex];
-
-      if (!img || !img.complete) return;
-
-      const canvasRatio = renderWidth / renderHeight;
-      let dw = renderWidth;
-      let dh = renderHeight;
-      let dx = 0;
-      let dy = 0;
-
-      // Object-fit: cover calculation
-      if (imageRatio > canvasRatio) {
-        dh = renderHeight;
-        dw = dh * imageRatio;
-        dx = (renderWidth - dw) / 2;
+      if (ratio > cr) {
+        dh = rh;
+        dw = dh * ratio;
+        dx = (rw - dw) / 2;
       } else {
-        dw = renderWidth;
-        dh = dw / imageRatio;
-        dy = (renderHeight - dh) / 2;
+        dw = rw;
+        dh = dw / ratio;
+        dy = (rh - dh) / 2;
       }
 
-      ctx.clearRect(0, 0, renderWidth, renderHeight);
+      ctx.clearRect(0, 0, rw, rh);
+      ctx.save();
+      ctx.filter = "brightness(1.05) contrast(1.15) saturate(1.1)";
       ctx.drawImage(img, dx, dy, dw, dh);
+      ctx.restore();
     };
 
-    const handleResize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap at 2x for performance
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
-      canvas.style.width = width + "px";
-      canvas.style.height = height + "px";
-      ctx.scale(dpr, dpr);
-
-      renderWidth = width;
-      renderHeight = height;
-
-      if (imagesRef.current[0]) {
-        imageRatio = imagesRef.current[0].width / imagesRef.current[0].height;
-      }
-
-      // Re-render current frame
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      rw = window.innerWidth;
+      rh = window.innerHeight;
+      canvas.width = rw * dpr;
+      canvas.height = rh * dpr;
+      canvas.style.width = rw + "px";
+      canvas.style.height = rh + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ratio = imagesRef.current[0]?.width / imagesRef.current[0]?.height || 1;
       renderFrame(frameIndexRef.current);
     };
 
-    handleResize();
-    window.addEventListener("resize", handleResize);
+    resize();
+    window.addEventListener("resize", resize);
 
-    const gsapCtx = gsap.context(() => {
-      renderFrame(0);
+    const ctxGsap = gsap.context(() => {
+      const anim = { frame: 0 };
 
-      const animObject = { frame: 0 };
+      gsap.set("[data-step]", { autoAlpha: 0 });
+      gsap.set("[data-word]", {
+        autoAlpha: 0,
+        y: 30,
+        filter: "blur(10px)",
+      });
 
-      // TERMINAL INDUSTRIES EXACT CONFIGURATION
-      const masterTl = gsap.timeline({
+      const tl = gsap.timeline({
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top top",
-          end: "+=100%", // Extended to show all frames smoothly (3x viewport)
-          scrub: 0.5, // Very responsive, immediate feedback
+          end: "+=500%",
+          scrub: 0.2,
           pin: true,
-          anticipatePin: 1, // Smooth pin start
-          invalidateOnRefresh: true,
+          snap: {
+            snapTo: 1 / TEXT_STEPS.length,
+            duration: 0.25,
+            ease: "power1.inOut",
+          },
         },
       });
 
-      // Frame animation with linear easing for consistent speed
-      masterTl.to(
-        animObject,
-        {
-          frame: FRAME_INDICES.length - 1,
-          ease: "none", // Linear for consistent frame progression
-          onUpdate: () => {
-            renderFrame(animObject.frame);
-          },
-        },
-        0
-      );
+      tl.to(anim, {
+        frame: FRAME_NAMES.length - 1,
+        ease: "none",
+        duration: 1,
+        onUpdate: () => renderFrame(anim.frame),
+      });
 
-      // Progress bar
-      masterTl.to(
-        ".scroll-progress",
-        {
-          scaleX: 1,
-          ease: "none",
-        },
-        0
-      );
+      TEXT_STEPS.forEach((step, i) => {
+        const start = i / TEXT_STEPS.length;
+        const dur = 1 / TEXT_STEPS.length;
+
+        if (step.text) {
+          tl.to(`[data-step="${step.id}"]`, { autoAlpha: 1, duration: 0.1 }, start);
+
+          const words = step.text.split(" ");
+          words.forEach((_, wi) => {
+            tl.to(
+              `[data-step="${step.id}"] [data-word="${wi}"]`,
+              {
+                autoAlpha: 1,
+                y: 0,
+                filter: "blur(0px)",
+                duration: 0.3,
+                ease: "power2.out",
+              },
+              start + (wi * dur) / (words.length + 1)
+            );
+          });
+
+          if (i < TEXT_STEPS.length - 1) {
+            tl.to(
+              `[data-step="${step.id}"]`,
+              { autoAlpha: 0, y: -30, duration: 0.25 },
+              start + dur * 0.8
+            );
+          }
+        }
+      });
     }, containerRef);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
-      gsapCtx.revert();
+      window.removeEventListener("resize", resize);
+      ctxGsap.revert();
     };
   }, [loaded]);
 
   return (
-    <section
-      ref={containerRef}
-      className="relative w-full overflow-hidden bg-[#0a0a0f]"
-    >
-      {/* Texture Overlay */}
-      <div
-        className="pointer-events-none absolute inset-0 z-[5] opacity-[0.04] mix-blend-overlay"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='filter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23filter)'/%3E%3C/svg%3E")`,
-        }}
-      />
+    <section ref={containerRef} className="relative w-full overflow-hidden bg-black">
+      <div className="sticky top-0 h-screen w-full">
+        <canvas ref={canvasRef} className="absolute inset-0" />
 
-      <div className="sticky top-0 flex h-screen w-full items-center justify-center">
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 h-full w-full object-cover brightness-[0.9] contrast-[1.1] saturate-[0.8]"
-          style={{ willChange: "contents" }}
-        />
-
-        {/* Vignette & Gradients */}
-        <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-b from-transparent via-[#0a0a0f]/20 to-[#0a0a0f]/60" />
-        <div className="pointer-events-none absolute inset-0 z-[3] bg-[radial-gradient(circle_at_center,transparent_0%,rgba(10,10,15,0.4)_100%)]" />
-
-        {/* Loading State */}
-        {!loaded && (
-          <div className="absolute inset-0 z-[60] flex items-center justify-center bg-[#0a0a0f]">
-            <div className="flex flex-col items-center gap-6">
-              <div className="relative h-12 w-12">
-                <div className="absolute inset-0 animate-spin rounded-full border-t-2 border-[#00B0B2]" />
-                <div className="absolute inset-0 rounded-full border-2 border-white/5" />
-              </div>
-              <span className="animate-pulse text-[10px] font-medium tracking-[0.4em] text-white/40 uppercase">
-                Loading Frames
-              </span>
+        <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
+          {TEXT_STEPS.map((step) => (
+            <div
+              key={step.id}
+              data-step={step.id}
+              className="absolute flex flex-wrap justify-center gap-3 px-4"
+            >
+              {step.text.split(" ").map((word, wi) => {
+                const isHighlight = wi === step.highlightIndex;
+                return (
+                  <span
+                    key={wi}
+                    data-word={wi}
+                    style={{
+                      fontSize: "clamp(2.5rem, 8vw, 6rem)",
+                      fontWeight: 700,
+                      lineHeight: 1.1,
+                      color: isHighlight ? step.highlightColor : THEME_COLORS.textPrimary,
+                      textShadow: isHighlight
+                        ? `0 0 40px ${step.highlightColor}55`
+                        : "0 2px 20px rgba(0,0,0,0.6)",
+                    }}
+                  >
+                    {word}
+                  </span>
+                );
+              })}
             </div>
-          </div>
-        )}
-
-        {/* HUD Elements */}
-        <div className="pointer-events-none absolute top-10 right-10 left-10 z-20 flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-10 w-10 items-center justify-center border border-white/10">
-              <div className="h-1 w-1 animate-ping bg-[#00B0B2]" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[9px] tracking-[0.3em] text-white/30 uppercase">
-                System Status
-              </span>
-              <span className="text-[11px] font-bold tracking-widest text-white uppercase">
-                Active / Optimized
-              </span>
-            </div>
-          </div>
-          <div className="hidden flex-col items-end md:flex">
-            <span className="text-[9px] tracking-[0.3em] text-white/30 uppercase">
-              Temporal Sync
-            </span>
-            <span className="font-mono text-[11px] text-[#00B0B2]">SYNCED</span>
-          </div>
-        </div>
-
-        {/* Bottom HUD */}
-        <div className="pointer-events-none absolute right-10 bottom-10 left-10 z-20 flex flex-col gap-6">
-          <div className="relative h-[1px] w-full overflow-hidden bg-white/5">
-            <div className="scroll-progress absolute top-0 left-0 h-full w-full origin-left scale-x-0 bg-gradient-to-r from-transparent via-[#00B0B2] to-transparent" />
-          </div>
-          <div className="flex items-end justify-between opacity-40">
-            <div className="flex flex-col gap-1">
-              <span className="text-[8px] tracking-[0.5em] text-white/40 uppercase">
-                Foundation Core
-              </span>
-              <span className="text-[10px] font-bold tracking-widest text-white uppercase">
-                NEARHUMAN INDUSTRIES
-              </span>
-            </div>
-            <div className="flex gap-12">
-              <div className="flex flex-col items-end gap-1">
-                <span className="text-[8px] tracking-[0.5em] text-white/40 uppercase">
-                  Sequence
-                </span>
-                <span className="font-mono text-[10px] text-white">
-                  0.0.01 // {FRAME_INDICES.length}
-                </span>
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className="text-[8px] tracking-[0.5em] text-white/40 uppercase">
-                  Network
-                </span>
-                <span className="font-mono text-[10px] text-[#00B0B2]">
-                  STABLE
-                </span>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>

@@ -10,32 +10,31 @@ import AIDevices from "@/components/sections/home/AIDevices";
 import Protocol from "@/components/sections/home/Protocol";
 import Journey from "@/components/sections/home/Journey";
 import Partners from "@/components/sections/home/Partners";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { gsap } from "gsap";
 
 export default function Home() {
-  useEffect(() => {
-    // Initialize Lenis smooth scroll
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: "vertical",
-      gestureOrientation: "vertical",
-      smoothWheel: true,
-      wheelMultiplier: 1,
-      touchMultiplier: 2,
-      infinite: false,
-    });
+useEffect(() => {
+  const lenis = new Lenis({
+    duration: 1.2,
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    smoothWheel: true,
+  });
 
-    function raf(time: number) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
+  lenis.on("scroll", ScrollTrigger.update);
 
-    requestAnimationFrame(raf);
+  gsap.ticker.add((time) => {
+    lenis.raf(time * 1000);
+  });
 
-    return () => {
-      lenis.destroy();
-    };
-  }, []);
+  gsap.ticker.lagSmoothing(0);
+
+  return () => {
+    gsap.ticker.remove(lenis.raf);
+    lenis.destroy();
+  };
+}, []);
+
 
   return (
     <main className="selection:bg-primary relative min-h-screen overflow-hidden bg-black selection:text-black">
@@ -43,10 +42,11 @@ export default function Home() {
 
       <div className="">
         <Hero />
-        {/* <AIStandard /> */}
-        <AIDevices />
+        <AIStandard />
+        {/* <AIDevices /> */}
         {/* White spacer to prevent black screen after AIDevices unpins */}
-        <div className="min-h-[200vh] bg-white" />
+        {/* <div className="min-h-[200vh] bg-white" /> */}
+        
         {/* <Protocol />
         <Journey />
         <Partners /> */}
