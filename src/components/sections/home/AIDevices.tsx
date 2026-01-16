@@ -190,7 +190,7 @@ const AIDevices = () => {
         ref={aiStandardRef}
         className="absolute inset-0 flex flex-col items-center justify-center px-8 text-center"
       >
-        <div className="mx-auto max-w-4xl">
+        {/* <div className="mx-auto max-w-4xl">
           <h2 className="text-4xl leading-tight font-bold tracking-tight md:text-6xl">
             <span className="mb-2 block text-black">
               Today, AI has <span className="text-[#00B0B2]">no standard</span>
@@ -200,7 +200,7 @@ const AIDevices = () => {
             </span>
             <span className="block text-zinc-700">devices</span>
           </h2>
-        </div>
+        </div> */}
       </div>
 
       {/* AIDevices Content - Initially Hidden */}
