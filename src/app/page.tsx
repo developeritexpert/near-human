@@ -73,20 +73,23 @@ import HomeBanner from '@/components/sections/home/HomeBanner'
 import OurJourney from '@/components/sections/home/Our-Journey'
 import OurPartners from '@/components/sections/home/OurPartners'
 import Posibilities from '@/components/sections/home/Posibilities'
+import LoaderWrapper from '@/components/loader/LoaderWrapper';
 import React from 'react'
 
 function page() {
   return (
-    <div>
-      <Navbar/>
-      <HomeBanner/>
-      <Posibilities/>
-      <DeviceProtocol/>
-      <OurJourney/>
-      <OurPartners/>
-      <EcoSystem/>
-      <Footer/>
-    </div>
+      <LoaderWrapper>
+        <div>
+          <Navbar/>
+          <HomeBanner/>
+          <Posibilities/>
+          <DeviceProtocol/>
+          <OurJourney/>
+          <OurPartners/>
+          <EcoSystem/>
+          <Footer/>
+        </div>
+      </LoaderWrapper>
   )
 }
 
