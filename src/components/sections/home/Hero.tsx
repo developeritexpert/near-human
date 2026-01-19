@@ -424,7 +424,7 @@ export default function Hero() {
 
         <div
           ref={cursorRef}
-          className="pointer-events-none fixed left-0 top-0 z-[100] opacity-0"
+          className="pointer-events-none fixed top-0 left-0 z-[100] opacity-0"
           style={{
             width: "40px",
             height: "40px",
@@ -440,7 +440,7 @@ export default function Hero() {
 
         <div
           ref={cursorDotRef}
-          className="pointer-events-none fixed left-0 top-0 z-[100] opacity-0"
+          className="pointer-events-none fixed top-0 left-0 z-[100] opacity-0"
           style={{
             width: "6px",
             height: "6px",

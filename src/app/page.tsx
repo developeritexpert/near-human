@@ -35,7 +35,6 @@
 //   };
 // }, []);
 
-
 // //   return (
 // //     <main className="selection:bg-primary relative min-h-screen overflow-hidden bg-black selection:text-black">
 // //       <Navbar />
@@ -58,10 +57,6 @@
 // //     </main>
 // //   );
 // // }
-
-
-
-
 
 // //------new
 // import Footer from '@/components/layout/Footer'
@@ -86,7 +81,7 @@
 //         {/* <AIDevices /> */}
 //         {/* White spacer to prevent black screen after AIDevices unpins */}
 //         {/* <div className="min-h-[200vh] bg-white" /> */}
-        
+
 //         {/* <Protocol />
 //         <Journey />
 //         <Partners /> */}
@@ -102,7 +97,6 @@
 
 // export default page;
 
-
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -115,14 +109,13 @@ import Footer from "@/components/layout/Footer";
 import Hero from "@/components/sections/home/Hero";
 import AIStandard from "@/components/sections/home/AIStandard";
 import LoaderWrapper from "@/components/loader/LoaderWrapper";
-import DeviceProtocol from '@/components/sections/home/DeviceProtocol'
-import EcoSystem from '@/components/sections/home/EcoSystem'
-import HomeBanner from '@/components/sections/home/HomeBanner'
-import OurJourney from '@/components/sections/home/Our-Journey'
-import OurPartners from '@/components/sections/home/OurPartners'
-import Posibilities from '@/components/sections/home/Posibilities'
-import React from 'react'
-
+import DeviceProtocol from "@/components/sections/home/DeviceProtocol";
+import EcoSystem from "@/components/sections/home/EcoSystem";
+import HomeBanner from "@/components/sections/home/HomeBanner";
+import OurJourney from "@/components/sections/home/Our-Journey";
+import OurPartners from "@/components/sections/home/OurPartners";
+import Posibilities from "@/components/sections/home/Posibilities";
+import React from "react";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -138,8 +131,8 @@ export default function Page() {
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: 'vertical',
-      gestureOrientation: 'vertical',
+      orientation: "vertical",
+      gestureOrientation: "vertical",
       smoothWheel: true,
       wheelMultiplier: 1,
       // smoothTouch: false, // Better mobile performance
@@ -151,7 +144,7 @@ export default function Page() {
     lenisRef.current = lenis;
 
     // Sync with GSAP ScrollTrigger
-    lenis.on('scroll', ScrollTrigger.update);
+    lenis.on("scroll", ScrollTrigger.update);
 
     // Animation frame loop
     const raf = (time: number) => {
@@ -167,48 +160,42 @@ export default function Page() {
       ScrollTrigger.refresh();
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     // GSAP ticker configuration
     gsap.ticker.lagSmoothing(0);
 
     return () => {
       lenis.destroy();
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       lenisRef.current = null;
     };
   }, []);
 
   return (
-   
     <>
       <LoaderWrapper>
         <Navbar />
         <div className="overflow-x-hidden">
           <Hero />
-          <Posibilities/>
-          <DeviceProtocol/>
-          <OurJourney/>
-          <OurPartners/>
-          <EcoSystem/>
+          <div className="relative">
+            <Posibilities />
+            <DeviceProtocol />
+            <OurJourney />
+            <OurPartners />
+            <EcoSystem />
+          </div>
           {/* <AIStandard /> */}
         </div>
         <Footer />
-        
-        {/* Global Grainy Overlay */}
-        
-        <div className="pointer-events-none fixed inset-0 z-[999] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]" />
-        
-     
-     </LoaderWrapper>
-    </>
-      
 
-    
+        {/* Global Grainy Overlay */}
+
+        <div className="pointer-events-none fixed inset-0 z-[999] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]" />
+      </LoaderWrapper>
+    </>
   );
 }
-
-
 
 // function page() {
 
