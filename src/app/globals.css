@@ -121,10 +121,12 @@ line-height:1.2;
 
 
 @media (min-width:1600px){
-.container{
-  max-width: 1440px;
+
+.Container{
+  max-width: 1440px !important;
   margin-inline:auto;
 }
+
 }
 
 .scrollbar-hidden {
@@ -147,7 +149,6 @@ line-height:1.2;
   }
  
 }
-
 
 .move-lft {
   animation: mov-x 10s ease infinite;
