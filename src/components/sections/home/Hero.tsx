@@ -4,17 +4,21 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+// Register plugin once at module level
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
 const THEME_COLORS = {
   highlight1: "#00B0B2",
   highlight2: "#FF6B9D",
   textPrimary: "#FFFFFF",
 };
 
-// Generate frame names: frame_001.webp to frame_207.webp
 const TOTAL_FRAMES = 207;
 const FRAME_NAMES = Array.from(
-  { length: TOTAL_FRAMES }, 
-  (_, i) => `frame_${String(i + 1).padStart(3, '0')}.webp`
+  { length: TOTAL_FRAMES },
+  (_, i) => `frame_${String(i + 1).padStart(3, "0")}.webp`
 );
 
 const FRAME_PATH = (index: number) => `/hero-banner/${FRAME_NAMES[index]}`;
@@ -38,18 +42,15 @@ export default function Hero() {
   const [mounted, setMounted] = useState(false);
   const [firstFrameReady, setFirstFrameReady] = useState(false);
   const frameIndexRef = useRef(0);
-  const timelineRef = useRef<gsap.core.Timeline | null>(null);
-  const resizeHandlerRef = useRef<(() => void) | null>(null);
+  const ctxRef = useRef<gsap.Context | null>(null);
   const mousePos = useRef({ x: 0, y: 0 });
   const cursorPos = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== "undefined") {
-      gsap.registerPlugin(ScrollTrigger);
-    }
   }, []);
 
+  // Image loading effect
   useEffect(() => {
     if (!mounted) return;
 
@@ -65,7 +66,7 @@ export default function Hero() {
       loadRemainingFrames();
     };
     firstImg.onerror = () => {
-      console.error('Failed to load first frame');
+      console.error("Failed to load first frame");
       setFirstFrameReady(true);
     };
 
@@ -102,6 +103,7 @@ export default function Hero() {
     };
   }, [mounted]);
 
+  // Cursor effect
   useEffect(() => {
     if (!mounted || !containerRef.current) return;
 
@@ -159,11 +161,12 @@ export default function Hero() {
     };
   }, [mounted]);
 
+  // Canvas setup effect
   useEffect(() => {
     if (!mounted || !canvasRef.current || !firstFrameReady) return;
 
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d", { 
+    const ctx = canvas.getContext("2d", {
       alpha: false,
       desynchronized: true,
       willReadFrequently: false,
@@ -180,7 +183,10 @@ export default function Hero() {
       if (!img || !img.complete) return;
 
       const cr = rw / rh;
-      let dw = rw, dh = rh, dx = 0, dy = 0;
+      let dw = rw,
+        dh = rh,
+        dx = 0,
+        dy = 0;
 
       if (ratio > cr) {
         dh = rh;
@@ -197,7 +203,7 @@ export default function Hero() {
       ctx.filter = "brightness(1.05) contrast(1.15) saturate(1.1)";
       ctx.drawImage(img, dx, dy, dw, dh);
       ctx.restore();
-      
+
       frameIndexRef.current = index;
     };
 
@@ -210,33 +216,32 @@ export default function Hero() {
       canvas.style.width = `${rw}px`;
       canvas.style.height = `${rh}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      
+
       const firstImg = imagesRef.current[0];
-      ratio = firstImg?.width && firstImg?.height 
-        ? firstImg.width / firstImg.height 
-        : 16 / 9;
+      ratio =
+        firstImg?.width && firstImg?.height
+          ? firstImg.width / firstImg.height
+          : 16 / 9;
       renderFrame(frameIndexRef.current);
     };
 
     resize();
-    resizeHandlerRef.current = resize;
     window.addEventListener("resize", resize);
     renderFrame(0);
 
     return () => {
-      if (resizeHandlerRef.current) {
-        window.removeEventListener("resize", resizeHandlerRef.current);
-        resizeHandlerRef.current = null;
-      }
+      window.removeEventListener("resize", resize);
     };
   }, [mounted, firstFrameReady]);
 
+  // MAIN GSAP ANIMATION EFFECT - Fixed
   useEffect(() => {
-    if (!mounted || !loaded || !containerRef.current || !canvasRef.current) return;
+    if (!mounted || !loaded || !containerRef.current || !canvasRef.current)
+      return;
 
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d", { 
-      alpha: false, 
+    const ctx = canvas.getContext("2d", {
+      alpha: false,
       desynchronized: true,
       willReadFrequently: false,
     });
@@ -244,9 +249,10 @@ export default function Hero() {
 
     let rw = window.innerWidth;
     let rh = window.innerHeight;
-    let ratio = imagesRef.current[0]?.width && imagesRef.current[0]?.height 
-      ? imagesRef.current[0].width / imagesRef.current[0].height 
-      : 16 / 9;
+    let ratio =
+      imagesRef.current[0]?.width && imagesRef.current[0]?.height
+        ? imagesRef.current[0].width / imagesRef.current[0].height
+        : 16 / 9;
 
     const renderFrame = (i: number) => {
       const index = Math.max(0, Math.min(Math.round(i), TOTAL_FRAMES - 1));
@@ -254,7 +260,10 @@ export default function Hero() {
       if (!img || !img.complete) return;
 
       const cr = rw / rh;
-      let dw = rw, dh = rh, dx = 0, dy = 0;
+      let dw = rw,
+        dh = rh,
+        dx = 0,
+        dy = 0;
 
       if (ratio > cr) {
         dh = rh;
@@ -273,16 +282,16 @@ export default function Hero() {
       ctx.restore();
     };
 
-    const mm = gsap.matchMedia();
-    
-    mm.add("(min-width: 1px)", () => {
+    // Create GSAP context scoped to this component
+    const gsapCtx = gsap.context(() => {
       const anim = { frame: 0 };
 
-      gsap.set("[data-step]", { opacity: 0, visibility: "hidden", y: 0 });
-      gsap.set("[data-word]", { opacity: 0, y: 30, filter: "blur(10px)" });
+      gsap.set("[data-hero-step]", { opacity: 0, visibility: "hidden", y: 0 });
+      gsap.set("[data-hero-word]", { opacity: 0, y: 30, filter: "blur(10px)" });
 
       const tl = gsap.timeline({
         scrollTrigger: {
+          id: "hero-scroll-trigger", // Unique ID
           trigger: containerRef.current,
           start: "top top",
           end: "+=500%",
@@ -290,11 +299,7 @@ export default function Hero() {
           pin: true,
           anticipatePin: 1,
           invalidateOnRefresh: true,
-          snap: {
-            snapTo: 1 / TEXT_STEPS.length,
-            duration: 0.3,
-            ease: "power1.inOut",
-          },
+          // Remove snap to prevent conflicts
           onUpdate: () => {
             if (containerRef.current) {
               renderFrame(anim.frame);
@@ -302,8 +307,6 @@ export default function Hero() {
           },
         },
       });
-
-      timelineRef.current = tl;
 
       tl.to(anim, {
         frame: TOTAL_FRAMES - 1,
@@ -321,43 +324,55 @@ export default function Hero() {
         const dur = 1 / TEXT_STEPS.length;
 
         if (step.text) {
-          tl.to(`[data-step="${step.id}"]`, { opacity: 1, visibility: "visible", duration: 0.01 }, start);
+          tl.to(
+            `[data-hero-step="${step.id}"]`,
+            { opacity: 1, visibility: "visible", duration: 0.01 },
+            start
+          );
 
           const words = step.text.split(" ");
           const wordDelay = (dur * 0.6) / words.length;
 
           words.forEach((_, wi) => {
             tl.to(
-              `[data-step="${step.id}"] [data-word="${wi}"]`,
-              { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.2, ease: "power2.out" },
+              `[data-hero-step="${step.id}"] [data-hero-word="${wi}"]`,
+              {
+                opacity: 1,
+                y: 0,
+                filter: "blur(0px)",
+                duration: 0.2,
+                ease: "power2.out",
+              },
               start + 0.05 + wi * wordDelay
             );
           });
 
           if (i < TEXT_STEPS.length - 1) {
-            tl.to(`[data-step="${step.id}"]`, { opacity: 0, duration: 0.15, ease: "power2.in" }, start + dur * 0.85);
-            tl.set(`[data-step="${step.id}"]`, { visibility: "hidden" }, start + dur * 0.95);
-            tl.set(`[data-step="${step.id}"] [data-word]`, { opacity: 0, y: 30, filter: "blur(10px)" }, start + dur * 0.95);
+            tl.to(
+              `[data-hero-step="${step.id}"]`,
+              { opacity: 0, duration: 0.15, ease: "power2.in" },
+              start + dur * 0.85
+            );
+            tl.set(
+              `[data-hero-step="${step.id}"]`,
+              { visibility: "hidden" },
+              start + dur * 0.95
+            );
+            tl.set(
+              `[data-hero-step="${step.id}"] [data-hero-word]`,
+              { opacity: 0, y: 30, filter: "blur(10px)" },
+              start + dur * 0.95
+            );
           }
         }
       });
+    }, containerRef);
 
-      return () => {};
-    });
+    ctxRef.current = gsapCtx;
 
     return () => {
-      if (timelineRef.current) {
-        timelineRef.current.kill();
-        timelineRef.current = null;
-      }
-
-      ScrollTrigger.getAll().forEach(trigger => {
-        if (trigger.vars.trigger === containerRef.current) {
-          trigger.kill();
-        }
-      });
-
-      mm.revert();
+      gsapCtx.revert();
+      ctxRef.current = null;
     };
   }, [mounted, loaded]);
 
@@ -366,20 +381,18 @@ export default function Hero() {
   }
 
   return (
-    <section 
-      ref={containerRef} 
+    <section
+      ref={containerRef}
       className="relative w-full overflow-hidden bg-black cursor-none"
-      style={{ 
+      style={{
         opacity: firstFrameReady ? 1 : 0,
-        transition: "opacity 0.3s ease-in-out"
+        transition: "opacity 0.3s ease-in-out",
       }}
     >
       <div className="sticky top-0 h-screen w-full">
-        {/* Full Screen Canvas - NO ZOOM */}
         <canvas ref={canvasRef} className="absolute inset-0 bg-black" />
 
-        {/* Subtle Radial Vignette Gradient */}
-        <div 
+        <div
           className="absolute inset-0 z-20 pointer-events-none"
           style={{
             background: `
@@ -393,23 +406,22 @@ export default function Hero() {
           }}
         />
 
-        {/* Top Edge Fade */}
-        <div 
+        <div
           className="absolute top-0 left-0 right-0 h-[20%] z-20 pointer-events-none"
           style={{
-            background: 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%)',
+            background:
+              "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%)",
           }}
         />
 
-        {/* Bottom Edge Fade */}
-        <div 
+        <div
           className="absolute bottom-0 left-0 right-0 h-[20%] z-20 pointer-events-none"
           style={{
-            background: 'linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent 100%)',
+            background:
+              "linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent 100%)",
           }}
         />
 
-        {/* Custom Cursor - Outer Ring */}
         <div
           ref={cursorRef}
           className="pointer-events-none fixed left-0 top-0 z-[100] opacity-0"
@@ -418,14 +430,14 @@ export default function Hero() {
             height: "40px",
             border: "2px solid #00B0B2",
             borderRadius: "50%",
-            boxShadow: "0 0 20px rgba(0, 176, 178, 0.4), inset 0 0 20px rgba(0, 176, 178, 0.2)",
+            boxShadow:
+              "0 0 20px rgba(0, 176, 178, 0.4), inset 0 0 20px rgba(0, 176, 178, 0.2)",
             mixBlendMode: "screen",
             transform: "translate(-50%, -50%) scale(0)",
             willChange: "transform",
           }}
         />
 
-        {/* Custom Cursor - Inner Dot */}
         <div
           ref={cursorDotRef}
           className="pointer-events-none fixed left-0 top-0 z-[100] opacity-0"
@@ -444,31 +456,34 @@ export default function Hero() {
           {TEXT_STEPS.map((step) => (
             <div
               key={step.id}
-              data-step={step.id}
+              data-hero-step={step.id}
               className="absolute flex flex-wrap justify-center gap-x-3 gap-y-2 px-4 max-w-6xl"
               style={{ opacity: 0, visibility: "hidden" }}
             >
-              {step.text && step.text.split(" ").map((word, wi) => {
-                const isHighlight = wi === step.highlightIndex;
-                return (
-                  <span
-                    key={wi}
-                    data-word={wi}
-                    className="inline-block"
-                    style={{
-                      fontSize: "clamp(2.5rem, 8vw, 6rem)",
-                      fontWeight: 700,
-                      lineHeight: 1.1,
-                      color: isHighlight ? step.highlightColor : THEME_COLORS.textPrimary,
-                      textShadow: isHighlight
-                        ? `0 0 40px ${step.highlightColor}55`
-                        : "0 2px 20px rgba(0,0,0,0.6)",
-                    }}
-                  >
-                    {word}
-                  </span>
-                );
-              })}
+              {step.text &&
+                step.text.split(" ").map((word, wi) => {
+                  const isHighlight = wi === step.highlightIndex;
+                  return (
+                    <span
+                      key={wi}
+                      data-hero-word={wi}
+                      className="inline-block"
+                      style={{
+                        fontSize: "clamp(2.5rem, 8vw, 6rem)",
+                        fontWeight: 700,
+                        lineHeight: 1.1,
+                        color: isHighlight
+                          ? step.highlightColor
+                          : THEME_COLORS.textPrimary,
+                        textShadow: isHighlight
+                          ? `0 0 40px ${step.highlightColor}55`
+                          : "0 2px 20px rgba(0,0,0,0.6)",
+                      }}
+                    >
+                      {word}
+                    </span>
+                  );
+                })}
             </div>
           ))}
         </div>

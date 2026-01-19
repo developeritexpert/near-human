@@ -211,17 +211,5 @@ export default function Page() {
 
 
 // function page() {
-//   return (
-//     <div>
-//       <Navbar/>
-//       <HomeBanner/>
-//       <Posibilities/>
-//       <DeviceProtocol/>
-//       <OurJourney/>
-//       <OurPartners/>
-//       <EcoSystem/>
-//       <Footer/>
-//     </div>
-//   )
-// }
+
 
