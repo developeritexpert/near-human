@@ -115,6 +115,14 @@ import Footer from "@/components/layout/Footer";
 import Hero from "@/components/sections/home/Hero";
 import AIStandard from "@/components/sections/home/AIStandard";
 import LoaderWrapper from "@/components/loader/LoaderWrapper";
+import DeviceProtocol from '@/components/sections/home/DeviceProtocol'
+import EcoSystem from '@/components/sections/home/EcoSystem'
+import HomeBanner from '@/components/sections/home/HomeBanner'
+import OurJourney from '@/components/sections/home/Our-Journey'
+import OurPartners from '@/components/sections/home/OurPartners'
+import Posibilities from '@/components/sections/home/Posibilities'
+import React from 'react'
+
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -122,9 +130,9 @@ export default function Page() {
   const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
-    // Set black background immediately
-    document.body.style.backgroundColor = '#000000';
-    document.documentElement.style.backgroundColor = '#000000';
+    // // Set black background immediately
+    // document.body.style.backgroundColor = '#000000';
+    // document.documentElement.style.backgroundColor = '#000000';
 
     // Enhanced Lenis configuration
     const lenis = new Lenis({
@@ -172,18 +180,48 @@ export default function Page() {
   }, []);
 
   return (
-    <LoaderWrapper>
-      <main className="selection:bg-primary relative min-h-screen overflow-x-hidden bg-black selection:text-black">
+   
+    <>
+      <LoaderWrapper>
         <Navbar />
         <div className="overflow-x-hidden">
           <Hero />
-          <AIStandard />
+          <Posibilities/>
+          <DeviceProtocol/>
+          <OurJourney/>
+          <OurPartners/>
+          <EcoSystem/>
+          {/* <AIStandard /> */}
         </div>
         <Footer />
         
         {/* Global Grainy Overlay */}
+        
         <div className="pointer-events-none fixed inset-0 z-[999] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]" />
-      </main>
-    </LoaderWrapper>
+        
+     
+     </LoaderWrapper>
+    </>
+      
+
+    
   );
 }
+
+
+
+// function page() {
+//   return (
+//     <div>
+//       <Navbar/>
+//       <HomeBanner/>
+//       <Posibilities/>
+//       <DeviceProtocol/>
+//       <OurJourney/>
+//       <OurPartners/>
+//       <EcoSystem/>
+//       <Footer/>
+//     </div>
+//   )
+// }
+

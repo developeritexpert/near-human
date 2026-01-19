@@ -14,8 +14,8 @@ export default function LoaderWrapper({
   useEffect(() => {
     setMounted(true);
     // Force black background
-    document.body.style.backgroundColor = '#000000';
-    document.documentElement.style.backgroundColor = '#000000';
+    // document.body.style.backgroundColor = '#000000';
+    // document.documentElement.style.backgroundColor = '#000000';
   }, []);
 
   const handleLoadComplete = () => {
@@ -35,12 +35,8 @@ export default function LoaderWrapper({
       
       {/* Always render but keep hidden until ready */}
       <div 
-        style={{ 
-          opacity: loading ? 0 : 1,
-          visibility: loading ? 'hidden' : 'visible',
-          transition: 'opacity 0.5s ease-in-out',
-        }}
-        className="bg-black min-h-screen"
+        
+        className="min-h-screen"
       >
         {children}
       </div>

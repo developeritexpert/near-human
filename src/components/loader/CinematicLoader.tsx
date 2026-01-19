@@ -29,12 +29,15 @@ export default function CinematicLoader({ onComplete }: { onComplete: () => void
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
         onComplete: () => {
-          // Cleanup
           document.body.style.overflow = '';
           document.body.style.pointerEvents = 'auto';
+
+          // 🔥 RESET BACKGROUNDS
+          document.body.style.backgroundColor = '';
+          document.documentElement.style.backgroundColor = '';
+
           window.scrollTo(0, 0);
-          
-          // Wait before hiding loader
+
           setTimeout(() => {
             if (loaderRef.current) {
               loaderRef.current.style.display = 'none';
@@ -42,6 +45,7 @@ export default function CinematicLoader({ onComplete }: { onComplete: () => void
             onComplete();
           }, 100);
         },
+
       });
 
       // Stage 1: Black background (instant)
