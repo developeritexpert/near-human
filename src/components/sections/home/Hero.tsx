@@ -13,8 +13,8 @@ const THEME_COLORS = {
 // Generate frame names: frame_001.webp to frame_207.webp
 const TOTAL_FRAMES = 207;
 const FRAME_NAMES = Array.from(
-  { length: TOTAL_FRAMES }, 
-  (_, i) => `frame_${String(i + 1).padStart(3, '0')}.webp`
+  { length: TOTAL_FRAMES },
+  (_, i) => `frame_${String(i + 1).padStart(3, "0")}.webp`
 );
 
 const FRAME_PATH = (index: number) => `/hero-banner/${FRAME_NAMES[index]}`;
@@ -65,7 +65,7 @@ export default function Hero() {
       loadRemainingFrames();
     };
     firstImg.onerror = () => {
-      console.error('Failed to load first frame');
+      console.error("Failed to load first frame");
       setFirstFrameReady(true);
     };
 
@@ -163,7 +163,7 @@ export default function Hero() {
     if (!mounted || !canvasRef.current || !firstFrameReady) return;
 
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d", { 
+    const ctx = canvas.getContext("2d", {
       alpha: false,
       desynchronized: true,
       willReadFrequently: false,
@@ -180,7 +180,10 @@ export default function Hero() {
       if (!img || !img.complete) return;
 
       const cr = rw / rh;
-      let dw = rw, dh = rh, dx = 0, dy = 0;
+      let dw = rw,
+        dh = rh,
+        dx = 0,
+        dy = 0;
 
       if (ratio > cr) {
         dh = rh;
@@ -197,7 +200,7 @@ export default function Hero() {
       ctx.filter = "brightness(1.05) contrast(1.15) saturate(1.1)";
       ctx.drawImage(img, dx, dy, dw, dh);
       ctx.restore();
-      
+
       frameIndexRef.current = index;
     };
 
@@ -210,11 +213,12 @@ export default function Hero() {
       canvas.style.width = `${rw}px`;
       canvas.style.height = `${rh}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      
+
       const firstImg = imagesRef.current[0];
-      ratio = firstImg?.width && firstImg?.height 
-        ? firstImg.width / firstImg.height 
-        : 16 / 9;
+      ratio =
+        firstImg?.width && firstImg?.height
+          ? firstImg.width / firstImg.height
+          : 16 / 9;
       renderFrame(frameIndexRef.current);
     };
 
@@ -232,11 +236,12 @@ export default function Hero() {
   }, [mounted, firstFrameReady]);
 
   useEffect(() => {
-    if (!mounted || !loaded || !containerRef.current || !canvasRef.current) return;
+    if (!mounted || !loaded || !containerRef.current || !canvasRef.current)
+      return;
 
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d", { 
-      alpha: false, 
+    const ctx = canvas.getContext("2d", {
+      alpha: false,
       desynchronized: true,
       willReadFrequently: false,
     });
@@ -244,9 +249,10 @@ export default function Hero() {
 
     let rw = window.innerWidth;
     let rh = window.innerHeight;
-    let ratio = imagesRef.current[0]?.width && imagesRef.current[0]?.height 
-      ? imagesRef.current[0].width / imagesRef.current[0].height 
-      : 16 / 9;
+    let ratio =
+      imagesRef.current[0]?.width && imagesRef.current[0]?.height
+        ? imagesRef.current[0].width / imagesRef.current[0].height
+        : 16 / 9;
 
     const renderFrame = (i: number) => {
       const index = Math.max(0, Math.min(Math.round(i), TOTAL_FRAMES - 1));
@@ -254,7 +260,10 @@ export default function Hero() {
       if (!img || !img.complete) return;
 
       const cr = rw / rh;
-      let dw = rw, dh = rh, dx = 0, dy = 0;
+      let dw = rw,
+        dh = rh,
+        dx = 0,
+        dy = 0;
 
       if (ratio > cr) {
         dh = rh;
@@ -274,7 +283,7 @@ export default function Hero() {
     };
 
     const mm = gsap.matchMedia();
-    
+
     mm.add("(min-width: 1px)", () => {
       const anim = { frame: 0 };
 
@@ -321,7 +330,11 @@ export default function Hero() {
         const dur = 1 / TEXT_STEPS.length;
 
         if (step.text) {
-          tl.to(`[data-step="${step.id}"]`, { opacity: 1, visibility: "visible", duration: 0.01 }, start);
+          tl.to(
+            `[data-step="${step.id}"]`,
+            { opacity: 1, visibility: "visible", duration: 0.01 },
+            start
+          );
 
           const words = step.text.split(" ");
           const wordDelay = (dur * 0.6) / words.length;
@@ -329,15 +342,33 @@ export default function Hero() {
           words.forEach((_, wi) => {
             tl.to(
               `[data-step="${step.id}"] [data-word="${wi}"]`,
-              { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.2, ease: "power2.out" },
+              {
+                opacity: 1,
+                y: 0,
+                filter: "blur(0px)",
+                duration: 0.2,
+                ease: "power2.out",
+              },
               start + 0.05 + wi * wordDelay
             );
           });
 
           if (i < TEXT_STEPS.length - 1) {
-            tl.to(`[data-step="${step.id}"]`, { opacity: 0, duration: 0.15, ease: "power2.in" }, start + dur * 0.85);
-            tl.set(`[data-step="${step.id}"]`, { visibility: "hidden" }, start + dur * 0.95);
-            tl.set(`[data-step="${step.id}"] [data-word]`, { opacity: 0, y: 30, filter: "blur(10px)" }, start + dur * 0.95);
+            tl.to(
+              `[data-step="${step.id}"]`,
+              { opacity: 0, duration: 0.15, ease: "power2.in" },
+              start + dur * 0.85
+            );
+            tl.set(
+              `[data-step="${step.id}"]`,
+              { visibility: "hidden" },
+              start + dur * 0.95
+            );
+            tl.set(
+              `[data-step="${step.id}"] [data-word]`,
+              { opacity: 0, y: 30, filter: "blur(10px)" },
+              start + dur * 0.95
+            );
           }
         }
       });
@@ -351,7 +382,7 @@ export default function Hero() {
         timelineRef.current = null;
       }
 
-      ScrollTrigger.getAll().forEach(trigger => {
+      ScrollTrigger.getAll().forEach((trigger) => {
         if (trigger.vars.trigger === containerRef.current) {
           trigger.kill();
         }
@@ -366,12 +397,12 @@ export default function Hero() {
   }
 
   return (
-    <section 
-      ref={containerRef} 
-      className="relative w-full overflow-hidden bg-black cursor-none"
-      style={{ 
+    <section
+      ref={containerRef}
+      className="relative w-full cursor-none overflow-hidden bg-black"
+      style={{
         opacity: firstFrameReady ? 1 : 0,
-        transition: "opacity 0.3s ease-in-out"
+        transition: "opacity 0.3s ease-in-out",
       }}
     >
       <div className="sticky top-0 h-screen w-full">
@@ -379,8 +410,8 @@ export default function Hero() {
         <canvas ref={canvasRef} className="absolute inset-0 bg-black" />
 
         {/* Subtle Radial Vignette Gradient */}
-        <div 
-          className="absolute inset-0 z-20 pointer-events-none"
+        <div
+          className="pointer-events-none absolute inset-0 z-20"
           style={{
             background: `
               radial-gradient(
@@ -394,31 +425,34 @@ export default function Hero() {
         />
 
         {/* Top Edge Fade */}
-        <div 
-          className="absolute top-0 left-0 right-0 h-[20%] z-20 pointer-events-none"
+        <div
+          className="pointer-events-none absolute top-0 right-0 left-0 z-20 h-[20%]"
           style={{
-            background: 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%)',
+            background:
+              "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%)",
           }}
         />
 
         {/* Bottom Edge Fade */}
-        <div 
-          className="absolute bottom-0 left-0 right-0 h-[20%] z-20 pointer-events-none"
+        <div
+          className="pointer-events-none absolute right-0 bottom-0 left-0 z-20 h-[20%]"
           style={{
-            background: 'linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent 100%)',
+            background:
+              "linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent 100%)",
           }}
         />
 
         {/* Custom Cursor - Outer Ring */}
         <div
           ref={cursorRef}
-          className="pointer-events-none fixed left-0 top-0 z-[100] opacity-0"
+          className="pointer-events-none fixed top-0 left-0 z-[100] opacity-0"
           style={{
             width: "40px",
             height: "40px",
             border: "2px solid #00B0B2",
             borderRadius: "50%",
-            boxShadow: "0 0 20px rgba(0, 176, 178, 0.4), inset 0 0 20px rgba(0, 176, 178, 0.2)",
+            boxShadow:
+              "0 0 20px rgba(0, 176, 178, 0.4), inset 0 0 20px rgba(0, 176, 178, 0.2)",
             mixBlendMode: "screen",
             transform: "translate(-50%, -50%) scale(0)",
             willChange: "transform",
@@ -428,7 +462,7 @@ export default function Hero() {
         {/* Custom Cursor - Inner Dot */}
         <div
           ref={cursorDotRef}
-          className="pointer-events-none fixed left-0 top-0 z-[100] opacity-0"
+          className="pointer-events-none fixed top-0 left-0 z-[100] opacity-0"
           style={{
             width: "6px",
             height: "6px",
@@ -445,30 +479,33 @@ export default function Hero() {
             <div
               key={step.id}
               data-step={step.id}
-              className="absolute flex flex-wrap justify-center gap-x-3 gap-y-2 px-4 max-w-6xl"
+              className="absolute flex max-w-6xl flex-wrap justify-center gap-x-3 gap-y-2 px-4"
               style={{ opacity: 0, visibility: "hidden" }}
             >
-              {step.text && step.text.split(" ").map((word, wi) => {
-                const isHighlight = wi === step.highlightIndex;
-                return (
-                  <span
-                    key={wi}
-                    data-word={wi}
-                    className="inline-block"
-                    style={{
-                      fontSize: "clamp(2.5rem, 8vw, 6rem)",
-                      fontWeight: 700,
-                      lineHeight: 1.1,
-                      color: isHighlight ? step.highlightColor : THEME_COLORS.textPrimary,
-                      textShadow: isHighlight
-                        ? `0 0 40px ${step.highlightColor}55`
-                        : "0 2px 20px rgba(0,0,0,0.6)",
-                    }}
-                  >
-                    {word}
-                  </span>
-                );
-              })}
+              {step.text &&
+                step.text.split(" ").map((word, wi) => {
+                  const isHighlight = wi === step.highlightIndex;
+                  return (
+                    <span
+                      key={wi}
+                      data-word={wi}
+                      className="inline-block"
+                      style={{
+                        fontSize: "clamp(2.5rem, 8vw, 6rem)",
+                        fontWeight: 700,
+                        lineHeight: 1.1,
+                        color: isHighlight
+                          ? step.highlightColor
+                          : THEME_COLORS.textPrimary,
+                        textShadow: isHighlight
+                          ? `0 0 40px ${step.highlightColor}55`
+                          : "0 2px 20px rgba(0,0,0,0.6)",
+                      }}
+                    >
+                      {word}
+                    </span>
+                  );
+                })}
             </div>
           ))}
         </div>

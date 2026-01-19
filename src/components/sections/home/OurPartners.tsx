@@ -81,7 +81,7 @@ function OurPartners() {
           <div className="pointer-events-none relative -bottom-[100px] z-[12] h-[100px] w-full bg-gradient-to-b from-white to-transparent"></div>
           <div
             ref={gridRef}
-            className="grid-bg relative mx-auto flex max-w-[878px] flex-col gap-[2px] overflow-hidden bg-[#1017171a]"
+            className="grid-bg relative mx-auto flex flex-col gap-[2px] overflow-hidden bg-[#1017171a]"
           >
             <div
               className="follow-bg pointer-events-none absolute h-[400px] w-[400px] transition-all duration-150 ease-out"
@@ -91,51 +91,55 @@ function OurPartners() {
                 opacity: isMouseOverGrid ? 1 : 0,
                 filter: "blur(60px)",
                 background:
-                  "radial-gradient(circle at 50% 50%, #2CFF05, transparent 15rem)",
+                  "radial-gradient(circle at 50% 50%, #00B0B2, transparent 15rem)",
                 transform: "translate(-50%, -50%)",
               }}
             ></div>
 
-            <div className="relative z-10 flex justify-center gap-[2px]">
-              <div className="top_row_empty_box h-[100px] w-[60px] bg-[#ffffff]"></div>
-              <div className="top_row_empty_box h-[100px] w-[250px] bg-[#ffffff]"></div>
-              <div className="top_row_empty_box h-[100px] w-[250px] bg-[#ffffff]"></div>
-              <div className="top_row_empty_box h-[100px] w-[250px] bg-[#ffffff]"></div>
-              <div className="top_row_empty_box h-[100px] w-[60px] bg-[#ffffff]"></div>
+            <div className="relative z-10 flex grid grid-cols-[0.2fr_1fr_0.2fr] justify-center gap-[2px] md:grid-cols-[0.3fr_1fr_1fr_1fr_0.3fr]">
+              <div className="top_row_empty_box relative h-[100px] bg-[#ffffff]"></div>
+              <div className="top_row_empty_box relative h-[100px] bg-[#ffffff]"></div>
+              <div className="top_row_empty_box relative h-[100px] bg-[#ffffff]"></div>
+              <div className="top_row_empty_box relative hidden h-[100px] bg-[#ffffff] md:block"></div>
+              <div className="top_row_empty_box relative hidden h-[100px] bg-[#ffffff] md:block"></div>
             </div>
 
-            <div className="relative z-10 flex justify-center gap-[2px]">
-              <div className="h-[250px] w-[60px] bg-[#ffffff]"></div>
-              <div className="flex h-[250px] w-[250px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa]">
+            <div className="relative z-10 flex grid grid-cols-[0.2fr_1fr_0.2fr] justify-center gap-[2px] md:grid-cols-[0.3fr_1fr_1fr_1fr_0.3fr]">
+              <div className="h-[250px] bg-[#ffffff]"></div>
+              <div className="flex h-[250px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa]">
                 <img
                   src="/img/partner-logo1.png"
                   alt=""
                   className="mix-blend-luminosity"
                 />
               </div>
-              <div className="flex h-[250px] w-[250px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa]">
+              <div className="block h-[250px] bg-[#ffffff] md:hidden"></div>
+              <div className="block h-[250px] bg-[#ffffff] md:hidden"></div>
+              <div className="flex h-[250px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa]">
                 <img
                   src="/img/partner-logo2.png"
                   alt=""
                   className="mix-blend-luminosity"
                 />
               </div>
-              <div className="flex h-[250px] w-[250px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa]">
+              <div className="block h-[250px] bg-[#ffffff] md:hidden"></div>
+              <div className="block h-[250px] bg-[#ffffff] md:hidden"></div>
+              <div className="flex h-[250px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa]">
                 <img
                   src="/img/partner-logo3.png"
                   alt=""
                   className="mix-blend-luminosity"
                 />
               </div>
-              <div className="h-[250px] w-[60px] bg-[#ffffff]"></div>
+              <div className="h-[250px] bg-[#ffffff]"></div>
             </div>
 
-            <div className="relative z-10 flex justify-center gap-[2px]">
-              <div className="top_row_empty_box h-[100px] w-[60px] bg-[#ffffff]"></div>
-              <div className="top_row_empty_box h-[100px] w-[250px] bg-[#ffffff]"></div>
-              <div className="top_row_empty_box h-[100px] w-[250px] bg-[#ffffff]"></div>
-              <div className="top_row_empty_box h-[100px] w-[250px] bg-[#ffffff]"></div>
-              <div className="top_row_empty_box h-[100px] w-[60px] bg-[#ffffff]"></div>
+            <div className="relative z-10 flex grid grid-cols-[0.2fr_1fr_0.2fr] justify-center gap-[2px] md:grid-cols-[0.3fr_1fr_1fr_1fr_0.3fr]">
+              <div className="bottom_row_empty_box relative hidden h-[100px] bg-[#ffffff] md:block"></div>
+              <div className="bottom_row_empty_box relative hidden h-[100px] bg-[#ffffff] md:block"></div>
+              <div className="bottom_row_empty_box relative h-[100px] bg-[#ffffff]"></div>
+              <div className="bottom_row_empty_box relative h-[100px] bg-[#ffffff]"></div>
+              <div className="bottom_row_empty_box relative h-[100px] bg-[#ffffff]"></div>
             </div>
           </div>
           <div className="pointer-events-none relative -top-[100px] z-[12] h-[100px] w-full bg-gradient-to-t from-white to-transparent"></div>{" "}
