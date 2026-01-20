@@ -18,8 +18,8 @@ export default function CinematicLoader({ onComplete }: { onComplete: () => void
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-    document.body.style.backgroundColor = '#000000';
-    document.documentElement.style.backgroundColor = '#000000';
+    // document.body.style.backgroundColor = '#000000';
+    // document.documentElement.style.backgroundColor = '#000000';
     
     // Prevent scrolling during load
     document.body.style.overflow = 'hidden';
