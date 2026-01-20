@@ -28,10 +28,11 @@ const TEXT_STEPS = [
   },
 ];
 
-// Global state to track loading - accessible by LoaderWrapper
-export const heroState = {
-  isLoaded: false,
-  onLoadComplete: null as (() => void) | null,
+// Export loading state for parent components
+export const heroLoadingState = {
+  isFullyLoaded: false,
+  loadedCount: 0,
+  totalFrames: TOTAL_FRAMES,
 };
 
 export default function Hero() {
@@ -47,7 +48,9 @@ export default function Hero() {
   const mousePos = useRef({ x: 0, y: 0 });
   const cursorPos = useRef({ x: 0, y: 0 });
 
-  const [imagesReady, setImagesReady] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [allImagesLoaded, setAllImagesLoaded] = useState(false);
+  const [animationReady, setAnimationReady] = useState(false);
 
   // Render frame
   const renderFrame = useCallback((frameIndex: number) => {
@@ -58,6 +61,7 @@ export default function Hero() {
     const img = imagesRef.current[index];
 
     if (!img || !img.complete || !img.naturalWidth) {
+      // Try to find nearest available frame
       for (let offset = 1; offset < 10; offset++) {
         const nearImg = imagesRef.current[index - offset] || imagesRef.current[index + offset];
         if (nearImg?.complete && nearImg?.naturalWidth) {
@@ -92,8 +96,7 @@ export default function Hero() {
       dy = (rh - dh) / 2;
     }
 
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, rw, rh);
+    ctx.clearRect(0, 0, rw, rh);
     ctx.save();
     ctx.filter = "brightness(1.05) contrast(1.15) saturate(1.1)";
     ctx.drawImage(img, dx, dy, dw, dh);
@@ -120,96 +123,77 @@ export default function Hero() {
     canvas.style.height = `${rh}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, rw, rh);
-
     const firstImg = imagesRef.current[0];
-    const ratio = firstImg?.naturalWidth && firstImg?.naturalHeight
-      ? firstImg.naturalWidth / firstImg.naturalHeight
-      : 16 / 9;
+    const ratio =
+      firstImg?.naturalWidth && firstImg?.naturalHeight
+        ? firstImg.naturalWidth / firstImg.naturalHeight
+        : 16 / 9;
 
     dimensionsRef.current = { rw, rh, ratio };
-
-    if (imagesRef.current[0]) {
-      renderFrame(frameIndexRef.current);
-    }
+    renderFrame(frameIndexRef.current);
   }, [renderFrame]);
 
-  // Load all images
+  // Load ALL images before allowing any interaction
   useEffect(() => {
     let isMounted = true;
     const images: HTMLImageElement[] = new Array(TOTAL_FRAMES);
     let loadedCount = 0;
 
-    // Setup canvas with black background immediately
-    if (canvasRef.current) {
-      const ctx = canvasRef.current.getContext("2d", { alpha: false });
-      if (ctx) {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const rw = window.innerWidth;
-        const rh = window.innerHeight;
-        canvasRef.current.width = rw * dpr;
-        canvasRef.current.height = rh * dpr;
-        canvasRef.current.style.width = `${rw}px`;
-        canvasRef.current.style.height = `${rh}px`;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.fillStyle = "#000000";
-        ctx.fillRect(0, 0, rw, rh);
-        canvasContextRef.current = ctx;
-        dimensionsRef.current = { rw, rh, ratio: 16 / 9 };
-      }
-    }
+    // Block scrolling until loaded
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
 
-    const onAllLoaded = () => {
+    const updateProgress = () => {
       if (!isMounted) return;
-      imagesRef.current = images;
-      setImagesReady(true);
-      heroState.isLoaded = true;
+      const progress = Math.round((loadedCount / TOTAL_FRAMES) * 100);
+      setLoadingProgress(progress);
+      heroLoadingState.loadedCount = loadedCount;
 
-      // Notify LoaderWrapper that hero is ready
-      if (heroState.onLoadComplete) {
-        heroState.onLoadComplete();
+      if (loadedCount === TOTAL_FRAMES) {
+        imagesRef.current = images;
+        heroLoadingState.isFullyLoaded = true;
+        setAllImagesLoaded(true);
       }
     };
 
     const loadImage = (index: number): Promise<void> => {
       return new Promise((resolve) => {
         const img = new Image();
+        img.decoding = "sync"; // Force synchronous decoding
         img.src = FRAME_PATH(index);
 
         img.onload = () => {
           images[index] = img;
           imagesRef.current[index] = img;
           loadedCount++;
-
-          if (index === 0 && canvasContextRef.current) {
-            dimensionsRef.current.ratio = img.naturalWidth / img.naturalHeight;
-            renderFrame(0);
-          }
-
-          if (loadedCount === TOTAL_FRAMES) {
-            onAllLoaded();
-          }
+          updateProgress();
           resolve();
         };
 
         img.onerror = () => {
+          console.warn(`Failed to load frame ${index}`);
           loadedCount++;
-          if (loadedCount === TOTAL_FRAMES) {
-            onAllLoaded();
-          }
+          updateProgress();
           resolve();
         };
       });
     };
 
+    // Load frames in priority order
     const loadAllFrames = async () => {
-      // Load first frame first
+      // First, load frame 0 immediately
       await loadImage(0);
+
       if (!isMounted) return;
 
-      // Load remaining frames in batches
-      const batchSize = 25;
+      // Setup canvas with first frame
+      if (canvasRef.current) {
+        resizeCanvas();
+        renderFrame(0);
+      }
+
+      // Load remaining frames in parallel batches
+      const batchSize = 20;
       for (let batch = 0; batch < Math.ceil((TOTAL_FRAMES - 1) / batchSize); batch++) {
         if (!isMounted) return;
 
@@ -230,19 +214,26 @@ export default function Hero() {
     return () => {
       isMounted = false;
     };
-  }, [renderFrame]);
+  }, [resizeCanvas, renderFrame]);
 
-  // Setup ScrollTrigger after images loaded
+  // Setup ScrollTrigger ONLY after ALL images are loaded
   useEffect(() => {
-    if (!imagesReady || !containerRef.current || !canvasRef.current) return;
+    if (!allImagesLoaded || !containerRef.current || !canvasRef.current) return;
 
+    // Re-enable scrolling
+    document.body.style.overflow = "";
+    document.documentElement.style.overflow = "";
+
+    // Kill any existing triggers
     ScrollTrigger.getById("hero-scroll-trigger")?.kill();
     if (scrollTriggerRef.current) {
       scrollTriggerRef.current.kill();
     }
 
+    // Ensure we're at top
     window.scrollTo(0, 0);
 
+    // Wait for layout to stabilize
     const setupTimer = setTimeout(() => {
       resizeCanvas();
       renderFrame(0);
@@ -315,7 +306,8 @@ export default function Hero() {
       });
 
       ScrollTrigger.refresh(true);
-    }, 100);
+      setAnimationReady(true);
+    }, 200);
 
     window.addEventListener("resize", resizeCanvas);
 
@@ -323,12 +315,15 @@ export default function Hero() {
       clearTimeout(setupTimer);
       window.removeEventListener("resize", resizeCanvas);
       ScrollTrigger.getById("hero-scroll-trigger")?.kill();
+      if (scrollTriggerRef.current) {
+        scrollTriggerRef.current.kill();
+      }
     };
-  }, [imagesReady, resizeCanvas, renderFrame]);
+  }, [allImagesLoaded, resizeCanvas, renderFrame]);
 
   // Cursor effect
   useEffect(() => {
-    if (!imagesReady || !containerRef.current) return;
+    if (!animationReady || !containerRef.current) return;
 
     const container = containerRef.current;
     let rafId: number;
@@ -373,21 +368,32 @@ export default function Hero() {
       container.removeEventListener("mouseleave", handleMouseLeave);
       cancelAnimationFrame(rafId);
     };
-  }, [imagesReady]);
+  }, [animationReady]);
 
   return (
     <section
       ref={containerRef}
-      className="relative w-full overflow-hidden cursor-none"
-      style={{ backgroundColor: "#000000" }}
+      className="relative w-full overflow-hidden bg-black cursor-none"
     >
-      <div className="sticky top-0 h-screen w-full" style={{ backgroundColor: "#000000" }}>
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0"
-          style={{ backgroundColor: "#000000" }}
-        />
+      {/* Loading overlay - shows until ALL frames are loaded */}
+      {!allImagesLoaded && (
+        <div className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center">
+          <div className="w-48 h-1 bg-white/20 rounded-full overflow-hidden mb-4">
+            <div
+              className="h-full bg-[#00B0B2] transition-all duration-300 ease-out"
+              style={{ width: `${loadingProgress}%` }}
+            />
+          </div>
+          <p className="text-white/60 text-sm font-medium">
+            Loading {loadingProgress}%
+          </p>
+        </div>
+      )}
 
+      <div className="sticky top-0 h-screen w-full">
+        <canvas ref={canvasRef} className="absolute inset-0 bg-black" />
+
+        {/* Vignette */}
         <div
           className="absolute inset-0 z-20 pointer-events-none"
           style={{
@@ -395,16 +401,19 @@ export default function Hero() {
           }}
         />
 
+        {/* Top gradient */}
         <div
           className="absolute top-0 left-0 right-0 h-[20%] z-20 pointer-events-none"
           style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%)" }}
         />
 
+        {/* Bottom gradient */}
         <div
           className="absolute bottom-0 left-0 right-0 h-[20%] z-20 pointer-events-none"
           style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent 100%)" }}
         />
 
+        {/* Cursor ring */}
         <div
           ref={cursorRef}
           className="pointer-events-none fixed top-0 left-0 z-[100] opacity-0"
@@ -419,6 +428,7 @@ export default function Hero() {
           }}
         />
 
+        {/* Cursor dot */}
         <div
           ref={cursorDotRef}
           className="pointer-events-none fixed top-0 left-0 z-[100] opacity-0"
@@ -432,6 +442,7 @@ export default function Hero() {
           }}
         />
 
+        {/* Text */}
         <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
           {TEXT_STEPS.map((step) => (
             <div
