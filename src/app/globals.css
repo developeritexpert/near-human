@@ -230,6 +230,21 @@ h6 {
   display: none;
 }
 
+
+.article_slider .slick-track{
+  margin-bottom:60px !important;
+}
+.article_slider  .slick-dots li.slick-active button:before {
+    opacity: .75;
+    color: #00B0B2 !important;
+}
+.article_slider  .slick-dots li button:before { 
+    font-size: 15px !important;
+  
+}
+.article_slider  .slick-dots li button:before {  
+    color: #00B0B2 !important;    
+}
 .cta-btn {
   position: relative;
   overflow: hidden;
