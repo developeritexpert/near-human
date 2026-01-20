@@ -46,10 +46,129 @@ const DeviceProtocol: React.FC = () => {
       });
     };
 
-    const interval = setInterval(animateBoxes, 3000);
+    const interval = setInterval(animateBoxes, 1500);
     animateBoxes(); // Start immediately
 
     return () => clearInterval(interval);
+  }, []);
+
+  /* ───────── GLOWING LINE ANIMATION ───────── */
+  useEffect(() => {
+    if (!svgBgRef.current) return;
+
+    const svg = svgBgRef.current.querySelector("svg");
+    const container = svgBgRef.current.querySelector(".animated-boxes");
+    if (!svg || !container) return;
+
+    const svgRect = svg.getBoundingClientRect();
+    const gridSize = 80;
+    const cols = Math.ceil(svgRect.width / gridSize);
+    const rows = Math.ceil(svgRect.height / gridSize);
+
+    // Create grid boxes
+    const boxes: SVGRectElement[] = [];
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const rect = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "rect"
+        );
+        rect.setAttribute("x", (col * gridSize).toString());
+        rect.setAttribute("y", (row * gridSize).toString());
+        rect.setAttribute("width", gridSize.toString());
+        rect.setAttribute("height", gridSize.toString());
+        rect.setAttribute("fill", "none");
+        rect.setAttribute("stroke", "#00B0B2");
+        rect.setAttribute("stroke-width", "2");
+        rect.setAttribute("opacity", "0");
+        rect.setAttribute("filter", "url(#boxGlow)");
+        rect.classList.add("svg-box");
+        container.appendChild(rect);
+        boxes.push(rect);
+      }
+    }
+
+    // Animation patterns
+    const animatePattern = () => {
+      const pattern = Math.floor(Math.random() * 4);
+
+      if (pattern === 0) {
+        // Wave effect from left to right
+        boxes.forEach((box, index) => {
+          const col = index % cols;
+          gsap.to(box, {
+            opacity: 0.6,
+            duration: 0.5,
+            delay: col * 0.05,
+            ease: "power2.out",
+            onComplete: () => {
+              gsap.to(box, { opacity: 0, duration: 0.5, delay: 0.2 });
+            },
+          });
+        });
+      } else if (pattern === 1) {
+        // Random box flash
+        const numFlashes = 8 + Math.floor(Math.random() * 12);
+        for (let i = 0; i < numFlashes; i++) {
+          const randomBox = boxes[Math.floor(Math.random() * boxes.length)];
+          gsap.to(randomBox, {
+            opacity: 0.7,
+            duration: 0.5,
+            delay: i * 0.1,
+            ease: "power2.inOut",
+            yoyo: true,
+            repeat: 1,
+          });
+        }
+      } else if (pattern === 2) {
+        // Scanning line (horizontal)
+        const scanRow = Math.floor(Math.random() * rows);
+        boxes.forEach((box, index) => {
+          const row = Math.floor(index / cols);
+          if (row === scanRow) {
+            const col = index % cols;
+            gsap.to(box, {
+              opacity: 0.8,
+              duration: 0.15,
+              delay: col * 0.03,
+              ease: "none",
+              onComplete: () => {
+                gsap.to(box, { opacity: 0, duration: 0.3 });
+              },
+            });
+          }
+        });
+      } else {
+        // Radial pulse from center
+        const centerCol = Math.floor(cols / 2);
+        const centerRow = Math.floor(rows / 2);
+        boxes.forEach((box, index) => {
+          const col = index % cols;
+          const row = Math.floor(index / cols);
+          const distance = Math.sqrt(
+            Math.pow(col - centerCol, 2) + Math.pow(row - centerRow, 2)
+          );
+          gsap.to(box, {
+            opacity: 0.5,
+            duration: 0.5,
+            delay: distance * 0.05,
+            ease: "power2.out",
+            onComplete: () => {
+              gsap.to(box, { opacity: 0, duration: 0.4, delay: 0.1 });
+            },
+          });
+        });
+      }
+    };
+
+    // Run animations periodically
+    const interval = setInterval(animatePattern, 3000);
+    animatePattern(); // Start immediately
+
+    return () => {
+      clearInterval(interval);
+      boxes.forEach((box) => box.remove());
+    };
   }, []);
 
   useGSAP(
@@ -151,7 +270,7 @@ const DeviceProtocol: React.FC = () => {
         );
 
         /* ───────── STEP 4: HOLD FOR ADDITIONAL SCROLLS ───────── */
-        tl.to({}, { duration: 1 }); // Empty tween to add scroll distance
+        tl.to({}, { duration: 2 }); // Empty tween to add scroll distance
       }, sectionRef);
 
       return () => ctx.revert();
@@ -203,8 +322,16 @@ const DeviceProtocol: React.FC = () => {
                 strokeWidth="1"
               />
             </pattern>
+            <filter id="boxGlow">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
           </defs>
           <rect width="100%" height="100%" fill="url(#grid)" />
+          <g className="animated-boxes"></g>
         </svg>
       </div>
 

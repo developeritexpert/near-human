@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import CTAbutton from "@/components/layout/CTAbutton";
 
 function OurJourney() {
   const [glowPosition, setGlowPosition] = useState<number>(0);
@@ -32,6 +33,80 @@ function OurJourney() {
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
+      {/* Bottom Left SVG */}
+      <div className="pointer-events-none absolute bottom-0 left-0 z-0 w-1/3 md:w-1/3 lg:w-1/4">
+        <svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 429 379"
+          preserveAspectRatio="xMinYMax meet"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient
+              id="bottom-left-grey-gradient"
+              x1="490.244"
+              y1="-17.8706"
+              x2="-114.264"
+              y2="89.3237"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop stopColor="#D1D5DB" stopOpacity="0" />
+              <stop offset="0.5" stopColor="#D1D5DB" />
+              <stop offset="1" stopColor="#D1D5DB" stopOpacity="0" />
+            </linearGradient>
+
+            <linearGradient
+              id="bottom-left-glow-gradient"
+              x1="490.244"
+              y1="-17.8706"
+              x2="-114.264"
+              y2="89.3237"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0%" stopColor="#00B0B2" stopOpacity="0" />
+              <stop offset="30%" stopColor="#00B0B2" stopOpacity="1" />
+              <stop offset="50%" stopColor="#00B0B2" />
+              <stop offset="70%" stopColor="#00B0B2" stopOpacity="1" />
+              <stop offset="100%" stopColor="#00B0B2" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          {/* Static grey path */}
+          <path
+            d="M0.290489 0.5H369.317C399.923 1.66597 459.023 39.3751 408.668 86.198L0.290489 377.699"
+            stroke="url(#bottom-left-grey-gradient)"
+            strokeWidth="1"
+            strokeOpacity="1"
+            fill="none"
+          />
+
+          {/* Animated glow path */}
+          <path
+            d="M0.290489 0.5H369.317C399.923 1.66597 459.023 39.3751 408.668 86.198L0.290489 377.699"
+            stroke="url(#bottom-left-glow-gradient)"
+            strokeWidth="2"
+            strokeOpacity="1"
+            strokeDasharray="15 1000"
+            strokeDashoffset={`${glowPosition}`}
+            fill="none"
+            style={{
+              filter: "drop-shadow(0px 0px 20px #00B0B2)",
+              animation: "pulse 3s ease-in-out infinite",
+            }}
+          >
+            <animate
+              attributeName="stroke-dashoffset"
+              values="0; 1000"
+              dur="4s"
+              repeatCount="indefinite"
+              calcMode="linear"
+            />
+          </path>
+        </svg>
+      </div>
+
       {/* left Side SVG */}
       <div className="pointer-events-none absolute top-0 left-0 z-0 h-full w-1/3 md:w-1/2 lg:w-[40%]">
         <svg
@@ -192,24 +267,33 @@ function OurJourney() {
             </h3>
           </div>
           <div className="mt-[60px] flex flex-wrap justify-center gap-4 sm:flex-nowrap">
-            <Link
-              href="/early-access"
-              className="relative z-20 flex w-full max-w-[170px] justify-center rounded-lg border border-[#00B0B2] bg-[#00B0B2] py-[18px] text-[16px] text-white transition hover:border-[#101717] hover:bg-white hover:text-[#101717]"
-            >
-              MDP
-            </Link>
-            <Link
+            <CTAbutton
               href="/contact"
-              className="relative z-20 flex w-full max-w-[170px] justify-center rounded-lg border border-[#101717] py-[18px] text-[16px] text-[#101717] transition hover:border-[#00B0B2] hover:bg-[#00B0B2] hover:text-[#fff]"
-            >
-              Scootrr
-            </Link>
-            <Link
-              href="/explore"
-              className="relative z-20 flex w-full max-w-[170px] justify-center rounded-lg border border-[#101717] py-[18px] text-[16px] text-[#101717] transition hover:border-[#00B0B2] hover:bg-[#00B0B2] hover:text-[#fff]"
-            >
-              Contact us
-            </Link>
+              text="MDP"
+              svgColor="#00B0B2"
+              textColor="text-[#fff]"
+              hoverTextColor="hover:text-[#000]"
+              borderColor="border-[#00B0B2]"
+              bgColor="bg-[#fff]"
+            />
+            <CTAbutton
+              href="/contact"
+              text="MDP"
+              svgColor="#fff"
+              textColor="text-[#000]"
+              hoverTextColor="hover:text-[#fff]"
+              borderColor="border-[#000]"
+              bgColor="bg-[#000]"
+            />
+            <CTAbutton
+              href="/contact"
+              text="MDP"
+              svgColor="#fff"
+              textColor="text-[#000]"
+              hoverTextColor="hover:text-[#fff]"
+              borderColor="border-[#000]"
+              bgColor="bg-[#000]"
+            />
           </div>
         </div>
       </section>
