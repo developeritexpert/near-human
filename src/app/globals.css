@@ -120,11 +120,14 @@ h6 {
   line-height: 1.2;
 }
 
-@media (min-width: 1600px) {
-  .container {
-    max-width: 1440px;
-    margin-inline: auto;
-  }
+
+@media (min-width:1600px){
+
+.Container{
+  max-width: 1440px !important;
+  margin-inline:auto;
+}
+
 }
 
 .scrollbar-hidden {
