@@ -14,6 +14,8 @@ export default function Navbar() {
   const [hasScrolled, setHasScrolled] = useState(false);
   const pathname = usePathname();
 
+  const isHomePage = pathname === "/";
+
   const navItems = [
     { name: "Home", href: "/" },
     { name: "About", href: "/about" },
@@ -25,53 +27,64 @@ export default function Navbar() {
   useEffect(() => {
     setMounted(true);
 
-    const handleScroll = () => {
-      const secondSection = document.querySelector(".second-sec");
+    // Only run scroll logic for homepage
+    if (isHomePage) {
+      const handleScroll = () => {
+        const secondSection = document.querySelector(".second-sec");
 
-      if (secondSection) {
-        const rect = secondSection.getBoundingClientRect();
-        const isInView =
-          rect.top <= window.innerHeight * 0.8 && rect.bottom >= 0;
+        if (secondSection) {
+          const rect = secondSection.getBoundingClientRect();
+          const isInView =
+            rect.top <= window.innerHeight * 0.8 && rect.bottom >= 0;
 
-        if (isInView && !hasScrolled) {
-          setIsVisible(true);
-          setHasScrolled(true);
+          if (isInView && !hasScrolled) {
+            setIsVisible(true);
+            setHasScrolled(true);
+          }
+
+          // Optional: Hide navbar when scrolling back up before second section
+          if (rect.top > window.innerHeight && hasScrolled) {
+            setIsVisible(false);
+            setHasScrolled(false);
+          }
         }
+      };
 
-        // Optional: Hide navbar when scrolling back up before second section
-        if (rect.top > window.innerHeight && hasScrolled) {
-          setIsVisible(false);
-          setHasScrolled(false);
-        }
-      }
-    };
+      // Check on initial load
+      handleScroll();
 
-    // Check on initial load
-    handleScroll();
+      window.addEventListener("scroll", handleScroll, { passive: true });
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [hasScrolled]);
+      return () => {
+        window.removeEventListener("scroll", handleScroll);
+      };
+    } else {
+      // For non-home pages, navbar is always visible
+      setIsVisible(true);
+    }
+  }, [hasScrolled, isHomePage]);
 
   // Reset when route changes
   useEffect(() => {
-    setIsVisible(false);
-    setHasScrolled(false);
+    if (isHomePage) {
+      setIsVisible(false);
+      setHasScrolled(false);
 
-    // Small delay to ensure DOM is ready
-    setTimeout(() => {
-      const secondSection = document.querySelector(".second-sec");
-      if (secondSection) {
-        const rect = secondSection.getBoundingClientRect();
-        if (rect.top <= window.innerHeight && rect.bottom >= 0) {
-          setIsVisible(true);
-          setHasScrolled(true);
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        const secondSection = document.querySelector(".second-sec");
+        if (secondSection) {
+          const rect = secondSection.getBoundingClientRect();
+          if (rect.top <= window.innerHeight && rect.bottom >= 0) {
+            setIsVisible(true);
+            setHasScrolled(true);
+          }
         }
-      }
-    }, 100);
+      }, 100);
+    } else {
+      // For non-home pages, navbar is always visible
+      setIsVisible(true);
+    }
   }, [pathname]);
 
   if (!mounted) {
@@ -139,9 +152,11 @@ export default function Navbar() {
 
       <div
         className={`fixed top-[26px] left-0 z-50 flex w-full justify-center px-4 py-2 ${
-          isVisible
-            ? "animate-slideDown opacity-100"
-            : "pointer-events-none -translate-y-full opacity-0"
+          isHomePage
+            ? isVisible
+              ? "animate-slideDown opacity-100"
+              : "pointer-events-none -translate-y-full opacity-0"
+            : "opacity-100" // Always visible on non-home pages
         } transition-opacity duration-300`}
       >
         <nav className="relative flex h-[75px] w-full max-w-[1002px] items-center justify-between rounded-[15px] border border-white/10 bg-[#0b0f0f]/20 px-[20px] backdrop-blur-[34px] md:px-[60px]">
@@ -169,7 +184,13 @@ export default function Navbar() {
                   pathname === item.href
                     ? "text-white"
                     : "text-white/70 hover:text-white"
-                } ${isVisible ? "animate-fadeInUp" : "opacity-0"} `}
+                } ${
+                  isHomePage
+                    ? isVisible
+                      ? "animate-fadeInUp"
+                      : "opacity-0"
+                    : "opacity-100" // Always visible on non-home pages
+                } `}
                 style={{
                   fontFamily: "var(--font-geist-sans), sans-serif",
                   animationDelay: `${index * 0.1}s`,
@@ -181,13 +202,6 @@ export default function Navbar() {
           </div>
 
           {/* Get In Touch Button */}
-          {/* <Link
-            href="/contact"
-            className={`mr-4 hidden h-[42px] w-[127px] items-center justify-center rounded-[7px] bg-[#00B0B2] text-[15px] font-[450] text-white shadow-[0_0_20px_rgba(0,176,178,0.25)] transition-all hover:brightness-110 active:scale-95 md:flex ${isVisible ? "animate-scaleIn" : "scale-95 opacity-0"} `}
-            style={{ animationDelay: "0.5s" }}
-          >
-            Get In Touch
-          </Link> */}
           <CTAbutton
             href="/contact"
             text="Get In Touch"
