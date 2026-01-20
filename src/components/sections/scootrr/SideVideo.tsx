@@ -1,56 +1,422 @@
-"use client"
-import React from 'react'
-import Link from 'next/link';
+"use client";
 
-function SideVideo() {
-  return (
-    <div>
-        <section className='px-[20px] md:px-[30px] lg:px-[50px]  py-[40px] md:py-[70px] lg:pt-[90px] xl:pt-[140px] lg:pb-[100px] xl:pb-[150px]'>
-        
-             <div className="flex flex-col lg:flex-row ">
-              <div className="flex-1 ">
-                <div className=' xl:pl-[60px] 2xl:pl-[220px] lg:pt-[80px] xl:pt-[145px]  lg:mr-[30px] xl:mr-[80px] '>
-                    <div>
-                      <h2 className='mb-[4px] text-[32px] md:text-[45px] lg:text-[55px] xl:text-[77px] font-[450]'>30,000+</h2>
-                      <p className='text-[22px] md:text-[25px] font-normal '>injuries in the UK and EU alone</p>        
-                    </div>
-                    <div className='mt-[40px] lg:mt-[90px]  lg:max-w-[412px] '>
-                      <h2 className='mb-[4px] text-[32px] md:text-[45px] lg:text-[55px] xl:text-[77px] font-[450] text-[#1017171F]'>1,300</h2>
-                      <p className='text-[22px] md:text-[25px]font-normal text-[#1017171F]  '>reported casualties in the UK alone, costing the NHS and Insurers ~£7M</p>        
-                    </div>
-                      <div className='mt-[40px] lg:mt-[90px]  lg:max-w-[412px] '>
-                      <h2 className='mb-[4px] text-[32px] md:text-[45px] lg:text-[55px] xl:text-[77px] font-[450] text-[#1017171F]'>9,425</h2>
-                      <p className=' text-[22px] md:text-[25px] font-normal text-[#1017171F]  '>Germany reported 9,425 E-Scooter accidents, marking a 14.1% increase from the previous year.</p>        
-                    </div>
-                    
+import React, { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-
-
-                </div>                  
-              </div>
-
-             <div className="flex-1 relative z-10 h-full min-h-[400px] sm:min-h-[550px] md:min-h-[750px] lg:min-h-[833px] mt-[30px] lg:mt-0 flex justify-center items-center">
-               <div className='absolute inset-0 -z-0 h-full w-full'>
-                 <img src="/img/Sidevideo-bgimg.png" alt=""  className=' h-full w-full'/>
-              </div>
-
-
-                 <Link href="https://www.youtube.com/embed/sVHBuAOOHhE?autoplay=1&mute=1" className='relative z-20'>
-                     <div className="h-[114px] w-[114px] rounded-full bg-[#00B0B21F]  flex justify-center items-center">
-                         <div className='relative h-[80px] w-[80px] rounded-full bg-[#00B0B2]  flex justify-center items-center'>
-                      <svg width="22" height="24" viewBox="0 0 22 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-               <path d="M19.9287 9.3141C21.9287 10.4688 21.9287 13.3556 19.9287 14.5103L4.50013 23.4179C2.50013 24.5726 0.000136127 23.1293 0.000136228 20.8199L0.000137007 3.00448C0.000137108 0.695083 2.50014 -0.748288 4.50014 0.406412L19.9287 9.3141Z" fill="#101717"/>
-                    </svg>
-                   </div>
-                 </div>
-                      </Link>
-
-               </div>
-         </div>
-     
-        </section>
-    </div>
-  )
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
 }
 
-export default SideVideo
+const THEME = {
+  primary: "#00B0B2",
+  dark: "#101717",
+  muted: "#1017171F",
+  mutedText: "#10171740",
+};
+
+function SideVideo() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const pinRef = useRef<HTMLDivElement>(null);
+  const textContainerRef = useRef<HTMLDivElement>(null);
+  const textItemsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const notchRef = useRef<HTMLDivElement>(null);
+  const svgPathRef = useRef<SVGPathElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const ctxRef = useRef<gsap.Context | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const statisticsData = [
+    {
+      id: "01",
+      number: "30,000+",
+      description: "injuries in the UK and EU alone",
+    },
+    {
+      id: "02",
+      number: "1,300",
+      description:
+        "reported casualties in the UK alone, costing the NHS and Insurers ~£7M",
+    },
+    {
+      id: "03",
+      number: "9,425",
+      description:
+        "Germany reported 9,425 E-Scooter accidents, marking a 14.1% increase from the previous year.",
+    },
+  ];
+
+  const CONTENT_HEIGHT = 700;
+  const VIDEO_SIZE = 450;
+
+  const generateNotchPath = (index: number) => {
+    const totalItems = statisticsData.length;
+    const minY = 150;
+    const maxY = 400;
+    const notchY = minY + ((maxY - minY) / (totalItems - 1)) * index;
+    const notchHeight = 220;
+    const notchDepth = 35;
+
+    return `
+      M 40,0 
+      H 860 
+      A 40,40 0 0 1 900,40 
+      V 660 
+      A 40,40 0 0 1 860,700 
+      H 40 
+      A 40,40 0 0 1 0,660 
+      V ${notchY + notchHeight}
+      L ${notchDepth},${notchY + notchHeight - 55}
+      V ${notchY + 55}
+      L 0,${notchY}
+      V 40 
+      A 40,40 0 0 1 40,0 
+      Z
+    `;
+  };
+
+  // Video autoplay
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!pinRef.current) return;
+
+    ScrollTrigger.getById("sidevideo-scroll-trigger")?.kill();
+
+    const initTimeout = setTimeout(() => {
+      const gsapCtx = gsap.context(() => {
+        const items = textItemsRef.current.filter(
+          (el): el is HTMLDivElement => !!el
+        );
+
+        if (!items.length) return;
+
+        items.forEach((item, i) => {
+          if (i === 0) {
+            gsap.set(item, {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              display: "block",
+            });
+          } else {
+            gsap.set(item, {
+              opacity: 0,
+              y: 40,
+              scale: 0.95,
+              display: "none",
+            });
+          }
+        });
+
+        if (notchRef.current) {
+          gsap.set(notchRef.current, { y: 0 });
+        }
+        if (svgPathRef.current) {
+          gsap.set(svgPathRef.current, { attr: { d: generateNotchPath(0) } });
+        }
+
+        let currentIdx = 0;
+
+        ScrollTrigger.create({
+          id: "sidevideo-scroll-trigger",
+          trigger: pinRef.current,
+          start: "top top",
+          end: `+=${statisticsData.length * 500}`,
+          pin: true,
+          pinSpacing: true,
+          scrub: 0.5,
+          anticipatePin: 1,
+          onUpdate: (self) => {
+            const progress = self.progress;
+            const total = statisticsData.length;
+            const rawIndex = progress * total;
+            let newIdx = Math.floor(rawIndex);
+            newIdx = Math.max(0, Math.min(newIdx, total - 1));
+
+            if (newIdx === currentIdx) return;
+
+            const prevIdx = currentIdx;
+            currentIdx = newIdx;
+            setActiveIndex(newIdx);
+
+            const prevItem = items[prevIdx];
+            const nextItem = items[newIdx];
+
+            const tl = gsap.timeline();
+
+            if (prevItem) {
+              tl.to(
+                prevItem,
+                {
+                  opacity: 0,
+                  y: -30,
+                  scale: 0.98,
+                  duration: 0.4,
+                  ease: "power2.in",
+                  onComplete: () => {
+                    gsap.set(prevItem, { display: "none" });
+                  },
+                },
+                0
+              );
+            }
+
+            if (nextItem) {
+              gsap.set(nextItem, {
+                display: "block",
+                opacity: 0,
+                y: 40,
+                scale: 0.95,
+              });
+
+              tl.to(
+                nextItem,
+                {
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                  duration: 0.5,
+                  ease: "power2.out",
+                },
+                0.15
+              );
+            }
+
+            if (notchRef.current && trackRef.current) {
+              const trackHeight = trackRef.current.offsetHeight;
+              const indicatorHeight = 70;
+              const maxTravel = trackHeight - indicatorHeight;
+              const targetY = (newIdx / (total - 1)) * maxTravel;
+
+              tl.to(
+                notchRef.current,
+                {
+                  y: targetY,
+                  duration: 0.45,
+                  ease: "power2.inOut",
+                },
+                0
+              );
+            }
+
+            if (svgPathRef.current) {
+              tl.to(
+                svgPathRef.current,
+                {
+                  attr: { d: generateNotchPath(newIdx) },
+                  duration: 0.5,
+                  ease: "power2.inOut",
+                },
+                0
+              );
+            }
+          },
+        });
+      }, pinRef);
+
+      ctxRef.current = gsapCtx;
+      ScrollTrigger.refresh();
+    }, 150);
+
+    return () => {
+      clearTimeout(initTimeout);
+      ScrollTrigger.getById("sidevideo-scroll-trigger")?.kill();
+      if (ctxRef.current) {
+        ctxRef.current.revert();
+        ctxRef.current = null;
+      }
+    };
+  }, []);
+
+  return (
+    <section ref={sectionRef} className="relative z-10 bg-white">
+      <div ref={pinRef} className="px-[20px] md:px-[30px] lg:px-[50px] bg-white">
+        <div
+          className="flex flex-col lg:flex-row items-center"
+          style={{
+            minHeight: `${CONTENT_HEIGHT}px`,
+            paddingTop: "80px",
+            paddingBottom: "80px",
+          }}
+        >
+          {/* LEFT: Statistics */}
+          <div className="w-full lg:w-1/2 flex items-center relative h-full">
+            {/* Parallelogram scroll track */}
+            <div
+              ref={trackRef}
+              className="hidden lg:block absolute left-0 top-1/2 -translate-y-1/2"
+              style={{ height: "200px", width: "4px" }}
+            >
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: "#E8E8E8",
+                  clipPath: "polygon(0 8px, 100% 0, 100% calc(100% - 8px), 0 100%)",
+                }}
+              />
+
+              <div
+                ref={notchRef}
+                className="absolute left-0 top-0"
+                style={{ height: "70px", width: "4px" }}
+              >
+                <div
+                  className="w-full h-full"
+                  style={{
+                    background: THEME.primary,
+                    clipPath: "polygon(0 6px, 100% 0, 100% calc(100% - 6px), 0 100%)",
+                    boxShadow: `0 0 12px ${THEME.primary}60`,
+                  }}
+                />
+                <div
+                  className="absolute -top-2 left-1/2 -translate-x-1/2"
+                  style={{
+                    width: "10px",
+                    height: "10px",
+                    background: THEME.primary,
+                    clipPath: "polygon(20% 0, 80% 0, 100% 100%, 0 100%)",
+                  }}
+                />
+                <div
+                  className="absolute -bottom-2 left-1/2 -translate-x-1/2"
+                  style={{
+                    width: "10px",
+                    height: "10px",
+                    background: THEME.primary,
+                    clipPath: "polygon(0 0, 100% 0, 80% 100%, 20% 100%)",
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Text Content */}
+            <div className="lg:pl-[50px] xl:pl-[100px] 2xl:pl-[200px] w-full">
+              <div
+                ref={textContainerRef}
+                className="relative"
+                style={{ minHeight: "280px" }}
+              >
+                {statisticsData.map((item, index) => (
+                  <div
+                    key={item.id}
+                    ref={(el) => {
+                      textItemsRef.current[index] = el;
+                    }}
+                    className="absolute top-0 left-0 w-full lg:max-w-[450px]"
+                    style={{
+                      opacity: index === 0 ? 1 : 0,
+                      display: index === 0 ? "block" : "none",
+                    }}
+                  >
+                    <h2 className="mb-[8px] text-[36px] md:text-[50px] lg:text-[60px] xl:text-[77px] font-[450] leading-tight text-[#101717]">
+                      {item.number}
+                    </h2>
+                    <p className="text-[18px] md:text-[22px] xl:text-[25px] font-normal leading-relaxed text-[#101717]">
+                      {item.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Progress bar */}
+              <div className="mt-6 flex items-center gap-3">
+                <span
+                  className="font-semibold tabular-nums text-sm"
+                  style={{ color: THEME.primary }}
+                >
+                  {String(activeIndex + 1).padStart(2, "0")}
+                </span>
+                <div className="w-24 lg:w-28 h-1 bg-[#E5E5E5] rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500 ease-out"
+                    style={{
+                      width: `${((activeIndex + 1) / statisticsData.length) * 100}%`,
+                      background: THEME.primary,
+                      boxShadow: `0 0 8px ${THEME.primary}60`,
+                    }}
+                  />
+                </div>
+                <span
+                  className="tabular-nums text-sm"
+                  style={{ color: THEME.mutedText }}
+                >
+                  {String(statisticsData.length).padStart(2, "0")}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT: Video */}
+          <div className="w-full lg:w-1/2 flex justify-center items-center mt-8 lg:mt-0">
+            <div
+              className="relative w-full max-w-[600px] flex items-center justify-center"
+              style={{ height: `${CONTENT_HEIGHT}px` }}
+            >
+              {/* SVG Background */}
+              <svg
+                className="absolute inset-0 w-full h-full"
+                viewBox="0 0 900 700"
+                preserveAspectRatio="xMidYMid meet"
+                style={{ zIndex: 1 }}
+              >
+                <path
+                  ref={svgPathRef}
+                  d={generateNotchPath(0)}
+                  fill="#020203"
+                />
+              </svg>
+
+              {/* Video */}
+              <div
+                className="relative"
+                style={{
+                  width: VIDEO_SIZE,
+                  height: VIDEO_SIZE,
+                  maxWidth: "80%",
+                  maxHeight: "60%",
+                  zIndex: 10,
+                }}
+              >
+                <video
+                  ref={videoRef}
+                  className="w-full h-full object-contain pointer-events-none"
+                  src="/Videos/scootr/scottr.mp4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="auto"
+                />
+              </div>
+
+              {/* Glow effect */}
+              <div
+                className="absolute rounded-full blur-3xl"
+                style={{
+                  width: "200px",
+                  height: "200px",
+                  background: THEME.primary,
+                  opacity: 0.15,
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  zIndex: 5,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="h-12" />
+    </section>
+  );
+}
+
+export default SideVideo;

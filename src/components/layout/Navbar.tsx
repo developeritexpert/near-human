@@ -5,11 +5,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
+import CTAbutton from "./CTAbutton";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
   const pathname = usePathname();
+
+  const isHomePage = pathname === "/";
 
   const navItems = [
     { name: "Home", href: "/" },
@@ -21,124 +26,228 @@ export default function Navbar() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+
+    // Only run scroll logic for homepage
+    if (isHomePage) {
+      const handleScroll = () => {
+        const secondSection = document.querySelector(".second-sec");
+
+        if (secondSection) {
+          const rect = secondSection.getBoundingClientRect();
+          const isInView =
+            rect.top <= window.innerHeight * 0.8 && rect.bottom >= 0;
+
+          if (isInView && !hasScrolled) {
+            setIsVisible(true);
+            setHasScrolled(true);
+          }
+
+          // Optional: Hide navbar when scrolling back up before second section
+          if (rect.top > window.innerHeight && hasScrolled) {
+            setIsVisible(false);
+            setHasScrolled(false);
+          }
+        }
+      };
+
+      // Check on initial load
+      handleScroll();
+
+      window.addEventListener("scroll", handleScroll, { passive: true });
+
+      return () => {
+        window.removeEventListener("scroll", handleScroll);
+      };
+    } else {
+      // For non-home pages, navbar is always visible
+      setIsVisible(true);
+    }
+  }, [hasScrolled, isHomePage]);
+
+  // Reset when route changes
+  useEffect(() => {
+    if (isHomePage) {
+      setIsVisible(false);
+      setHasScrolled(false);
+
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        const secondSection = document.querySelector(".second-sec");
+        if (secondSection) {
+          const rect = secondSection.getBoundingClientRect();
+          if (rect.top <= window.innerHeight && rect.bottom >= 0) {
+            setIsVisible(true);
+            setHasScrolled(true);
+          }
+        }
+      }, 100);
+    } else {
+      // For non-home pages, navbar is always visible
+      setIsVisible(true);
+    }
+  }, [pathname]);
 
   if (!mounted) {
     return null;
   }
 
   return (
-    <div className="fixed top-[26px] left-0 z-50 flex w-full justify-center px-4 py-2 animate-slideDown">
-      <nav
-        className="
-          relative flex h-[75px] w-[1002px] items-center justify-between
-          px-[20px] md:px-[60px]
-          rounded-[15px]
-          bg-[#0b0f0f]/20
-          backdrop-blur-[34px]
-          border border-white/10
-        "
+    <>
+      {/* Add CSS animation definitions inline if not in global CSS */}
+      <style jsx global>{`
+        @keyframes slideDown {
+          from {
+            transform: translateY(-100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        .animate-slideDown {
+          animation: slideDown 0.7s ease-out forwards;
+        }
+
+        .animate-fadeInUp {
+          animation: fadeInUp 0.5s ease-out forwards;
+        }
+
+        .animate-scaleIn {
+          animation: scaleIn 0.5s ease-out forwards;
+        }
+
+        .animate-slideDownMobile {
+          animation: slideDown 0.3s ease-out forwards;
+        }
+
+        .animate-fadeInLeft {
+          animation: fadeInUp 0.5s ease-out 0.2s forwards;
+          opacity: 0;
+        }
+      `}</style>
+
+      <div
+        className={`fixed top-[26px] left-0 z-50 flex w-full justify-center px-4 py-2 ${
+          isHomePage
+            ? isVisible
+              ? "animate-slideDown opacity-100"
+              : "pointer-events-none -translate-y-full opacity-0"
+            : "opacity-100" // Always visible on non-home pages
+        } transition-opacity duration-300`}
       >
-        {/* Logo */}
-        <div className="flex items-center animate-fadeInLeft">
-          <Link href="/" className="ml-4 flex-shrink-0">
-            <Image
-              src="/img/white-logo.png"
-              alt="near HUMAN"
-              width={170}
-              height={19}
-              className="h-[19px] w-[170px] object-contain"
-              priority
-            />
-          </Link>
-        </div>
-
-        {/* Desktop Navigation */}
-        <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-10 lg:flex">
-          {navItems.map((item, index) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`text-[15px] leading-none font-bold tracking-normal transition-all duration-300 animate-fadeInUp
-                ${
-                  pathname === item.href
-                    ? "text-white"
-                    : "text-white/70 hover:text-white"
-                }
-              `}
-              style={{ 
-                fontFamily: "var(--font-geist-sans), sans-serif",
-                animationDelay: `${0.5 + index * 0.1}s`,
-              }}
-            >
-              {item.name}
+        <nav className="relative flex h-[75px] w-full max-w-[1002px] items-center justify-between rounded-[15px] border border-white/10 bg-[#0b0f0f]/20 px-[20px] backdrop-blur-[34px] md:px-[60px]">
+          {/* Logo */}
+          <div className="flex items-center">
+            <Link href="/" className="ml-4 flex-shrink-0">
+              <Image
+                src="/img/white-logo.png"
+                alt="near HUMAN"
+                width={170}
+                height={19}
+                className="h-[19px] w-[170px] object-contain"
+                priority
+              />
             </Link>
-          ))}
-        </div>
+          </div>
 
-        {/* Get In Touch Button */}
-        <Link
-          href="/contact"
-          className="
-            mr-4 hidden md:flex h-[42px] w-[127px]
-            items-center justify-center rounded-[7px]
-            bg-[#00B0B2]
-            text-[15px] font-[450] text-white
-            shadow-[0_0_20px_rgba(0,176,178,0.25)]
-            transition-all hover:brightness-110 active:scale-95
-            animate-scaleIn
-          "
-        >
-          Get In Touch
-        </Link>
-
-        {/* Mobile Menu Toggle */}
-        <button
-          onClick={() => setOpen(!open)}
-          className="p-2 text-white md:hidden"
-          aria-label="Toggle menu"
-        >
-          {open ? <X size={26} /> : <Menu size={26} />}
-        </button>
-
-        {/* Mobile Navigation Dropdown */}
-        {open && (
-          <div 
-            className="
-              absolute top-full left-0 mt-4
-              flex w-full flex-col gap-6
-              rounded-2xl
-              bg-[#0b0f0f]/95
-              border border-white/10
-              p-6 backdrop-blur-xl md:hidden
-              animate-slideDownMobile
-            "
-          >
-            {navItems.map((item) => (
+          {/* Desktop Navigation */}
+          <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-10 lg:flex">
+            {navItems.map((item, index) => (
               <Link
                 key={item.name}
                 href={item.href}
-                onClick={() => setOpen(false)}
-                className={`text-xl font-bold ${
+                className={`text-[15px] leading-none font-bold tracking-normal transition-colors duration-300 ${
                   pathname === item.href
                     ? "text-white"
-                    : "text-white/70"
-                }`}
+                    : "text-white/70 hover:text-white"
+                } ${
+                  isHomePage
+                    ? isVisible
+                      ? "animate-fadeInUp"
+                      : "opacity-0"
+                    : "opacity-100" // Always visible on non-home pages
+                } `}
+                style={{
+                  fontFamily: "var(--font-geist-sans), sans-serif",
+                  animationDelay: `${index * 0.1}s`,
+                }}
               >
                 {item.name}
               </Link>
             ))}
-
-            <Link
-              href="/contact"
-              onClick={() => setOpen(false)}
-              className="flex h-[48px] w-full items-center justify-center rounded-[7px] bg-[#00B0B2] text-[15px] font-medium text-white"
-            >
-              Get In Touch
-            </Link>
           </div>
-        )}
-      </nav>
-    </div>
+
+          {/* Get In Touch Button */}
+          <CTAbutton
+            href="/contact"
+            text="Get In Touch"
+            svgColor="#00B0B2"
+            textColor="text-[#fff]"
+            hoverTextColor="hover:text-[#00B0B2]"
+            borderColor="border-[#00B0B2]"
+            bgColor="transparent"
+          />
+
+          {/* Mobile Menu Toggle */}
+          <button
+            onClick={() => setOpen(!open)}
+            className="p-2 text-white md:hidden"
+            aria-label="Toggle menu"
+          >
+            {open ? <X size={26} /> : <Menu size={26} />}
+          </button>
+
+          {/* Mobile Navigation Dropdown */}
+          {open && (
+            <div className="animate-slideDownMobile absolute top-full left-0 mt-4 flex w-full flex-col gap-6 rounded-2xl border border-white/10 bg-[#0b0f0f]/95 p-6 backdrop-blur-xl md:hidden">
+              {navItems.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className={`text-xl font-bold ${
+                    pathname === item.href ? "text-white" : "text-white/70"
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              ))}
+
+              <Link
+                href="/contact"
+                onClick={() => setOpen(false)}
+                className="flex h-[48px] w-full items-center justify-center rounded-[7px] bg-[#00B0B2] text-[15px] font-medium text-white"
+              >
+                Get In Touch
+              </Link>
+            </div>
+          )}
+        </nav>
+      </div>
+    </>
   );
 }

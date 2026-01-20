@@ -120,14 +120,11 @@ h6 {
   line-height: 1.2;
 }
 
-
-@media (min-width:1600px){
-
-.Container{
-  max-width: 1440px !important;
-  margin-inline:auto;
-}
-
+@media (min-width: 1600px) {
+  .Container {
+    max-width: 1440px !important;
+    margin-inline: auto;
+  }
 }
 
 .scrollbar-hidden {
@@ -247,4 +244,40 @@ h6 {
 }
 .article_slider  .slick-dots li button:before {  
     color: #00B0B2 !important;    
+}
+.cta-btn {
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  transition: all 0.4s ease-in-out 0.5s;
+  border: 1px solid #00b0b2;
+  color: #fff;
+}
+.cta-btn-before {
+  position: absolute;
+  pointer-events: none;
+  bottom: 45%;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  transition: all 0.4s ease-in-out 0.5s;
+}
+.cta-btn-after {
+  position: absolute;
+  pointer-events: none;
+  top: 45%;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  transition: all 0.4s ease-in-out 0.5s;
+}
+.cta-btn:hover .cta-btn-before {
+  bottom: 90%;
+}
+.cta-btn:hover .cta-btn-after {
+  top: 90%;
+}
+.cta-btn:hover {
+  /* border: 1px solid #000; */
+  color: #000;
 }
