@@ -37,6 +37,7 @@ export default function Hero() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
   const cursorDotRef = useRef<HTMLDivElement>(null);
+  const smokeCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -226,13 +227,146 @@ export default function Hero() {
     };
 
     resize();
-    window.addEventListener("resize", resize);
     renderFrame(0);
+    window.addEventListener("resize", resize);
 
     return () => {
       window.removeEventListener("resize", resize);
     };
   }, [mounted, firstFrameReady]);
+
+  // SMOKE EFFECT SYSTEM
+  useEffect(() => {
+    if (!mounted || !smokeCanvasRef.current) return;
+
+    const canvas = smokeCanvasRef.current;
+    const ctx = canvas.getContext("2d", { alpha: true });
+    if (!ctx) return;
+
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+
+    const resize = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+    };
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    // SMOKE PARTICLES
+    const particles: {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      life: number;
+      maxLife: number;
+      size: number;
+      alpha: number;
+      rotation: number;
+    }[] = [];
+
+    // Create a "puff" texture offscreen for better performance
+    const puffSize = 200; // Balanced size
+    const puffCanvas = document.createElement("canvas");
+    puffCanvas.width = puffSize;
+    puffCanvas.height = puffSize;
+    const pCtx = puffCanvas.getContext("2d");
+    if (pCtx) {
+      const grad = pCtx.createRadialGradient(
+        puffSize / 2,
+        puffSize / 2,
+        0,
+        puffSize / 2,
+        puffSize / 2,
+        puffSize / 2
+      );
+      // Deep Teal/Blue smoke colors - Balanced Opacity
+      grad.addColorStop(0, "rgba(0, 176, 178, 0.6)"); // Good visibility but not solid
+      grad.addColorStop(0.3, "rgba(0, 100, 150, 0.3)"); // Balanced mid
+      grad.addColorStop(0.7, "rgba(0, 50, 80, 0.1)"); // Soft outer
+      grad.addColorStop(1, "rgba(0, 0, 0, 0)"); // Fade out
+      pCtx.fillStyle = grad;
+      pCtx.fillRect(0, 0, puffSize, puffSize);
+    }
+
+    const MAX_PARTICLES = 180; // Halved from 360
+    let frameCount = 0;
+
+    const spawnParticle = () => {
+      // Spawn at the bottom, spread widely
+      particles.push({
+        x: Math.random() * width,
+        y: height + 150,
+        vx: (Math.random() - 0.5) * 1.5,
+        vy: -Math.random() * 2 - 1,
+        life: 0,
+        maxLife: Math.random() * 250 + 150,
+        size: Math.random() * 3 + 2,
+        alpha: 0,
+        rotation: Math.random() * Math.PI * 2,
+      });
+    };
+
+    const update = () => {
+      frameCount++;
+      ctx.clearRect(0, 0, width, height);
+
+      // Spawn new particles normally
+      if (particles.length < MAX_PARTICLES) {
+        spawnParticle();
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life++;
+
+        // Movement
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Swirling motion (sine wave based on y position and time)
+        p.x += Math.sin(p.y * 0.01 + frameCount * 0.005) * 0.3;
+
+        // Fade in/out logic
+        if (p.life < 60) {
+          p.alpha = (p.life / 60) * 0.8; // Quicker fade in
+        } else if (p.life > p.maxLife - 60) {
+          p.alpha = ((p.maxLife - p.life) / 60) * 0.8;
+        }
+
+        // Remove dead particles
+        if (p.life >= p.maxLife) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        // Draw
+        ctx.globalAlpha = p.alpha;
+        ctx.globalCompositeOperation = "screen"; // Additive blending for glow
+        const size = puffSize * p.size;
+        
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation + frameCount * 0.001); // Slower rotation
+        ctx.drawImage(puffCanvas, -size / 2, -size / 2, size, size);
+        ctx.restore();
+      }
+      
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+    };
+
+    gsap.ticker.add(update);
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      gsap.ticker.remove(update);
+    };
+  }, [mounted]);
 
   // MAIN GSAP ANIMATION EFFECT - Fixed
   useEffect(() => {
@@ -391,6 +525,12 @@ export default function Hero() {
     >
       <div className="sticky top-0 h-screen w-full">
         <canvas ref={canvasRef} className="absolute inset-0 bg-black" />
+
+        {/* Cinematic Smoke Canvas */}
+        <canvas
+          ref={smokeCanvasRef}
+          className="absolute inset-0 z-10 pointer-events-none mix-blend-screen"
+        />
 
         <div
           className="absolute inset-0 z-20 pointer-events-none"
