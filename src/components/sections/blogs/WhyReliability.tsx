@@ -23,7 +23,7 @@ function WhyReliability() {
                </p>
 
                <div>            
-                <Link href="" className=' inline-block text-[16px] bg-[#00B0B2] text-white font-[450] py-[18px] px-[44px] rounded-[7px] hover:bg-[#1FC4C6]'>
+                <Link href="/blogs-detail" className=' inline-block text-[16px] bg-[#00B0B2] text-white font-[450] py-[18px] px-[44px] rounded-[7px] hover:bg-[#1FC4C6]'>
                 Read More
                 </Link>
                </div>
