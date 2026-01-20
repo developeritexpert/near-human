@@ -8,27 +8,18 @@ function OurPartners() {
   const gridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const gridElement = gridRef.current;
+    if (!gridElement) return;
+
     const handleMouseMove = (event: MouseEvent) => {
-      if (!gridRef.current) return;
+      const gridRect = gridElement.getBoundingClientRect();
+      const relativeX = event.clientX - gridRect.left;
+      const relativeY = event.clientY - gridRect.top;
 
-      const gridRect = gridRef.current.getBoundingClientRect();
-
-      // Check if mouse is within grid boundaries
-      if (
-        event.clientX >= gridRect.left &&
-        event.clientX <= gridRect.right &&
-        event.clientY >= gridRect.top &&
-        event.clientY <= gridRect.bottom
-      ) {
-        // Calculate relative position within the grid
-        const relativeX = event.clientX - gridRect.left;
-        const relativeY = event.clientY - gridRect.top;
-
-        setMousePosition({
-          x: relativeX,
-          y: relativeY,
-        });
-      }
+      setMousePosition({
+        x: relativeX,
+        y: relativeY,
+      });
     };
 
     const handleMouseEnter = () => {
@@ -37,29 +28,23 @@ function OurPartners() {
 
     const handleMouseLeave = () => {
       setIsMouseOverGrid(false);
-      // Reset position to center when mouse leaves
-      if (gridRef.current) {
-        const gridRect = gridRef.current.getBoundingClientRect();
-        setMousePosition({
-          x: gridRect.width / 2,
-          y: gridRect.height / 2,
-        });
-      }
+      // Reset to center
+      const gridRect = gridElement.getBoundingClientRect();
+      setMousePosition({
+        x: gridRect.width / 2,
+        y: gridRect.height / 2,
+      });
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-
-    if (gridRef.current) {
-      gridRef.current.addEventListener("mouseenter", handleMouseEnter);
-      gridRef.current.addEventListener("mouseleave", handleMouseLeave);
-    }
+    // Add listeners to the grid element, not the window
+    gridElement.addEventListener("mousemove", handleMouseMove);
+    gridElement.addEventListener("mouseenter", handleMouseEnter);
+    gridElement.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      if (gridRef.current) {
-        gridRef.current.removeEventListener("mouseenter", handleMouseEnter);
-        gridRef.current.removeEventListener("mouseleave", handleMouseLeave);
-      }
+      gridElement.removeEventListener("mousemove", handleMouseMove);
+      gridElement.removeEventListener("mouseenter", handleMouseEnter);
+      gridElement.removeEventListener("mouseleave", handleMouseLeave);
     };
   }, []);
 

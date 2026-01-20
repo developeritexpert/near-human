@@ -318,7 +318,7 @@ function Possibilities() {
   };
 
   return (
-    <section ref={sectionRef} className="relative z-10 bg-white">
+    <section ref={sectionRef} className="second-sec relative z-10 bg-white">
       {/* Top normal scroll section */}
       <div className="px-5 pt-16 md:px-8 lg:px-12 lg:pt-24 xl:px-[50px]">
         <div className="mx-auto max-w-[746px] pb-12 text-center lg:pb-20">
@@ -416,7 +416,7 @@ function Possibilities() {
               </div>
 
               {/* Progress indicator */}
-              <div className="mt-10 flex items-center gap-3">
+              {/* <div className="mt-10 flex items-center gap-3">
                 <span
                   className="text-sm font-semibold tabular-nums"
                   style={{ color: THEME.primary }}
@@ -441,7 +441,7 @@ function Possibilities() {
                 >
                   {String(deviceCategories.length).padStart(2, "0")}
                 </span>
-              </div>
+              </div> */}
             </div>
           </div>
 
