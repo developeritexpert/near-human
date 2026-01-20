@@ -1,10 +1,10 @@
+// components/sections/home/Hero.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-// Register plugin once at module level
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
@@ -16,12 +16,8 @@ const THEME_COLORS = {
 };
 
 const TOTAL_FRAMES = 207;
-const FRAME_NAMES = Array.from(
-  { length: TOTAL_FRAMES },
-  (_, i) => `frame_${String(i + 1).padStart(3, "0")}.webp`
-);
-
-const FRAME_PATH = (index: number) => `/hero-banner/${FRAME_NAMES[index]}`;
+const FRAME_PATH = (index: number) =>
+  `/hero-banner/frame_${String(index + 1).padStart(3, "0")}.webp`;
 
 const TEXT_STEPS = [
   {
@@ -32,258 +28,225 @@ const TEXT_STEPS = [
   },
 ];
 
+// Global state to track loading - accessible by LoaderWrapper
+export const heroState = {
+  isLoaded: false,
+  onLoadComplete: null as (() => void) | null,
+};
+
 export default function Hero() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
   const cursorDotRef = useRef<HTMLDivElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [firstFrameReady, setFirstFrameReady] = useState(false);
   const frameIndexRef = useRef(0);
-  const ctxRef = useRef<gsap.Context | null>(null);
+  const canvasContextRef = useRef<CanvasRenderingContext2D | null>(null);
+  const dimensionsRef = useRef({ rw: 0, rh: 0, ratio: 16 / 9 });
+  const scrollTriggerRef = useRef<ScrollTrigger | null>(null);
   const mousePos = useRef({ x: 0, y: 0 });
   const cursorPos = useRef({ x: 0, y: 0 });
 
-  useEffect(() => {
-    setMounted(true);
+  const [imagesReady, setImagesReady] = useState(false);
+
+  // Render frame
+  const renderFrame = useCallback((frameIndex: number) => {
+    const ctx = canvasContextRef.current;
+    if (!ctx) return;
+
+    const index = Math.max(0, Math.min(Math.round(frameIndex), TOTAL_FRAMES - 1));
+    const img = imagesRef.current[index];
+
+    if (!img || !img.complete || !img.naturalWidth) {
+      for (let offset = 1; offset < 10; offset++) {
+        const nearImg = imagesRef.current[index - offset] || imagesRef.current[index + offset];
+        if (nearImg?.complete && nearImg?.naturalWidth) {
+          renderFrameImage(nearImg);
+          return;
+        }
+      }
+      return;
+    }
+
+    renderFrameImage(img);
+    frameIndexRef.current = index;
   }, []);
 
-  // Image loading effect
+  const renderFrameImage = (img: HTMLImageElement) => {
+    const ctx = canvasContextRef.current;
+    if (!ctx) return;
+
+    const { rw, rh, ratio } = dimensionsRef.current;
+    if (rw === 0 || rh === 0) return;
+
+    const cr = rw / rh;
+    let dw = rw, dh = rh, dx = 0, dy = 0;
+
+    if (ratio > cr) {
+      dh = rh;
+      dw = dh * ratio;
+      dx = (rw - dw) / 2;
+    } else {
+      dw = rw;
+      dh = dw / ratio;
+      dy = (rh - dh) / 2;
+    }
+
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, rw, rh);
+    ctx.save();
+    ctx.filter = "brightness(1.05) contrast(1.15) saturate(1.1)";
+    ctx.drawImage(img, dx, dy, dw, dh);
+    ctx.restore();
+  };
+
+  // Resize canvas
+  const resizeCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d", { alpha: false });
+    if (!ctx) return;
+
+    canvasContextRef.current = ctx;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rw = window.innerWidth;
+    const rh = window.innerHeight;
+
+    canvas.width = rw * dpr;
+    canvas.height = rh * dpr;
+    canvas.style.width = `${rw}px`;
+    canvas.style.height = `${rh}px`;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, rw, rh);
+
+    const firstImg = imagesRef.current[0];
+    const ratio = firstImg?.naturalWidth && firstImg?.naturalHeight
+      ? firstImg.naturalWidth / firstImg.naturalHeight
+      : 16 / 9;
+
+    dimensionsRef.current = { rw, rh, ratio };
+
+    if (imagesRef.current[0]) {
+      renderFrame(frameIndexRef.current);
+    }
+  }, [renderFrame]);
+
+  // Load all images
   useEffect(() => {
-    if (!mounted) return;
-
+    let isMounted = true;
+    const images: HTMLImageElement[] = new Array(TOTAL_FRAMES);
     let loadedCount = 0;
-    const totalFrames = TOTAL_FRAMES;
 
-    const firstImg = new Image();
-    firstImg.src = FRAME_PATH(0);
-    firstImg.onload = () => {
-      imagesRef.current[0] = firstImg;
-      setFirstFrameReady(true);
-      loadedCount++;
-      loadRemainingFrames();
+    // Setup canvas with black background immediately
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext("2d", { alpha: false });
+      if (ctx) {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const rw = window.innerWidth;
+        const rh = window.innerHeight;
+        canvasRef.current.width = rw * dpr;
+        canvasRef.current.height = rh * dpr;
+        canvasRef.current.style.width = `${rw}px`;
+        canvasRef.current.style.height = `${rh}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(0, 0, rw, rh);
+        canvasContextRef.current = ctx;
+        dimensionsRef.current = { rw, rh, ratio: 16 / 9 };
+      }
+    }
+
+    const onAllLoaded = () => {
+      if (!isMounted) return;
+      imagesRef.current = images;
+      setImagesReady(true);
+      heroState.isLoaded = true;
+
+      // Notify LoaderWrapper that hero is ready
+      if (heroState.onLoadComplete) {
+        heroState.onLoadComplete();
+      }
     };
-    firstImg.onerror = () => {
-      console.error("Failed to load first frame");
-      setFirstFrameReady(true);
+
+    const loadImage = (index: number): Promise<void> => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.src = FRAME_PATH(index);
+
+        img.onload = () => {
+          images[index] = img;
+          imagesRef.current[index] = img;
+          loadedCount++;
+
+          if (index === 0 && canvasContextRef.current) {
+            dimensionsRef.current.ratio = img.naturalWidth / img.naturalHeight;
+            renderFrame(0);
+          }
+
+          if (loadedCount === TOTAL_FRAMES) {
+            onAllLoaded();
+          }
+          resolve();
+        };
+
+        img.onerror = () => {
+          loadedCount++;
+          if (loadedCount === TOTAL_FRAMES) {
+            onAllLoaded();
+          }
+          resolve();
+        };
+      });
     };
 
-    const loadRemainingFrames = () => {
-      const batchSize = 10;
-      let currentBatch = 0;
+    const loadAllFrames = async () => {
+      // Load first frame first
+      await loadImage(0);
+      if (!isMounted) return;
 
-      const loadBatch = () => {
-        const start = currentBatch * batchSize + 1;
-        const end = Math.min(start + batchSize, totalFrames);
+      // Load remaining frames in batches
+      const batchSize = 25;
+      for (let batch = 0; batch < Math.ceil((TOTAL_FRAMES - 1) / batchSize); batch++) {
+        if (!isMounted) return;
+
+        const start = batch * batchSize + 1;
+        const end = Math.min(start + batchSize, TOTAL_FRAMES);
+        const promises: Promise<void>[] = [];
 
         for (let i = start; i < end; i++) {
-          const img = new Image();
-          img.src = FRAME_PATH(i);
-          img.onload = () => {
-            imagesRef.current[i] = img;
-            loadedCount++;
-            if (loadedCount === totalFrames) setLoaded(true);
-          };
-          img.onerror = () => {
-            console.error(`Failed to load frame ${i}`);
-            loadedCount++;
-            if (loadedCount === totalFrames) setLoaded(true);
-          };
+          promises.push(loadImage(i));
         }
 
-        currentBatch++;
-        if (end < totalFrames) {
-          setTimeout(loadBatch, 50);
-        }
-      };
-
-      loadBatch();
-    };
-  }, [mounted]);
-
-  // Cursor effect
-  useEffect(() => {
-    if (!mounted || !containerRef.current) return;
-
-    const container = containerRef.current;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = container.getBoundingClientRect();
-      mousePos.current = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      };
-    };
-
-    const handleMouseEnter = () => {
-      if (cursorRef.current && cursorDotRef.current) {
-        gsap.to(cursorRef.current, { scale: 1, opacity: 1, duration: 0.3 });
-        gsap.to(cursorDotRef.current, { scale: 1, opacity: 1, duration: 0.2 });
+        await Promise.all(promises);
       }
     };
 
-    const handleMouseLeave = () => {
-      if (cursorRef.current && cursorDotRef.current) {
-        gsap.to(cursorRef.current, { scale: 0, opacity: 0, duration: 0.3 });
-        gsap.to(cursorDotRef.current, { scale: 0, opacity: 0, duration: 0.2 });
-      }
-    };
-
-    container.addEventListener("mousemove", handleMouseMove);
-    container.addEventListener("mouseenter", handleMouseEnter);
-    container.addEventListener("mouseleave", handleMouseLeave);
-
-    let rafId: number;
-    const updateCursor = () => {
-      cursorPos.current.x += (mousePos.current.x - cursorPos.current.x) * 0.15;
-      cursorPos.current.y += (mousePos.current.y - cursorPos.current.y) * 0.15;
-
-      if (cursorRef.current) {
-        cursorRef.current.style.transform = `translate(${cursorPos.current.x}px, ${cursorPos.current.y}px) translate(-50%, -50%)`;
-      }
-
-      if (cursorDotRef.current) {
-        cursorDotRef.current.style.transform = `translate(${mousePos.current.x}px, ${mousePos.current.y}px) translate(-50%, -50%)`;
-      }
-
-      rafId = requestAnimationFrame(updateCursor);
-    };
-
-    updateCursor();
+    loadAllFrames();
 
     return () => {
-      container.removeEventListener("mousemove", handleMouseMove);
-      container.removeEventListener("mouseenter", handleMouseEnter);
-      container.removeEventListener("mouseleave", handleMouseLeave);
-      cancelAnimationFrame(rafId);
+      isMounted = false;
     };
-  }, [mounted]);
+  }, [renderFrame]);
 
-  // Canvas setup effect
+  // Setup ScrollTrigger after images loaded
   useEffect(() => {
-    if (!mounted || !canvasRef.current || !firstFrameReady) return;
+    if (!imagesReady || !containerRef.current || !canvasRef.current) return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d", {
-      alpha: false,
-      desynchronized: true,
-      willReadFrequently: false,
-    });
-    if (!ctx) return;
+    ScrollTrigger.getById("hero-scroll-trigger")?.kill();
+    if (scrollTriggerRef.current) {
+      scrollTriggerRef.current.kill();
+    }
 
-    let rw = 0;
-    let rh = 0;
-    let ratio = 1;
+    window.scrollTo(0, 0);
 
-    const renderFrame = (i: number) => {
-      const index = Math.max(0, Math.min(Math.round(i), TOTAL_FRAMES - 1));
-      const img = imagesRef.current[index];
-      if (!img || !img.complete) return;
+    const setupTimer = setTimeout(() => {
+      resizeCanvas();
+      renderFrame(0);
 
-      const cr = rw / rh;
-      let dw = rw,
-        dh = rh,
-        dx = 0,
-        dy = 0;
-
-      if (ratio > cr) {
-        dh = rh;
-        dw = dh * ratio;
-        dx = (rw - dw) / 2;
-      } else {
-        dw = rw;
-        dh = dw / ratio;
-        dy = (rh - dh) / 2;
-      }
-
-      ctx.clearRect(0, 0, rw, rh);
-      ctx.save();
-      ctx.filter = "brightness(1.05) contrast(1.15) saturate(1.1)";
-      ctx.drawImage(img, dx, dy, dw, dh);
-      ctx.restore();
-
-      frameIndexRef.current = index;
-    };
-
-    const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      rw = window.innerWidth;
-      rh = window.innerHeight;
-      canvas.width = rw * dpr;
-      canvas.height = rh * dpr;
-      canvas.style.width = `${rw}px`;
-      canvas.style.height = `${rh}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      const firstImg = imagesRef.current[0];
-      ratio =
-        firstImg?.width && firstImg?.height
-          ? firstImg.width / firstImg.height
-          : 16 / 9;
-      renderFrame(frameIndexRef.current);
-    };
-
-    resize();
-    window.addEventListener("resize", resize);
-    renderFrame(0);
-
-    return () => {
-      window.removeEventListener("resize", resize);
-    };
-  }, [mounted, firstFrameReady]);
-
-  // MAIN GSAP ANIMATION EFFECT - Fixed
-  useEffect(() => {
-    if (!mounted || !loaded || !containerRef.current || !canvasRef.current)
-      return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d", {
-      alpha: false,
-      desynchronized: true,
-      willReadFrequently: false,
-    });
-    if (!ctx) return;
-
-    let rw = window.innerWidth;
-    let rh = window.innerHeight;
-    let ratio =
-      imagesRef.current[0]?.width && imagesRef.current[0]?.height
-        ? imagesRef.current[0].width / imagesRef.current[0].height
-        : 16 / 9;
-
-    const renderFrame = (i: number) => {
-      const index = Math.max(0, Math.min(Math.round(i), TOTAL_FRAMES - 1));
-      const img = imagesRef.current[index];
-      if (!img || !img.complete) return;
-
-      const cr = rw / rh;
-      let dw = rw,
-        dh = rh,
-        dx = 0,
-        dy = 0;
-
-      if (ratio > cr) {
-        dh = rh;
-        dw = dh * ratio;
-        dx = (rw - dw) / 2;
-      } else {
-        dw = rw;
-        dh = dw / ratio;
-        dy = (rh - dh) / 2;
-      }
-
-      ctx.clearRect(0, 0, rw, rh);
-      ctx.save();
-      ctx.filter = "brightness(1.05) contrast(1.15) saturate(1.1)";
-      ctx.drawImage(img, dx, dy, dw, dh);
-      ctx.restore();
-    };
-
-    // Create GSAP context scoped to this component
-    const gsapCtx = gsap.context(() => {
       const anim = { frame: 0 };
 
       gsap.set("[data-hero-step]", { opacity: 0, visibility: "hidden", y: 0 });
@@ -291,32 +254,26 @@ export default function Hero() {
 
       const tl = gsap.timeline({
         scrollTrigger: {
-          id: "hero-scroll-trigger", // Unique ID
+          id: "hero-scroll-trigger",
           trigger: containerRef.current,
           start: "top top",
           end: "+=500%",
           scrub: 0.5,
           pin: true,
+          pinSpacing: true,
           anticipatePin: 1,
           invalidateOnRefresh: true,
-          // Remove snap to prevent conflicts
-          onUpdate: () => {
-            if (containerRef.current) {
-              renderFrame(anim.frame);
-            }
-          },
+          onUpdate: () => renderFrame(anim.frame),
         },
       });
+
+      scrollTriggerRef.current = tl.scrollTrigger as ScrollTrigger;
 
       tl.to(anim, {
         frame: TOTAL_FRAMES - 1,
         ease: "none",
         duration: 1,
-        onUpdate: () => {
-          if (containerRef.current) {
-            renderFrame(anim.frame);
-          }
-        },
+        onUpdate: () => renderFrame(anim.frame),
       });
 
       TEXT_STEPS.forEach((step, i) => {
@@ -353,73 +310,99 @@ export default function Hero() {
               { opacity: 0, duration: 0.15, ease: "power2.in" },
               start + dur * 0.85
             );
-            tl.set(
-              `[data-hero-step="${step.id}"]`,
-              { visibility: "hidden" },
-              start + dur * 0.95
-            );
-            tl.set(
-              `[data-hero-step="${step.id}"] [data-hero-word]`,
-              { opacity: 0, y: 30, filter: "blur(10px)" },
-              start + dur * 0.95
-            );
           }
         }
       });
-    }, containerRef);
 
-    ctxRef.current = gsapCtx;
+      ScrollTrigger.refresh(true);
+    }, 100);
+
+    window.addEventListener("resize", resizeCanvas);
 
     return () => {
-      gsapCtx.revert();
-      ctxRef.current = null;
+      clearTimeout(setupTimer);
+      window.removeEventListener("resize", resizeCanvas);
+      ScrollTrigger.getById("hero-scroll-trigger")?.kill();
     };
-  }, [mounted, loaded]);
+  }, [imagesReady, resizeCanvas, renderFrame]);
 
-  if (!mounted) {
-    return null;
-  }
+  // Cursor effect
+  useEffect(() => {
+    if (!imagesReady || !containerRef.current) return;
+
+    const container = containerRef.current;
+    let rafId: number;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = container.getBoundingClientRect();
+      mousePos.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    };
+
+    const handleMouseEnter = () => {
+      gsap.to(cursorRef.current, { scale: 1, opacity: 1, duration: 0.3 });
+      gsap.to(cursorDotRef.current, { scale: 1, opacity: 1, duration: 0.2 });
+    };
+
+    const handleMouseLeave = () => {
+      gsap.to(cursorRef.current, { scale: 0, opacity: 0, duration: 0.3 });
+      gsap.to(cursorDotRef.current, { scale: 0, opacity: 0, duration: 0.2 });
+    };
+
+    const updateCursor = () => {
+      cursorPos.current.x += (mousePos.current.x - cursorPos.current.x) * 0.15;
+      cursorPos.current.y += (mousePos.current.y - cursorPos.current.y) * 0.15;
+
+      if (cursorRef.current) {
+        cursorRef.current.style.transform = `translate(${cursorPos.current.x}px, ${cursorPos.current.y}px) translate(-50%, -50%)`;
+      }
+      if (cursorDotRef.current) {
+        cursorDotRef.current.style.transform = `translate(${mousePos.current.x}px, ${mousePos.current.y}px) translate(-50%, -50%)`;
+      }
+
+      rafId = requestAnimationFrame(updateCursor);
+    };
+
+    container.addEventListener("mousemove", handleMouseMove);
+    container.addEventListener("mouseenter", handleMouseEnter);
+    container.addEventListener("mouseleave", handleMouseLeave);
+    updateCursor();
+
+    return () => {
+      container.removeEventListener("mousemove", handleMouseMove);
+      container.removeEventListener("mouseenter", handleMouseEnter);
+      container.removeEventListener("mouseleave", handleMouseLeave);
+      cancelAnimationFrame(rafId);
+    };
+  }, [imagesReady]);
 
   return (
     <section
       ref={containerRef}
-      className="relative w-full overflow-hidden bg-black cursor-none"
-      style={{
-        opacity: firstFrameReady ? 1 : 0,
-        transition: "opacity 0.3s ease-in-out",
-      }}
+      className="relative w-full overflow-hidden cursor-none"
+      style={{ backgroundColor: "#000000" }}
     >
-      <div className="sticky top-0 h-screen w-full">
-        <canvas ref={canvasRef} className="absolute inset-0 bg-black" />
+      <div className="sticky top-0 h-screen w-full" style={{ backgroundColor: "#000000" }}>
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0"
+          style={{ backgroundColor: "#000000" }}
+        />
 
         <div
           className="absolute inset-0 z-20 pointer-events-none"
           style={{
-            background: `
-              radial-gradient(
-                ellipse at center,
-                transparent 50%,
-                rgba(0,0,0,0.3) 80%,
-                rgba(0,0,0,0.6) 100%
-              )
-            `,
+            background: `radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0.6) 100%)`,
           }}
         />
 
         <div
           className="absolute top-0 left-0 right-0 h-[20%] z-20 pointer-events-none"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%)",
-          }}
+          style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%)" }}
         />
 
         <div
           className="absolute bottom-0 left-0 right-0 h-[20%] z-20 pointer-events-none"
-          style={{
-            background:
-              "linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent 100%)",
-          }}
+          style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent 100%)" }}
         />
 
         <div
@@ -430,11 +413,9 @@ export default function Hero() {
             height: "40px",
             border: "2px solid #00B0B2",
             borderRadius: "50%",
-            boxShadow:
-              "0 0 20px rgba(0, 176, 178, 0.4), inset 0 0 20px rgba(0, 176, 178, 0.2)",
+            boxShadow: "0 0 20px rgba(0,176,178,0.4), inset 0 0 20px rgba(0,176,178,0.2)",
             mixBlendMode: "screen",
             transform: "translate(-50%, -50%) scale(0)",
-            willChange: "transform",
           }}
         />
 
@@ -448,7 +429,6 @@ export default function Hero() {
             borderRadius: "50%",
             boxShadow: "0 0 10px #00B0B2",
             transform: "translate(-50%, -50%) scale(0)",
-            willChange: "transform",
           }}
         />
 
@@ -460,30 +440,22 @@ export default function Hero() {
               className="absolute flex flex-wrap justify-center gap-x-3 gap-y-2 px-4 max-w-6xl"
               style={{ opacity: 0, visibility: "hidden" }}
             >
-              {step.text &&
-                step.text.split(" ").map((word, wi) => {
-                  const isHighlight = wi === step.highlightIndex;
-                  return (
-                    <span
-                      key={wi}
-                      data-hero-word={wi}
-                      className="inline-block"
-                      style={{
-                        fontSize: "clamp(2.5rem, 8vw, 6rem)",
-                        fontWeight: 700,
-                        lineHeight: 1.1,
-                        color: isHighlight
-                          ? step.highlightColor
-                          : THEME_COLORS.textPrimary,
-                        textShadow: isHighlight
-                          ? `0 0 40px ${step.highlightColor}55`
-                          : "0 2px 20px rgba(0,0,0,0.6)",
-                      }}
-                    >
-                      {word}
-                    </span>
-                  );
-                })}
+              {step.text?.split(" ").map((word, wi) => (
+                <span
+                  key={wi}
+                  data-hero-word={wi}
+                  className="inline-block"
+                  style={{
+                    fontSize: "clamp(2.5rem, 8vw, 6rem)",
+                    fontWeight: 700,
+                    lineHeight: 1.1,
+                    color: wi === step.highlightIndex ? step.highlightColor : THEME_COLORS.textPrimary,
+                    textShadow: wi === step.highlightIndex ? `0 0 40px ${step.highlightColor}55` : "0 2px 20px rgba(0,0,0,0.6)",
+                  }}
+                >
+                  {word}
+                </span>
+              ))}
             </div>
           ))}
         </div>

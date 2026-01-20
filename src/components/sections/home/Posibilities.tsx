@@ -320,11 +320,11 @@ function Possibilities() {
   return (
     <section ref={sectionRef} className="relative z-10 bg-white">
       {/* Top normal scroll section */}
-      <div className="px-5 md:px-8 lg:px-12 xl:px-[50px] pt-16 lg:pt-24">
-        <div className="max-w-[746px] mx-auto text-center pb-12 lg:pb-20">
+      <div className="px-5 pt-16 md:px-8 lg:px-12 lg:pt-24 xl:px-[50px]">
+        <div className="mx-auto max-w-[746px] pb-12 text-center lg:pb-20">
           <AnimatedText
             text="Today, AI has no standard way to talk to the hardware devices"
-            className="text-[28px] md:text-[36px] lg:text-[48px] xl:text-[55px] text-center break-keep leading-tight"
+            className="text-center text-[28px] leading-tight break-keep md:text-[36px] lg:text-[48px] xl:text-[55px]"
             fromColor="#10171730"
             toColor="#101717"
           />
@@ -332,17 +332,20 @@ function Possibilities() {
       </div>
 
       {/* Pinned block */}
-      <div ref={pinRef} className="px-5 md:px-8 lg:px-12 xl:px-[50px] bg-white">
+      <div
+        ref={pinRef}
+        className="flex min-h-screen flex-col items-center justify-center bg-white px-5 md:px-8 lg:px-12 xl:px-[50px]"
+      >
         <div
-          className="flex flex-col lg:flex-row items-stretch gap-8 lg:gap-4"
+          className="flex flex-col items-stretch gap-8 lg:flex-row lg:gap-4"
           style={{ height: `${CONTENT_HEIGHT}px` }}
         >
           {/* LEFT: text list + notch indicator */}
-          <div className="w-full lg:w-1/2 flex flex-col justify-center relative">
+          <div className="relative flex w-full flex-col justify-center lg:w-1/2">
             {/* Progress track indicator */}
             <div
               ref={trackRef}
-              className="hidden lg:block absolute left-0 top-1/2 -translate-y-1/2 w-1 rounded-full"
+              className="absolute top-1/2 left-0 hidden w-1 -translate-y-1/2 rounded-full lg:block"
               style={{
                 height: "320px",
                 background: `linear-gradient(180deg, ${THEME.mutedLight} 0%, ${THEME.mutedLight} 100%)`,
@@ -350,7 +353,7 @@ function Possibilities() {
             >
               <div
                 ref={notchRef}
-                className="absolute left-0 top-0 w-1 rounded-full"
+                className="absolute top-0 left-0 w-1 rounded-full"
                 style={{
                   height: "60px",
                   background: `linear-gradient(180deg, ${THEME.primary} 0%, ${THEME.primary}90 100%)`,
@@ -358,11 +361,11 @@ function Possibilities() {
                 }}
               >
                 <div
-                  className="absolute -left-0.5 -top-1 w-2 h-2 rounded-full"
+                  className="absolute -top-1 -left-0.5 h-2 w-2 rounded-full"
                   style={{ background: THEME.primary }}
                 />
                 <div
-                  className="absolute -left-0.5 -bottom-1 w-2 h-2 rounded-full"
+                  className="absolute -bottom-1 -left-0.5 h-2 w-2 rounded-full"
                   style={{ background: THEME.primary }}
                 />
               </div>
@@ -370,7 +373,7 @@ function Possibilities() {
 
             <div className="pl-6 lg:pl-12">
               {/* Section heading */}
-              <h3 className="text-3xl md:text-4xl lg:text-5xl xl:text-[54px] text-[#101717] font-semibold leading-tight mb-8 lg:mb-10">
+              <h3 className="mb-8 text-3xl leading-tight font-semibold text-[#101717] md:text-4xl lg:mb-10 lg:text-5xl xl:text-[54px]">
                 Possibilities are{" "}
                 <span style={{ color: THEME.primary }}>Endless</span>
               </h3>
@@ -383,13 +386,13 @@ function Possibilities() {
                     ref={(el) => {
                       textItemsRef.current[index] = el;
                     }}
-                    className="flex gap-3 items-start cursor-pointer transition-transform duration-200 hover:translate-x-1"
+                    className="flex cursor-pointer items-start gap-3 transition-transform duration-200 hover:translate-x-1"
                     onMouseEnter={() => handleMouseEnter(index)}
                     onMouseLeave={() => handleMouseLeave(index)}
                   >
                     <span
                       data-number
-                      className="text-sm md:text-base font-semibold mt-1 min-w-[28px] tabular-nums transition-colors duration-300"
+                      className="mt-1 min-w-[28px] text-sm font-semibold tabular-nums transition-colors duration-300 md:text-base"
                       style={{
                         color:
                           index === activeIndex
@@ -401,10 +404,9 @@ function Possibilities() {
                     </span>
                     <h4
                       data-title
-                      className="text-[18px] sm:text-[20px] md:text-[22px] lg:text-[24px] xl:text-[26px] font-medium leading-[1.3] max-w-[420px] transition-colors duration-300"
+                      className="max-w-[420px] text-[18px] leading-[1.3] font-medium transition-colors duration-300 sm:text-[20px] md:text-[22px] lg:text-[24px] xl:text-[26px]"
                       style={{
-                        color:
-                          index === activeIndex ? THEME.dark : THEME.muted,
+                        color: index === activeIndex ? THEME.dark : THEME.muted,
                       }}
                     >
                       {item.title}
@@ -416,12 +418,12 @@ function Possibilities() {
               {/* Progress indicator */}
               <div className="mt-10 flex items-center gap-3">
                 <span
-                  className="font-semibold tabular-nums text-sm"
+                  className="text-sm font-semibold tabular-nums"
                   style={{ color: THEME.primary }}
                 >
                   {String(activeIndex + 1).padStart(2, "0")}
                 </span>
-                <div className="w-32 h-1 bg-[#10171715] rounded-full overflow-hidden">
+                <div className="h-1 w-32 overflow-hidden rounded-full bg-[#10171715]">
                   <div
                     className="h-full rounded-full transition-all duration-500 ease-out"
                     style={{
@@ -434,7 +436,7 @@ function Possibilities() {
                   />
                 </div>
                 <span
-                  className="tabular-nums text-sm"
+                  className="text-sm tabular-nums"
                   style={{ color: THEME.muted }}
                 >
                   {String(deviceCategories.length).padStart(2, "0")}
@@ -444,14 +446,14 @@ function Possibilities() {
           </div>
 
           {/* RIGHT: Videos + SVG shape */}
-          <div className="w-full lg:w-1/2 flex justify-center items-center">
+          <div className="flex w-full items-center justify-center lg:w-1/2">
             <div
-              className="relative w-full max-w-[600px] flex items-center justify-center"
+              className="relative flex w-full max-w-[600px] items-center justify-center"
               style={{ height: `${CONTENT_HEIGHT}px` }}
             >
               {/* SVG Background Shape */}
               <svg
-                className="absolute inset-0 w-full h-full z-10"
+                className="absolute inset-0 z-10 h-full w-full"
                 viewBox="0 0 900 850"
                 preserveAspectRatio="xMidYMid meet"
               >
@@ -461,7 +463,6 @@ function Possibilities() {
                   fill="#020203"
                 />
               </svg>
-
 
               {/* Videos container */}
               <div
@@ -479,7 +480,7 @@ function Possibilities() {
                     ref={(el) => {
                       videoRefs.current[index] = el;
                     }}
-                    className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+                    className="pointer-events-none absolute inset-0 h-full w-full object-contain"
                     style={{
                       opacity: index === 0 ? 1 : 0,
                       transform: index === 0 ? "scale(1)" : "scale(0.95)",
@@ -495,7 +496,7 @@ function Possibilities() {
 
               {/* Subtle glow effect */}
               <div
-                className="absolute z-5 rounded-full blur-3xl opacity-20"
+                className="absolute z-5 rounded-full opacity-20 blur-3xl"
                 style={{
                   width: "300px",
                   height: "300px",
