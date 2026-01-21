@@ -159,10 +159,10 @@ export default function Navbar() {
             : "opacity-100" // Always visible on non-home pages
         } transition-opacity duration-300`}
       >
-        <nav className="relative flex h-[75px] w-full max-w-[1002px] items-center justify-between rounded-[15px] border border-white/10 bg-[#0b0f0f]/20 px-[20px] backdrop-blur-[34px] md:px-[60px]">
+        <nav className="relative flex h-[75px] w-full max-w-[1002px] items-center justify-between rounded-[15px] border border-white/10 bg-[#0b0f0f]/20 px-[20px] backdrop-blur-[34px]  lg:px-[60px]">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="ml-4 flex-shrink-0">
+            <Link href="/" className=" flex-shrink-0">
               <Image
                 src="/img/white-logo.png"
                 alt="near HUMAN"
@@ -175,7 +175,7 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-10 lg:flex">
+          <div className="  hidden  items-center gap-5 lg:gap-10 md:flex">
             {navItems.map((item, index) => (
               <Link
                 key={item.name}
@@ -202,15 +202,17 @@ export default function Navbar() {
           </div>
 
           {/* Get In Touch Button */}
-          <CTAbutton
-            href="/contact"
-            text="Get In Touch"
-            svgColor="#00B0B2"
-            textColor="text-[#fff]"
-            hoverTextColor="hover:text-[#00B0B2]"
-            borderColor="border-[#00B0B2]"
-            bgColor="transparent"
-          />
+          <div className="md:block hidden basis-[20%]">
+            <CTAbutton
+              href="/contact"
+              text="Get In Touch"
+              svgColor="#00B0B2"
+              textColor="text-[#fff]"
+              hoverTextColor="hover:text-[#00B0B2]"
+              borderColor="border-[#00B0B2]"
+              bgColor="transparent"
+            />
+          </div>
 
           {/* Mobile Menu Toggle */}
           <button

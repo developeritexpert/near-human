@@ -19,42 +19,43 @@ const teamMembers = [
   {
     id: 3,
     name: "Hatim Shaherawala",
-    designation: "VP AI Research and Development",
+    designation: "VP R&D",
     image: "img/abt-team-usr3.png",
   },
    {
     "id": 4,
     "name": "Dushyant Goel",
-    "designation": "AI Research and Development",
+    "designation": " AI R&D intern",
     "image": "img/abt-team-usr4.png",
-    "tag": "#OPENTOWORK"
+    
   },
   {
     "id": 5,
     "name": "Madiha Trumboo",
     "designation": "Finance Management",
     "image": "img/abt-team-usr5.png",
-    "tag": "#OPENTOWORK"
+    
   },
   {
     "id": 6,
     "name": "Amin Alhawary",
-    "designation": "Software Development",
-    "image": "img/abt-team-usr2.png",
-    "tag": ""
+    "designation": " AI Engineer",
+    "image": "img/abt-team-usr6.png",
+    
   },
     {
     "id": 7,
     "name": "Cameron Setiadi",
     "designation": "Legal Intern",
-    "image": "img/abt-team-usr6.png"
+    "image": "img/abt-team-usr7.png",
   },
   {
     "id": 8,
     "name": "Catherine Lau",
     "designation": "Legal Intern",
-    "image": "img/abt-team-usr7.png"
-  }
+    "image": "img/abt-team-usr8.png",
+  },
+   
 ];
   return (
     <div>

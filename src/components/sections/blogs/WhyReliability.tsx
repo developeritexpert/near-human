@@ -1,6 +1,7 @@
 "use client"
 import React from 'react'
   import Link from 'next/link';
+import CTAbutton from '@/components/layout/CTAbutton';
 
 function WhyReliability() {
   return (
@@ -22,15 +23,17 @@ function WhyReliability() {
               reliability truly means and why it’s the hidden backbone of intelligent devices.
                </p>
 
-               <div>            
-                <Link href="/blogs-detail" className=' inline-block text-[16px] bg-[#00B0B2] text-white font-[450] py-[18px] px-[44px] rounded-[7px] hover:bg-[#1FC4C6]'>
-                Read More
-                </Link>
+               <div> 
+                  <CTAbutton
+                    href="/blod-details"
+                    text="Read More"
+                    svgColor="#00B0B2"
+                    textColor="text-[#fff]"
+                    hoverTextColor="hover:text-[#000]"
+                    borderColor="border-[#00B0B2]"
+                    bgColor="transparent"
+                  />           
                </div>
-
-
-             
-
             </div>
            </div>
         </section>

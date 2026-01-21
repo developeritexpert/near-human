@@ -7,29 +7,29 @@ function Advisor() {
     id: 1,
     name: "Mark Corderoy",
     designation: "Advisor",
-    image: "img/abt-team-usr2.png",
+   image: "img/advisor-img2.png",
   },
   {
     id: 2,
     name: "Charlie Hamilton*",
     designation: "Advisor",
-    image: "img/abt-team-usr2.png",
+    image: "img/advisor-img1.png",
   },
   {
     id: 3,
     name: "Cees De Witte",
     designation: "Advisor",
-    image: "img/advisor-img1.png",
+    image: "img/advisor-img3.png",
   },
  
 ];
   return (
     <div>
         <section className='px-[20px] md:px-[30px] lg:px-[50px] pt-[40px] md:pt-[70px] lg:pt-[100px] xl:pt-[135px]  pb-[40px] md:pb-[70px] lg:pb-[100px] xl:pb-[120px] relative overflow-hidden'>
-           <div className="absolute top-0 left-0 w-full z-1 h-full  max-h-[974px]">
+           <div className="absolute top-0 left-0 w-full -z-1 h-full  max-h-[974px]">
                 <img src="img/about-team-bg.png" alt="" />
               </div>
-              <div className="container relative z-5">
+              <div className="max-w-[1440px] mx-auto relative z-5">
                 <h2 className='text-[35px] md:text-[40px] lg:text-[55px] xl:text-[77px] text-black text-center'>Advisors</h2>
                   <div className="mt-[50px]  grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
 
