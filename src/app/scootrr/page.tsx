@@ -1,15 +1,12 @@
-// app/scootr/page.tsx
+// app/scootr/page.tsx - FIXED VERSION
 "use client";
 
 import { useEffect, useRef } from "react";
 import Lenis from "@studio-freight/lenis";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { gsap, ScrollTrigger, registerGSAP, killAllScrollTriggers } from "@/lib/gsap";
 
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
-import EcoSystem from "@/components/sections/home/EcoSystem";
-import OurPartners from "@/components/sections/home/OurPartners";
 import DropMessage from "@/components/sections/scootrr/DropMessage";
 import ImageSec from "@/components/sections/scootrr/ImageSec";
 import ScootrrSec from "@/components/sections/scootrr/ScootrrSec";
@@ -18,46 +15,74 @@ import TinyComputerVision from "@/components/sections/scootrr/TinyComputerVision
 import VehicleTechStack from "@/components/sections/scootrr/VehicleTechStack";
 import RouteLoaderWrapper from "@/components/loader/RouteLoaderWrapper";
 
-gsap.registerPlugin(ScrollTrigger);
-
 export default function ScootrPage() {
   const lenisRef = useRef<Lenis | null>(null);
+  const isInitialized = useRef(false);
 
   useEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: "vertical",
-      gestureOrientation: "vertical",
-      smoothWheel: true,
-      wheelMultiplier: 1,
-      touchMultiplier: 2,
-      infinite: false,
-      autoResize: true,
-    });
+    // Prevent double initialization
+    if (isInitialized.current) return;
+    isInitialized.current = true;
 
-    lenisRef.current = lenis;
-    lenis.on("scroll", ScrollTrigger.update);
+    // Register GSAP plugins globally
+    registerGSAP();
 
-    const raf = (time: number) => {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    };
+    // Kill all existing ScrollTriggers
+    killAllScrollTriggers();
 
-    requestAnimationFrame(raf);
+    // Small delay to ensure DOM is ready
+    const initTimer = setTimeout(() => {
+      // Initialize Lenis
+      const lenis = new Lenis({
+        duration: 1.2,
+        easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        orientation: "vertical",
+        gestureOrientation: "vertical",
+        smoothWheel: true,
+        wheelMultiplier: 1,
+        touchMultiplier: 2,
+        infinite: false,
+        autoResize: true,
+      });
 
-    const handleResize = () => {
-      lenis.resize();
-      ScrollTrigger.refresh();
-    };
+      lenisRef.current = lenis;
 
-    window.addEventListener("resize", handleResize);
-    gsap.ticker.lagSmoothing(0);
+      // Sync Lenis with ScrollTrigger
+      lenis.on("scroll", () => {
+        ScrollTrigger.update();
+      });
+
+      gsap.ticker.add((time) => {
+        lenis.raf(time * 1000);
+      });
+
+      gsap.ticker.lagSmoothing(0);
+
+      // Refresh ScrollTrigger after initialization
+      const refreshTimer = setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 100);
+
+      return () => clearTimeout(refreshTimer);
+    }, 100);
 
     return () => {
-      lenis.destroy();
-      window.removeEventListener("resize", handleResize);
-      lenisRef.current = null;
+      clearTimeout(initTimer);
+      
+      // Cleanup
+      if (lenisRef.current) {
+        lenisRef.current.destroy();
+        lenisRef.current = null;
+      }
+      
+      gsap.ticker.remove((time) => {
+        lenisRef.current?.raf(time * 1000);
+      });
+
+      // Kill all ScrollTriggers on unmount
+      killAllScrollTriggers();
+      
+      isInitialized.current = false;
     };
   }, []);
 
@@ -70,7 +95,6 @@ export default function ScootrPage() {
         <SideVideo />
         <TinyComputerVision />
         <VehicleTechStack />
-        <OurPartners />
         <DropMessage />
       </main>
       <Footer />
