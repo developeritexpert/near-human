@@ -1,12 +1,15 @@
-// app/scootr/page.tsx - FIXED VERSION
+// app/scootr/page.tsx
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import Lenis from "@studio-freight/lenis";
-import { gsap, ScrollTrigger, registerGSAP, killAllScrollTriggers } from "@/lib/gsap";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
+import EcoSystem from "@/components/sections/home/EcoSystem";
+import OurPartners from "@/components/sections/home/OurPartners";
 import DropMessage from "@/components/sections/scootrr/DropMessage";
 import ImageSec from "@/components/sections/scootrr/ImageSec";
 import ScootrrSec from "@/components/sections/scootrr/ScootrrSec";
@@ -15,24 +18,22 @@ import TinyComputerVision from "@/components/sections/scootrr/TinyComputerVision
 import VehicleTechStack from "@/components/sections/scootrr/VehicleTechStack";
 import RouteLoaderWrapper from "@/components/loader/RouteLoaderWrapper";
 
+gsap.registerPlugin(ScrollTrigger);
+
 export default function ScootrPage() {
   const lenisRef = useRef<Lenis | null>(null);
-  const isInitialized = useRef(false);
+  const rafIdRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // Prevent double initialization
-    if (isInitialized.current) return;
-    isInitialized.current = true;
-
-    // Register GSAP plugins globally
-    registerGSAP();
-
-    // Kill all existing ScrollTriggers
-    killAllScrollTriggers();
+    // Kill all existing ScrollTriggers first
+    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+    ScrollTrigger.clearMatchMedia();
+    
+    // Reset scroll position
+    window.scrollTo(0, 0);
 
     // Small delay to ensure DOM is ready
-    const initTimer = setTimeout(() => {
-      // Initialize Lenis
+    const initTimeout = setTimeout(() => {
       const lenis = new Lenis({
         duration: 1.2,
         easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -47,42 +48,49 @@ export default function ScootrPage() {
 
       lenisRef.current = lenis;
 
-      // Sync Lenis with ScrollTrigger
-      lenis.on("scroll", () => {
-        ScrollTrigger.update();
-      });
+      // Connect Lenis to ScrollTrigger
+      lenis.on("scroll", ScrollTrigger.update);
 
+      // Add Lenis to GSAP ticker
       gsap.ticker.add((time) => {
         lenis.raf(time * 1000);
       });
 
       gsap.ticker.lagSmoothing(0);
 
-      // Refresh ScrollTrigger after initialization
-      const refreshTimer = setTimeout(() => {
-        ScrollTrigger.refresh();
-      }, 100);
+      // Refresh ScrollTrigger after Lenis is ready
+      const refreshTimeout = setTimeout(() => {
+        ScrollTrigger.refresh(true);
+      }, 300);
 
-      return () => clearTimeout(refreshTimer);
+      const handleResize = () => {
+        lenis.resize();
+        ScrollTrigger.refresh();
+      };
+
+      window.addEventListener("resize", handleResize);
+
+      return () => {
+        clearTimeout(refreshTimeout);
+        window.removeEventListener("resize", handleResize);
+      };
     }, 100);
 
     return () => {
-      clearTimeout(initTimer);
+      clearTimeout(initTimeout);
       
-      // Cleanup
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+      
       if (lenisRef.current) {
         lenisRef.current.destroy();
         lenisRef.current = null;
       }
-      
-      gsap.ticker.remove((time) => {
-        lenisRef.current?.raf(time * 1000);
-      });
 
-      // Kill all ScrollTriggers on unmount
-      killAllScrollTriggers();
-      
-      isInitialized.current = false;
+      // Clean up all ScrollTriggers on unmount
+      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+      gsap.ticker.remove(() => {});
     };
   }, []);
 
@@ -95,11 +103,11 @@ export default function ScootrPage() {
         <SideVideo />
         <TinyComputerVision />
         <VehicleTechStack />
+        <OurPartners />
         <DropMessage />
       </main>
       <Footer />
       
-      {/* Grainy Overlay */}
       <div className="pointer-events-none fixed inset-0 z-[999] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]" />
     </RouteLoaderWrapper>
   );
