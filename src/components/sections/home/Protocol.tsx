@@ -61,7 +61,7 @@ const Protocol = () => {
         <span className="protocol-reveal mb-10 block translate-y-0 text-[10px] font-medium tracking-[0.6em] text-white/50 uppercase opacity-1">
           That's the
         </span>
-        <h2 className="protocol-reveal mb-12 text-[6vw] leading-[1.1] font-bold tracking-tighter text-white md:text-[5vw]">
+        <h2 className="protocol-reveal mb-12 text-[6vw]  lg:text-[80px] xl:text-[110px] leading-[1.1] font-bold tracking-tighter text-white ">
           Model to Device Protocol
         </h2>
 

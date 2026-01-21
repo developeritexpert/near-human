@@ -387,7 +387,7 @@ function SideVideo() {
 
               {/* Video */}
               <div
-                className="relative"
+                className="relative object-cover"
                 style={{
                   width: VIDEO_SIZE,
                   height: VIDEO_SIZE,
@@ -398,7 +398,7 @@ function SideVideo() {
               >
                 <video
                   ref={videoRef}
-                  className="w-full h-full object-contain pointer-events-none"
+                  className="w-full h-full object-contain  xl:object-cover pointer-events-none "
                   src="/Videos/scootr/scottr.mp4"
                   autoPlay
                   loop
