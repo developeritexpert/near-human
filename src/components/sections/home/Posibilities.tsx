@@ -480,7 +480,7 @@ function Possibilities() {
                     ref={(el) => {
                       videoRefs.current[index] = el;
                     }}
-                    className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+                    className="pointer-events-none absolute inset-0 h-full w-full object-contain "
                     style={{
                       opacity: index === 0 ? 1 : 0,
                       transform: index === 0 ? "scale(1)" : "scale(0.95)",

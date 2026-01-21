@@ -127,7 +127,7 @@ function LatestNewsSlider() {
         <div
           className="
             group relative h-full min-h-[450px] md:min-h-[450px] lg:min-h-[653px] rounded-[10px] sm:rounded-[17px]
-            bg-[#10171705]
+            bg-[#1017170F]
             hover:bg-white
             overflow-hidden
             transition-colors duration-500  ">
@@ -136,7 +136,7 @@ function LatestNewsSlider() {
               absolute inset-0              
               opacity-0 group-hover:opacity-100
               transition-opacity duration-500
-              bg-contain  bg-no-repeat
+              bg-cover  bg-no-repeat bg-center
                h-full w-full
             "
             style={{ backgroundImage: `url(${item.bgImage})` }}
@@ -164,7 +164,7 @@ function LatestNewsSlider() {
          
             <div className="mt-auto  opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <Link
-                href="#"
+                href="/blogs-detail"
                 className="
                   inline-block text-[16px] text-white
                   border border-white

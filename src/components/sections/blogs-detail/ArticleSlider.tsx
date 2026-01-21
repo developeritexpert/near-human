@@ -80,7 +80,7 @@ function ArticleSlider() {
         <div
           className="
             group relative h-full min-h-[450px] md:min-h-[450px] lg:min-h-[653px] rounded-[10px] sm:rounded-[17px]
-            bg-[#10171705]
+            bg-[#1017170F]
             hover:bg-white
             overflow-hidden
             transition-colors duration-500  ">
@@ -89,7 +89,7 @@ function ArticleSlider() {
               absolute inset-0              
               opacity-0 group-hover:opacity-100
               transition-opacity duration-500
-              bg-contain  bg-no-repeat
+              bg-cover bg-center  bg-no-repeat
                h-full w-full
             "
             style={{ backgroundImage: `url(${item.bgImage})` }}

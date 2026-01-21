@@ -1,10 +1,10 @@
-// components/sections/home/Hero.tsx
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+// Register plugin once at module level
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
@@ -15,352 +15,382 @@ const THEME_COLORS = {
   textPrimary: "#FFFFFF",
 };
 
-const TOTAL_FRAMES = 207;
-const FRAME_PATH = (index: number) =>
-  `/hero-banner/frame_${String(index + 1).padStart(3, "0")}.webp`;
-
-const TEXT_STEPS = [
-  {
-    id: 1,
-    text: "",
-    highlightIndex: 2,
-    highlightColor: THEME_COLORS.highlight1,
-  },
-];
-
-// Export loading state for parent components
-export const heroLoadingState = {
-  isFullyLoaded: false,
-  loadedCount: 0,
-  totalFrames: TOTAL_FRAMES,
-};
+// Particle interface for better type safety
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  maxLife: number;
+  size: number;
+  alpha: number;
+  rotation: number;
+  rotationSpeed: number;
+}
 
 export default function Hero() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const smokeCanvasRef = useRef<HTMLCanvasElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
   const cursorDotRef = useRef<HTMLDivElement>(null);
-  const imagesRef = useRef<HTMLImageElement[]>([]);
-  const frameIndexRef = useRef(0);
-  const canvasContextRef = useRef<CanvasRenderingContext2D | null>(null);
-  const dimensionsRef = useRef({ rw: 0, rh: 0, ratio: 16 / 9 });
-  const scrollTriggerRef = useRef<ScrollTrigger | null>(null);
-  const mousePos = useRef({ x: 0, y: 0 });
-  const cursorPos = useRef({ x: 0, y: 0 });
 
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [allImagesLoaded, setAllImagesLoaded] = useState(false);
-  const [animationReady, setAnimationReady] = useState(false);
+  // State
+  const [isLoading, setIsLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
-  // Render frame
-  const renderFrame = useCallback((frameIndex: number) => {
-    const ctx = canvasContextRef.current;
-    if (!ctx) return;
+  // Refs for animation data - using single object to reduce ref count
+  const animationData = useRef({
+    mouseX: 0,
+    mouseY: 0,
+    cursorX: 0,
+    cursorY: 0,
+    isHovering: false,
+    lastFrameTime: 0,
+    scrollTrigger: null as ScrollTrigger | null,
+  });
 
-    const index = Math.max(0, Math.min(Math.round(frameIndex), TOTAL_FRAMES - 1));
-    const img = imagesRef.current[index];
+  // Particle pool for object reuse
+  const particlePool = useRef<Particle[]>([]);
+  const activeParticles = useRef<Particle[]>([]);
 
-    if (!img || !img.complete || !img.naturalWidth) {
-      // Try to find nearest available frame
-      for (let offset = 1; offset < 10; offset++) {
-        const nearImg = imagesRef.current[index - offset] || imagesRef.current[index + offset];
-        if (nearImg?.complete && nearImg?.naturalWidth) {
-          renderFrameImage(nearImg);
-          return;
-        }
+  useEffect(() => {
+    setMounted(true);
+    return () => {
+      // Cleanup ScrollTrigger on unmount
+      if (animationData.current.scrollTrigger) {
+        animationData.current.scrollTrigger.kill();
       }
+    };
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // 1. VIDEO LOADING - Optimized with single event listener approach
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!mounted || !videoRef.current) return;
+
+    const video = videoRef.current;
+    let timeoutId: NodeJS.Timeout;
+
+    const handleCanPlay = () => {
+      video.currentTime = 0;
+      setIsLoading(false);
+      
+      // Delayed refresh for better accuracy
+      requestAnimationFrame(() => {
+        ScrollTrigger.refresh();
+      });
+    };
+
+    // Check if already loaded
+    if (video.readyState >= 3) {
+      handleCanPlay();
       return;
     }
 
-    renderFrameImage(img);
-    frameIndexRef.current = index;
-  }, []);
+    video.addEventListener("canplaythrough", handleCanPlay, { once: true });
+    video.load();
 
-  const renderFrameImage = (img: HTMLImageElement) => {
-    const ctx = canvasContextRef.current;
-    if (!ctx) return;
-
-    const { rw, rh, ratio } = dimensionsRef.current;
-    if (rw === 0 || rh === 0) return;
-
-    const cr = rw / rh;
-    let dw = rw, dh = rh, dx = 0, dy = 0;
-
-    if (ratio > cr) {
-      dh = rh;
-      dw = dh * ratio;
-      dx = (rw - dw) / 2;
-    } else {
-      dw = rw;
-      dh = dw / ratio;
-      dy = (rh - dh) / 2;
-    }
-
-    ctx.clearRect(0, 0, rw, rh);
-    ctx.save();
-    ctx.filter = "brightness(1.05) contrast(1.15) saturate(1.1)";
-    ctx.drawImage(img, dx, dy, dw, dh);
-    ctx.restore();
-  };
-
-  // Resize canvas
-  const resizeCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d", { alpha: false });
-    if (!ctx) return;
-
-    canvasContextRef.current = ctx;
-
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const rw = window.innerWidth;
-    const rh = window.innerHeight;
-
-    canvas.width = rw * dpr;
-    canvas.height = rh * dpr;
-    canvas.style.width = `${rw}px`;
-    canvas.style.height = `${rh}px`;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    const firstImg = imagesRef.current[0];
-    const ratio =
-      firstImg?.naturalWidth && firstImg?.naturalHeight
-        ? firstImg.naturalWidth / firstImg.naturalHeight
-        : 16 / 9;
-
-    dimensionsRef.current = { rw, rh, ratio };
-    renderFrame(frameIndexRef.current);
-  }, [renderFrame]);
-
-  // Load ALL images before allowing any interaction
-  useEffect(() => {
-    let isMounted = true;
-    const images: HTMLImageElement[] = new Array(TOTAL_FRAMES);
-    let loadedCount = 0;
-
-    // Block scrolling until loaded
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
-
-    const updateProgress = () => {
-      if (!isMounted) return;
-      const progress = Math.round((loadedCount / TOTAL_FRAMES) * 100);
-      setLoadingProgress(progress);
-      heroLoadingState.loadedCount = loadedCount;
-
-      if (loadedCount === TOTAL_FRAMES) {
-        imagesRef.current = images;
-        heroLoadingState.isFullyLoaded = true;
-        setAllImagesLoaded(true);
-      }
-    };
-
-    const loadImage = (index: number): Promise<void> => {
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.decoding = "sync"; // Force synchronous decoding
-        img.src = FRAME_PATH(index);
-
-        img.onload = () => {
-          images[index] = img;
-          imagesRef.current[index] = img;
-          loadedCount++;
-          updateProgress();
-          resolve();
-        };
-
-        img.onerror = () => {
-          console.warn(`Failed to load frame ${index}`);
-          loadedCount++;
-          updateProgress();
-          resolve();
-        };
-      });
-    };
-
-    // Load frames in priority order
-    const loadAllFrames = async () => {
-      // First, load frame 0 immediately
-      await loadImage(0);
-
-      if (!isMounted) return;
-
-      // Setup canvas with first frame
-      if (canvasRef.current) {
-        resizeCanvas();
-        renderFrame(0);
-      }
-
-      // Load remaining frames in parallel batches
-      const batchSize = 20;
-      for (let batch = 0; batch < Math.ceil((TOTAL_FRAMES - 1) / batchSize); batch++) {
-        if (!isMounted) return;
-
-        const start = batch * batchSize + 1;
-        const end = Math.min(start + batchSize, TOTAL_FRAMES);
-        const promises: Promise<void>[] = [];
-
-        for (let i = start; i < end; i++) {
-          promises.push(loadImage(i));
-        }
-
-        await Promise.all(promises);
-      }
-    };
-
-    loadAllFrames();
+    // Timeout safety (4s)
+    timeoutId = setTimeout(() => {
+      console.warn("Video load timeout - forcing visibility");
+      setIsLoading(false);
+    }, 4000);
 
     return () => {
-      isMounted = false;
+      video.removeEventListener("canplaythrough", handleCanPlay);
+      clearTimeout(timeoutId);
     };
-  }, [resizeCanvas, renderFrame]);
+  }, [mounted]);
 
-  // Setup ScrollTrigger ONLY after ALL images are loaded
+  // ---------------------------------------------------------------------------
+  // 2. VIDEO SCROLL ANIMATION - Optimized with direct manipulation
+  // ---------------------------------------------------------------------------
   useEffect(() => {
-    if (!allImagesLoaded || !containerRef.current || !canvasRef.current) return;
+    if (isLoading || !containerRef.current || !videoRef.current) return;
 
-    // Re-enable scrolling
-    document.body.style.overflow = "";
-    document.documentElement.style.overflow = "";
+    const video = videoRef.current;
 
-    // Kill any existing triggers
-    ScrollTrigger.getById("hero-scroll-trigger")?.kill();
-    if (scrollTriggerRef.current) {
-      scrollTriggerRef.current.kill();
-    }
+    // Wait for valid duration
+    const initScrollTrigger = () => {
+      if (!video.duration || isNaN(video.duration)) {
+        requestAnimationFrame(initScrollTrigger);
+        return;
+      }
 
-    // Ensure we're at top
-    window.scrollTo(0, 0);
+      const duration = video.duration;
+      let lastTime = 0;
 
-    // Wait for layout to stabilize
-    const setupTimer = setTimeout(() => {
-      resizeCanvas();
-      renderFrame(0);
-
-      const anim = { frame: 0 };
-
-      gsap.set("[data-hero-step]", { opacity: 0, visibility: "hidden", y: 0 });
-      gsap.set("[data-hero-word]", { opacity: 0, y: 30, filter: "blur(10px)" });
-
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          id: "hero-scroll-trigger",
-          trigger: containerRef.current,
-          start: "top top",
-          end: "+=500%",
-          scrub: 0.5,
-          pin: true,
-          pinSpacing: true,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-          onUpdate: () => renderFrame(anim.frame),
+      animationData.current.scrollTrigger = ScrollTrigger.create({
+        trigger: containerRef.current,
+        start: "top top",
+        end: "+=500%",
+        scrub: 0.1, // Slight smoothing for better feel
+        pin: true,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        onUpdate: (self) => {
+          const targetTime = self.progress * duration;
+          
+          // Only update if change is significant (reduces repaints)
+          if (Math.abs(targetTime - lastTime) > 0.016) {
+            video.currentTime = targetTime;
+            lastTime = targetTime;
+          }
         },
       });
 
-      scrollTriggerRef.current = tl.scrollTrigger as ScrollTrigger;
+      video.currentTime = 0;
+    };
 
-      tl.to(anim, {
-        frame: TOTAL_FRAMES - 1,
-        ease: "none",
-        duration: 1,
-        onUpdate: () => renderFrame(anim.frame),
-      });
-
-      TEXT_STEPS.forEach((step, i) => {
-        const start = i / TEXT_STEPS.length;
-        const dur = 1 / TEXT_STEPS.length;
-
-        if (step.text) {
-          tl.to(
-            `[data-hero-step="${step.id}"]`,
-            { opacity: 1, visibility: "visible", duration: 0.01 },
-            start
-          );
-
-          const words = step.text.split(" ");
-          const wordDelay = (dur * 0.6) / words.length;
-
-          words.forEach((_, wi) => {
-            tl.to(
-              `[data-hero-step="${step.id}"] [data-hero-word="${wi}"]`,
-              {
-                opacity: 1,
-                y: 0,
-                filter: "blur(0px)",
-                duration: 0.2,
-                ease: "power2.out",
-              },
-              start + 0.05 + wi * wordDelay
-            );
-          });
-
-          if (i < TEXT_STEPS.length - 1) {
-            tl.to(
-              `[data-hero-step="${step.id}"]`,
-              { opacity: 0, duration: 0.15, ease: "power2.in" },
-              start + dur * 0.85
-            );
-          }
-        }
-      });
-
-      ScrollTrigger.refresh(true);
-      setAnimationReady(true);
-    }, 200);
-
-    window.addEventListener("resize", resizeCanvas);
+    initScrollTrigger();
 
     return () => {
-      clearTimeout(setupTimer);
-      window.removeEventListener("resize", resizeCanvas);
-      ScrollTrigger.getById("hero-scroll-trigger")?.kill();
-      if (scrollTriggerRef.current) {
-        scrollTriggerRef.current.kill();
+      if (animationData.current.scrollTrigger) {
+        animationData.current.scrollTrigger.kill();
+        animationData.current.scrollTrigger = null;
       }
     };
-  }, [allImagesLoaded, resizeCanvas, renderFrame]);
+  }, [isLoading]);
 
-  // Cursor effect
+  // ---------------------------------------------------------------------------
+  // 3. SMOKE EFFECT - Heavily optimized with object pooling
+  // ---------------------------------------------------------------------------
   useEffect(() => {
-    if (!animationReady || !containerRef.current) return;
+    if (!mounted || !smokeCanvasRef.current) return;
+
+    const canvas = smokeCanvasRef.current;
+    const ctx = canvas.getContext("2d", { 
+      alpha: true,
+      desynchronized: true // Better performance on supported browsers
+    });
+    if (!ctx) return;
+
+    const MAX_PARTICLES = 120; // Reduced for better performance
+    const SPAWN_RATE = 2; // Particles per frame
+    let animationId: number;
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    let frameCount = 0;
+
+    // Set canvas size
+    const updateCanvasSize = () => {
+      const dpr = Math.min(window.devicePixelRatio, 2); // Cap at 2x for performance
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.scale(dpr, dpr);
+    };
+    updateCanvasSize();
+
+    // Pre-rendered puff texture (smaller for performance)
+    const puffSize = 128;
+    const puffCanvas = document.createElement("canvas");
+    puffCanvas.width = puffSize;
+    puffCanvas.height = puffSize;
+    const pCtx = puffCanvas.getContext("2d");
+    
+    if (pCtx) {
+      const center = puffSize / 2;
+      const grad = pCtx.createRadialGradient(center, center, 0, center, center, center);
+      grad.addColorStop(0, "rgba(0, 80, 80, 0.5)");
+      grad.addColorStop(0.25, "rgba(0, 50, 60, 0.3)");
+      grad.addColorStop(0.5, "rgba(0, 30, 40, 0.15)");
+      grad.addColorStop(0.75, "rgba(0, 15, 25, 0.05)");
+      grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      pCtx.fillStyle = grad;
+      pCtx.fillRect(0, 0, puffSize, puffSize);
+    }
+
+    // Get particle from pool or create new one
+    const getParticle = (): Particle => {
+      if (particlePool.current.length > 0) {
+        return particlePool.current.pop()!;
+      }
+      return {
+        x: 0, y: 0, vx: 0, vy: 0,
+        life: 0, maxLife: 0, size: 0,
+        alpha: 0, rotation: 0, rotationSpeed: 0
+      };
+    };
+
+    // Return particle to pool
+    const returnParticle = (p: Particle) => {
+      if (particlePool.current.length < MAX_PARTICLES * 2) {
+        particlePool.current.push(p);
+      }
+    };
+
+    // Spawn new particle
+    const spawnParticle = () => {
+      const p = getParticle();
+      p.x = Math.random() * width;
+      p.y = height + 100;
+      p.vx = (Math.random() - 0.5) * 1.2;
+      p.vy = -(Math.random() * 1.5 + 0.8);
+      p.life = 0;
+      p.maxLife = Math.random() * 200 + 120;
+      p.size = Math.random() * 2.5 + 1.5;
+      p.alpha = 0;
+      p.rotation = Math.random() * Math.PI * 2;
+      p.rotationSpeed = (Math.random() - 0.5) * 0.02;
+      activeParticles.current.push(p);
+    };
+
+    const update = (timestamp: number) => {
+      // Throttle to ~30fps for smoke (sufficient for visual effect)
+      const delta = timestamp - animationData.current.lastFrameTime;
+      if (delta < 33) {
+        animationId = requestAnimationFrame(update);
+        return;
+      }
+      animationData.current.lastFrameTime = timestamp;
+      
+      frameCount++;
+      ctx.clearRect(0, 0, width, height);
+
+      // Spawn particles
+      if (activeParticles.current.length < MAX_PARTICLES) {
+        for (let i = 0; i < SPAWN_RATE && activeParticles.current.length < MAX_PARTICLES; i++) {
+          spawnParticle();
+        }
+      }
+
+      // Set composite mode once
+      ctx.globalCompositeOperation = "screen";
+
+      const particles = activeParticles.current;
+      const sinTable = Math.sin(frameCount * 0.008); // Pre-calculate
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life++;
+
+        // Update position with simplified wave
+        p.x += p.vx + sinTable * 0.4;
+        p.y += p.vy;
+        p.rotation += p.rotationSpeed;
+
+        // Calculate alpha (fade in/out)
+        const fadeIn = 50;
+        const fadeOut = 50;
+        if (p.life < fadeIn) {
+          p.alpha = (p.life / fadeIn) * 0.6;
+        } else if (p.life > p.maxLife - fadeOut) {
+          p.alpha = ((p.maxLife - p.life) / fadeOut) * 0.6;
+        } else {
+          p.alpha = 0.6;
+        }
+
+        // Remove dead particles
+        if (p.life >= p.maxLife || p.y < -200) {
+          particles.splice(i, 1);
+          returnParticle(p);
+          continue;
+        }
+
+        // Draw particle
+        ctx.globalAlpha = p.alpha;
+        const size = puffSize * p.size;
+        const halfSize = size / 2;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.drawImage(puffCanvas, -halfSize, -halfSize, size, size);
+        ctx.restore();
+      }
+
+      // Reset
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+
+      animationId = requestAnimationFrame(update);
+    };
+
+    animationId = requestAnimationFrame(update);
+
+    // Debounced resize handler
+    let resizeTimeout: NodeJS.Timeout;
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(updateCanvasSize, 150);
+    };
+
+    window.addEventListener("resize", handleResize, { passive: true });
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(resizeTimeout);
+      activeParticles.current = [];
+    };
+  }, [mounted]);
+
+  // ---------------------------------------------------------------------------
+  // 4. CURSOR EFFECT - Optimized with RAF batching
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!mounted || !containerRef.current) return;
 
     const container = containerRef.current;
-    let rafId: number;
+    const cursor = cursorRef.current;
+    const cursorDot = cursorDotRef.current;
+    
+    if (!cursor || !cursorDot) return;
 
+    let rafId: number;
+    const data = animationData.current;
+
+    // Use passive event listeners for better scroll performance
     const handleMouseMove = (e: MouseEvent) => {
       const rect = container.getBoundingClientRect();
-      mousePos.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      data.mouseX = e.clientX - rect.left;
+      data.mouseY = e.clientY - rect.top;
     };
 
     const handleMouseEnter = () => {
-      gsap.to(cursorRef.current, { scale: 1, opacity: 1, duration: 0.3 });
-      gsap.to(cursorDotRef.current, { scale: 1, opacity: 1, duration: 0.2 });
+      data.isHovering = true;
+      cursor.style.opacity = "1";
+      cursor.style.transform = `translate(${data.cursorX}px, ${data.cursorY}px) translate(-50%, -50%) scale(1)`;
+      cursorDot.style.opacity = "1";
     };
 
     const handleMouseLeave = () => {
-      gsap.to(cursorRef.current, { scale: 0, opacity: 0, duration: 0.3 });
-      gsap.to(cursorDotRef.current, { scale: 0, opacity: 0, duration: 0.2 });
+      data.isHovering = false;
+      cursor.style.opacity = "0";
+      cursor.style.transform = `translate(${data.cursorX}px, ${data.cursorY}px) translate(-50%, -50%) scale(0)`;
+      cursorDot.style.opacity = "0";
     };
 
-    const updateCursor = () => {
-      cursorPos.current.x += (mousePos.current.x - cursorPos.current.x) * 0.15;
-      cursorPos.current.y += (mousePos.current.y - cursorPos.current.y) * 0.15;
+    // Optimized animation loop using CSS transforms
+    const loop = () => {
+      // Smooth interpolation
+      const ease = 0.12;
+      data.cursorX += (data.mouseX - data.cursorX) * ease;
+      data.cursorY += (data.mouseY - data.cursorY) * ease;
 
-      if (cursorRef.current) {
-        cursorRef.current.style.transform = `translate(${cursorPos.current.x}px, ${cursorPos.current.y}px) translate(-50%, -50%)`;
-      }
-      if (cursorDotRef.current) {
-        cursorDotRef.current.style.transform = `translate(${mousePos.current.x}px, ${mousePos.current.y}px) translate(-50%, -50%)`;
-      }
+      // Use transform3d for GPU acceleration
+      cursor.style.transform = `translate3d(${data.cursorX}px, ${data.cursorY}px, 0) translate(-50%, -50%)`;
+      cursorDot.style.transform = `translate3d(${data.mouseX}px, ${data.mouseY}px, 0) translate(-50%, -50%)`;
 
-      rafId = requestAnimationFrame(updateCursor);
+      rafId = requestAnimationFrame(loop);
     };
 
-    container.addEventListener("mousemove", handleMouseMove);
+    // Initialize cursor position
+    data.cursorX = window.innerWidth / 2;
+    data.cursorY = window.innerHeight / 2;
+
+    container.addEventListener("mousemove", handleMouseMove, { passive: true });
     container.addEventListener("mouseenter", handleMouseEnter);
     container.addEventListener("mouseleave", handleMouseLeave);
-    updateCursor();
+
+    rafId = requestAnimationFrame(loop);
 
     return () => {
       container.removeEventListener("mousemove", handleMouseMove);
@@ -368,108 +398,93 @@ export default function Hero() {
       container.removeEventListener("mouseleave", handleMouseLeave);
       cancelAnimationFrame(rafId);
     };
-  }, [animationReady]);
+  }, [mounted]);
+
+  if (!mounted) return null;
 
   return (
     <section
       ref={containerRef}
       className="relative w-full overflow-hidden bg-black cursor-none"
     >
-      {/* Loading overlay - shows until ALL frames are loaded */}
-      {!allImagesLoaded && (
-        <div className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center">
-          <div className="w-48 h-1 bg-white/20 rounded-full overflow-hidden mb-4">
+      {/* LOADING SCREEN */}
+      {isLoading && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black text-white">
+          <div className="mb-4 text-2xl font-bold tracking-widest text-[#00B0B2]">
+            LOADING
+          </div>
+          <div className="h-1 w-64 overflow-hidden rounded-full bg-gray-800">
             <div
-              className="h-full bg-[#00B0B2] transition-all duration-300 ease-out"
-              style={{ width: `${loadingProgress}%` }}
+              className="h-full bg-[#00B0B2] animate-pulse"
+              style={{ width: "50%" }}
             />
           </div>
-          <p className="text-white/60 text-sm font-medium">
-            Loading {loadingProgress}%
-          </p>
         </div>
       )}
 
       <div className="sticky top-0 h-screen w-full">
-        <canvas ref={canvasRef} className="absolute inset-0 bg-black" />
+        {/* Video Element - Optimized attributes */}
+        <video
+          ref={videoRef}
+          className="absolute inset-0 block h-full w-full object-cover"
+          src="/Videos/optimized.mp4"
+          muted
+          playsInline
+          preload="auto"
+          disablePictureInPicture
+          disableRemotePlayback
+        />
 
-        {/* Vignette */}
+        {/* Smoke Canvas */}
+        <canvas
+          ref={smokeCanvasRef}
+          className="absolute inset-0 z-10 pointer-events-none mix-blend-screen"
+          style={{ willChange: "transform" }}
+        />
+
+        {/* Overlays - Using CSS custom properties for potential theming */}
         <div
           className="absolute inset-0 z-20 pointer-events-none"
           style={{
-            background: `radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0.6) 100%)`,
+            background:
+              "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0.6) 100%)",
           }}
         />
-
-        {/* Top gradient */}
         <div
           className="absolute top-0 left-0 right-0 h-[20%] z-20 pointer-events-none"
-          style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%)" }}
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%)",
+          }}
         />
-
-        {/* Bottom gradient */}
         <div
           className="absolute bottom-0 left-0 right-0 h-[20%] z-20 pointer-events-none"
-          style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent 100%)" }}
+          style={{
+            background:
+              "linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent 100%)",
+          }}
         />
 
-        {/* Cursor ring */}
+        {/* Custom Cursor - GPU accelerated */}
         <div
           ref={cursorRef}
-          className="pointer-events-none fixed top-0 left-0 z-[100] opacity-0"
+          className="pointer-events-none fixed top-0 left-0 z-[100] h-10 w-10 rounded-full border-2 border-[#00B0B2] opacity-0 mix-blend-screen"
           style={{
-            width: "40px",
-            height: "40px",
-            border: "2px solid #00B0B2",
-            borderRadius: "50%",
-            boxShadow: "0 0 20px rgba(0,176,178,0.4), inset 0 0 20px rgba(0,176,178,0.2)",
-            mixBlendMode: "screen",
-            transform: "translate(-50%, -50%) scale(0)",
+            willChange: "transform, opacity",
+            boxShadow:
+              "0 0 20px rgba(0,176,178,0.4), inset 0 0 20px rgba(0,176,178,0.2)",
+            backfaceVisibility: "hidden",
           }}
         />
-
-        {/* Cursor dot */}
         <div
           ref={cursorDotRef}
-          className="pointer-events-none fixed top-0 left-0 z-[100] opacity-0"
+          className="pointer-events-none fixed top-0 left-0 z-[100] h-1.5 w-1.5 rounded-full bg-[#00B0B2] opacity-0"
           style={{
-            width: "6px",
-            height: "6px",
-            backgroundColor: "#00B0B2",
-            borderRadius: "50%",
+            willChange: "transform, opacity",
             boxShadow: "0 0 10px #00B0B2",
-            transform: "translate(-50%, -50%) scale(0)",
+            backfaceVisibility: "hidden",
           }}
         />
-
-        {/* Text */}
-        <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
-          {TEXT_STEPS.map((step) => (
-            <div
-              key={step.id}
-              data-hero-step={step.id}
-              className="absolute flex flex-wrap justify-center gap-x-3 gap-y-2 px-4 max-w-6xl"
-              style={{ opacity: 0, visibility: "hidden" }}
-            >
-              {step.text?.split(" ").map((word, wi) => (
-                <span
-                  key={wi}
-                  data-hero-word={wi}
-                  className="inline-block"
-                  style={{
-                    fontSize: "clamp(2.5rem, 8vw, 6rem)",
-                    fontWeight: 700,
-                    lineHeight: 1.1,
-                    color: wi === step.highlightIndex ? step.highlightColor : THEME_COLORS.textPrimary,
-                    textShadow: wi === step.highlightIndex ? `0 0 40px ${step.highlightColor}55` : "0 2px 20px rgba(0,0,0,0.6)",
-                  }}
-                >
-                  {word}
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
       </div>
     </section>
   );
