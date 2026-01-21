@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import { useImageSequence } from "./hooks/useImageSequence";
-import { useCanvasRenderer } from "./hooks/useCanvasRenderer";
 import { useSmokeEffect } from "./hooks/useSmokeEffect";
 import { useCustomCursor } from "./hooks/useCustomCursor";
 
@@ -18,13 +16,13 @@ if (typeof window !== "undefined") {
 // CONFIGURATION
 // -----------------------------------------------------------------------------
 const CONFIG = {
-  frames: {
-    total: 416,
-    path: (i: number) => `/hero-banner/frame_${String(i + 1).padStart(3, "0")}.avif`,
+  video: {
+    src: "/Videos/scrub-video.mp4",
+    duration: 29.37, // Duration from metadata
   },
   animation: {
     scrollDistance: "+=500%",
-    scrub: 0.5,
+    scrub: 0.5, // Increased smoothing for mouse wheel
   },
   colors: {
     highlight1: "#00B0B2",
@@ -32,50 +30,52 @@ const CONFIG = {
     textPrimary: "#FFFFFF",
   },
   particles: {
-    count: 80, // Reduced from 180 for performance
+    count: 80,
   },
 };
 
 const TEXT_STEPS = [
   {
     id: 1,
-    text: "",
+    text: "THE NEXT EVOLUTION",
     highlightIndex: 2,
     highlightColor: CONFIG.colors.highlight1,
   },
+  {
+    id: 2,
+    text: "OF HUMAN POTENTIAL",
+    highlightIndex: 1,
+    highlightColor: CONFIG.colors.highlight2,
+  },
+  {
+    id: 3,
+    text: "IS HERE NOW",
+    highlightIndex: 2,
+    highlightColor: CONFIG.colors.textPrimary,
+  },
+  {
+    id: 4,
+    text: "", // Final resolve state
+    highlightIndex: 0,
+    highlightColor: CONFIG.colors.highlight1,
+  }
 ];
 
 export default function Hero() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const smokeCanvasRef = useRef<HTMLCanvasElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
   const cursorDotRef = useRef<HTMLDivElement>(null);
   
-  // GSAP Animation State
-  const frameIndexRef = useRef({ value: 0 });
   const [mounted, setMounted] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // 1. Image Sequence Loading
-  const { images, progress, isLoading, error } = useImageSequence({
-    totalFrames: CONFIG.frames.total,
-    framePath: CONFIG.frames.path,
-  });
-
-  // 2. Canvas Rendering
-  const { drawFrame } = useCanvasRenderer({
-    canvasRef,
-    images,
-    isLoading,
-    maxDpr: 5.0, // Uncapped for maximum quality
-    filter: "brightness(1.05) contrast(1.15) saturate(1.1)",
-  });
-
-  // 3. Smoke Effect
+  // 1. Smoke Effect
   useSmokeEffect({
     canvasRef: smokeCanvasRef,
     containerRef,
@@ -83,7 +83,7 @@ export default function Hero() {
     enabled: mounted,
   });
 
-  // 4. Custom Cursor
+  // 2. Custom Cursor
   useCustomCursor({
     containerRef,
     cursorRef,
@@ -91,143 +91,95 @@ export default function Hero() {
     enabled: mounted,
   });
 
-  // 5. Scroll Animation Logic
+  // 3. Scroll Animation Logic
   useGSAP(() => {
-    if (isLoading || !containerRef.current || !images.length) return;
+    if (!mounted || !containerRef.current || !videoRef.current) return;
 
-    // Initial render
-    drawFrame(0);
+    const video = videoRef.current;
 
-    // Reduced Motion Check
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReducedMotion) return;
-
+    // Ensure video is paused immediately
+    video.pause();
+    
+    // Master Timeline
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: containerRef.current,
         start: "top top",
         end: CONFIG.animation.scrollDistance,
-        scrub: CONFIG.animation.scrub,
+        scrub: 1, // Smoother scrubbing (1 second delay)
         pin: true,
         anticipatePin: 1,
         invalidateOnRefresh: true,
-        onUpdate: () => {
-           drawFrame(frameIndexRef.current.value);
-        },
       },
     });
 
-    // Tween the frame index object
-    tl.to(frameIndexRef.current, {
-      value: CONFIG.frames.total - 1,
-      ease: "none",
-      duration: 1,
-    });
+    // 1. Video Scrubbing
+    // Ensure we have a valid duration to scrub to
+    const targetDuration = video.duration && !isNaN(video.duration) && video.duration > 0
+        ? video.duration 
+        : CONFIG.video.duration;
 
-    // Text Animations
-    gsap.set("[data-hero-step]", { opacity: 0, visibility: "hidden", y: 0 });
-    gsap.set("[data-hero-word]", { opacity: 0, y: 30, filter: "blur(10px)" });
+    tl.fromTo(
+      video,
+      { currentTime: 0 },
+      { 
+        currentTime: targetDuration - 0.1, // Slight buffer to avoid end glitch
+        duration: 1,
+        ease: "none" 
+      },
+      0
+    );
+      
+  }, [mounted, videoLoaded]); // Re-run when video loads to ensure correct duration
 
-    TEXT_STEPS.forEach((step, i) => {
-        const start = i / TEXT_STEPS.length;
-        const dur = 1 / TEXT_STEPS.length;
-
-        if (step.text) {
-          // Reveal Text Block
-          tl.to(
-            `[data-hero-step="${step.id}"]`,
-            { opacity: 1, visibility: "visible", duration: 0.01 },
-            start
-          );
-
-          // Reveal Words
-          const words = step.text.split(" ");
-          const wordDelay = (dur * 0.6) / words.length;
-
-          words.forEach((_, wi) => {
-            tl.to(
-              `[data-hero-step="${step.id}"] [data-hero-word="${wi}"]`,
-              {
-                opacity: 1,
-                y: 0,
-                filter: "blur(0px)",
-                duration: 0.2,
-                ease: "power2.out",
-              },
-              start + 0.05 + wi * wordDelay
-            );
-          });
-
-          // Hide Text Block
-          if (i < TEXT_STEPS.length - 1) {
-            tl.to(
-              `[data-hero-step="${step.id}"]`,
-              { opacity: 0, duration: 0.15, ease: "power2.in" },
-              start + dur * 0.85
-            );
-            tl.set(
-              `[data-hero-step="${step.id}"]`,
-              { visibility: "hidden" },
-              start + dur * 0.95
-            );
-            tl.set(
-              `[data-hero-step="${step.id}"] [data-hero-word]`,
-              { opacity: 0, y: 30, filter: "blur(10px)" },
-              start + dur * 0.95
-            );
-          }
+  const handleVideoLoad = () => {
+    setVideoLoaded(true);
+    // Explicitly update ScrollTrigger after load
+    ScrollTrigger.refresh();
+  };
+  
+  // Robust loading strategy
+  useEffect(() => {
+    const checkVideoState = () => {
+        if (videoRef.current && videoRef.current.readyState >= 3) {
+            setVideoLoaded(true);
+            ScrollTrigger.refresh();
+        } else {
+            requestAnimationFrame(checkVideoState);
         }
-      });
-  }, [isLoading, drawFrame, images]); 
-
-
+    };
+    
+    // Start periodic check
+    const id = requestAnimationFrame(checkVideoState);
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   if (!mounted) return null;
-
-  if (error) {
-     return (
-        <div className="flex h-screen w-full items-center justify-center bg-black text-red-500">
-           <p>Failed to load animation resources. Please refresh.</p>
-        </div>
-     );
-  }
 
   return (
     <section 
         ref={containerRef} 
         className="relative w-full overflow-hidden bg-black cursor-none"
         aria-label="Interactive Hero Animation"
+        style={{ backgroundColor: '#000000' }} // Force black background
     >
-       {/* LOADING SCREEN */}
-       {isLoading && (
-        <div 
-            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black text-white"
-            role="progressbar" 
-            aria-valuenow={progress} 
-            aria-valuemin={0} 
-            aria-valuemax={100}
-        >
-          <div className="mb-4 text-2xl font-bold tracking-widest text-[#00B0B2]">
-             INITIALIZING
-          </div>
-          <div className="h-1 w-64 overflow-hidden rounded-full bg-gray-800">
-             <div 
-               className="h-full bg-[#00B0B2] transition-all duration-300 ease-out"
-               style={{ width: `${progress}%` }}
-             />
-          </div>
-          <div className="mt-2 text-sm font-mono text-gray-400">
-            {progress}%
-          </div>
-        </div>
-      )}
+       {!videoLoaded && (
+         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black text-[#00B0B2]">
+            Loading Experience...
+         </div>
+       )}
 
-      <div className="sticky top-0 h-screen w-full">
-        {/* Main Canvas */}
-        <canvas 
-            ref={canvasRef} 
+      <div className="relative h-screen w-full bg-black">
+        {/* Main Video */}
+        <video
+            ref={videoRef}
+            src={CONFIG.video.src}
             className="absolute inset-0 block h-full w-full object-cover"
-            style={{ width: '100%', height: '100%' }}
+            preload="auto"
+            muted
+            playsInline
+            loop={false}
+            onLoadedMetadata={handleVideoLoad}
         />
         
         {/* Smoke Canvas */}
@@ -246,7 +198,7 @@ export default function Hero() {
         <div ref={cursorRef} className="pointer-events-none fixed top-0 left-0 z-[100] h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#00B0B2] opacity-0 mix-blend-screen shadow-[0_0_20px_rgba(0,176,178,0.4),inset_0_0_20px_rgba(0,176,178,0.2)]" />
         <div ref={cursorDotRef} className="pointer-events-none fixed top-0 left-0 z-[100] h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00B0B2] opacity-0 shadow-[0_0_10px_#00B0B2]" />
 
-        {/* Text Segments */}
+        {/* Text Segments - HIDDEN */}
         <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
           {TEXT_STEPS.map((step) => (
             <div
