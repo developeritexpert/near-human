@@ -51,26 +51,39 @@ export default function Hero() {
     if (!mounted || !videoRef.current) return;
 
     const video = videoRef.current;
+    let checkInterval: NodeJS.Timeout;
 
-    const handleLoadedData = () => {
-      setIsLoading(false);
-      // Ensure video is at start
-      video.currentTime = 0;
+    const checkReadyState = () => {
+      // readyState 4 = HAVE_ENOUGH_DATA (loaded enough to play through)
+      // readyState 3 = HAVE_FUTURE_DATA (usually enough for scrubbing)
+      if (video.readyState >= 3) {
+        setIsLoading(false);
+        // Ensure start position
+        video.currentTime = 0;
+        clearInterval(checkInterval);
+        ScrollTrigger.refresh();
+      }
     };
 
-    const handleCanPlay = () => {
-      setIsLoading(false);
-    };
+    // Initial check
+    checkReadyState();
 
-    video.addEventListener('loadeddata', handleLoadedData);
-    video.addEventListener('canplay', handleCanPlay);
+    // Polling is often more reliable than events for readyState changes across browsers
+    checkInterval = setInterval(checkReadyState, 100);
 
-    // Preload video
+    // Backup: Force load
     video.load();
 
+    // Timeout safety (5s)
+    const timeoutId = setTimeout(() => {
+      console.warn("Video load timeout - forcing visibility");
+      setIsLoading(false);
+      clearInterval(checkInterval);
+    }, 5000);
+
     return () => {
-      video.removeEventListener('loadeddata', handleLoadedData);
-      video.removeEventListener('canplay', handleCanPlay);
+      clearInterval(checkInterval);
+      clearTimeout(timeoutId);
     };
   }, [mounted]);
 
@@ -78,31 +91,35 @@ export default function Hero() {
   // 2. VIDEO SCROLL ANIMATION (useGSAP)
   // ---------------------------------------------------------------------------
   useGSAP(() => {
+    // STRICT BLOCKING: Do not run any GSAP logic until loading is totally complete
     if (isLoading || !containerRef.current || !videoRef.current) return;
 
     const video = videoRef.current;
     
-    // Make sure video is ready
-    if (!video.duration) return;
+    // Safety check for duration
+    if (!video.duration || isNaN(video.duration)) return;
 
-    gsap.timeline({
+    // Master Timeline
+    const tl = gsap.timeline({
       scrollTrigger: {
         trigger: containerRef.current,
         start: "top top",
         end: "+=500%",
-        scrub: 1,
+        scrub: 0, // Instant scrub for responsiveness
         pin: true,
         anticipatePin: 1,
         invalidateOnRefresh: true,
         onUpdate: (self) => {
-          // Sync video time to scroll progress with smooth interpolation
-          if (video.duration) {
-            const targetTime = self.progress * video.duration;
-            video.currentTime = targetTime;
-          }
-        },
+           // Direct frame interpolation
+           const frameTime = self.progress * video.duration;
+           video.currentTime = frameTime;
+        }
       },
     });
+
+    // Ensure we start at 0
+    video.currentTime = 0;
+    
   }, [isLoading]);
 
   // ---------------------------------------------------------------------------
