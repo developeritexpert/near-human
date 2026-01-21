@@ -1,6 +1,7 @@
 "use client"
 import React from 'react'
 import Link from 'next/link';
+import CTAbutton from '@/components/layout/CTAbutton';
 
 function WhatsNear() {
   return (
@@ -18,9 +19,18 @@ function WhatsNear() {
                             is building the next era of intelligent devices.
                      </p>
                      <div className='mt-[39px] flex justify-center'>            
-                         <Link href="" className='inline-block text-[16px] bg-[#00B0B2] text-white font-[450] py-[16px] px-[32px] rounded-[7px] hover:bg-[#1FC4C6]'>
+                         {/* <Link href="" className='inline-block text-[16px] bg-[#00B0B2] text-white font-[450] py-[16px] px-[32px] rounded-[7px] hover:bg-[#1FC4C6]'>
                           Join the Newsletter
-                          </Link>
+                          </Link>                           */}
+                             <CTAbutton
+                                href="/#"
+                              text="Join the Newsletter"
+                                svgColor="#00B0B2"
+                                textColor="text-[#fff]"
+                                hoverTextColor="hover:text-[#000]"
+                                borderColor="border-[#00B0B2]"
+                                bgColor="bg-[#fff]"
+                              />
                      </div>
 
 

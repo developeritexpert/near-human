@@ -1,6 +1,7 @@
 "use client"
 import React from 'react'
 import Link from 'next/link';
+import CTAbutton from '@/components/layout/CTAbutton';
 
 function  FutureIntelligent () {
   return (
@@ -194,9 +195,18 @@ function  FutureIntelligent () {
                       </div>
 
                       <div className="mt-[35px]">                      
-                        <Link href="" className=' inline-block text-[16px] font-[450] text-[#101717] px-[53px] py-[18px]  border border-[#101717] rounded-[7px] transition-all duration-300 linear hover:bg-[#101717] hover:text-white'>
+                        {/* <Link href="" className=' inline-block text-[16px] font-[450] text-[#101717] px-[53px] py-[18px]  border border-[#101717] rounded-[7px] transition-all duration-300 linear hover:bg-[#101717] hover:text-white'>
                               Share
-                        </Link>
+                        </Link> */}
+                        <CTAbutton
+                              href="#"
+                              text="Share"
+                              svgColor="#fff"
+                              textColor="text-[#000]"
+                              hoverTextColor="hover:text-[#fff]"
+                              borderColor="border-[#000]"
+                              bgColor="bg-[#000]"
+                            />
                       </div>
 
 

@@ -1,35 +1,36 @@
 "use client"
 import React from 'react'
 import Link from 'next/link';
+import CTAbutton from '@/components/layout/CTAbutton';
 function Advisor() {
     const advisor = [
   {
     id: 1,
     name: "Mark Corderoy",
     designation: "Advisor",
-    image: "img/abt-team-usr2.png",
+   image: "img/advisor-img2.png",
   },
   {
     id: 2,
     name: "Charlie Hamilton*",
     designation: "Advisor",
-    image: "img/abt-team-usr2.png",
+    image: "img/advisor-img1.png",
   },
   {
     id: 3,
     name: "Cees De Witte",
     designation: "Advisor",
-    image: "img/advisor-img1.png",
+    image: "img/advisor-img3.png",
   },
  
 ];
   return (
     <div>
         <section className='px-[20px] md:px-[30px] lg:px-[50px] pt-[40px] md:pt-[70px] lg:pt-[100px] xl:pt-[135px]  pb-[40px] md:pb-[70px] lg:pb-[100px] xl:pb-[120px] relative overflow-hidden'>
-           <div className="absolute top-0 left-0 w-full z-1 h-full  max-h-[974px]">
+           <div className="absolute top-0 left-0 w-full -z-1 h-full  max-h-[974px]">
                 <img src="img/about-team-bg.png" alt="" />
               </div>
-              <div className="container relative z-5">
+              <div className="max-w-[1440px] mx-auto relative z-5">
                 <h2 className='text-[35px] md:text-[40px] lg:text-[55px] xl:text-[77px] text-black text-center'>Advisors</h2>
                   <div className="mt-[50px]  grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
 
@@ -95,25 +96,34 @@ function Advisor() {
                   </div>
                   <div className="flex  flex-wrap sm:flex-nowrap gap-4 mt-[60px] justify-center">
    
-      <Link
-        href="/early-access"
-        className="rounded-lg border border-[#00B0B2] bg-[#00B0B2] w-full max-w-[211px] py-[18px] text-[16px] flex justify-center text-white transition hover:bg-white hover:text-[#101717] hover:border-[#101717]">
-        Join the early access
-      </Link>
-
-      
-      <Link
-        href="/contact"
-        className="rounded-lg border border-[#101717] w-full max-w-[211px] py-[18px] text-[16px] flex justify-center  text-[#101717] transition hover:bg-[#00B0B2] hover:text-[#fff] hover:border-[#00B0B2]">
-        Talk to us
-      </Link>
-
      
-      <Link
-        href="/explore"
-        className="rounded-lg border border-[#101717] w-full max-w-[211px] py-[18px] text-[16px] flex justify-center text-[#101717] transition hover:bg-[#00B0B2] hover:text-[#fff] hover:border-[#00B0B2]">
-        Explore Scootrr
-      </Link>
+             <CTAbutton
+              href="/early-access"
+              text="Join the early access"
+              svgColor="#00B0B2"
+              textColor="text-[#fff]"
+              hoverTextColor="hover:text-[#000]"
+              borderColor="border-[#00B0B2]"
+              bgColor="bg-[#fff]"
+            />
+            <CTAbutton
+              href="/contact"
+              text="Talk to us"
+              svgColor="#fff"
+              textColor="text-[#000]"
+              hoverTextColor="hover:text-[#fff]"
+              borderColor="border-[#000]"
+              bgColor="bg-[#000]"
+            />
+            <CTAbutton
+              href="/explore"
+              text=" Explore Scootrr"
+              svgColor="#fff"
+              textColor="text-[#000]"
+              hoverTextColor="hover:text-[#fff]"
+              borderColor="border-[#000]"
+              bgColor="bg-[#000]"
+            />
                   </div>
 
               </div>

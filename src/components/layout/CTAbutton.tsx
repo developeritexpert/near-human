@@ -24,7 +24,7 @@ const CTAbutton: React.FC<CTAbuttonProps> = ({
   return (
     <Link
       href={href}
-      className={`group relative h-[56px] w-full max-w-[170px] overflow-hidden rounded-[7px] border py-[15px] text-center text-[16px] transition-all delay-500 duration-400 ease-in ${bgColor} ${borderColor} ${textColor} ${hoverTextColor} `}
+      className={`group block relative h-[56px] w-full max-w-[170px] overflow-hidden rounded-[7px] border py-[15px] text-center text-[16px] transition-all delay-500 duration-400 ease-in ${bgColor} ${borderColor} ${textColor} ${hoverTextColor} `}
     >
       {/* Top SVG */}
       <div className="pointer-events-none absolute right-0 bottom-[45%] left-0 z-1 transition-all delay-500 duration-400 ease-in-out group-hover:bottom-[90%]">

@@ -41,7 +41,7 @@ const Footer = () => {
       </div>
 
       {/* Left Side SVG (replacing footr-bg-shade.png) */}
-      <div className="pointer-events-none absolute top-[40px] left-0 z-2 h-[369px] w-[821px]">
+      <div className="pointer-events-none absolute top-[40px] left-0 z-2 h-[369px] w-[300px] md:w-[400px] lg:w-[440px] xl:w-[650px] 2xl:w-[821px]">
         <svg
           width="100%"
           height="100%"
@@ -115,7 +115,7 @@ const Footer = () => {
       </div>
 
       {/* Right Side SVG (replacing footr-bg-shade1.png) */}
-      <div className="pointer-events-none absolute right-0 bottom-0 z-2 h-[424px] w-[526px]">
+      <div className="pointer-events-none absolute right-0 bottom-0 z-2 h-[424px] w-[250px] md:w-[350px] lg:w-[400px] xl:w-[526px]">
         <svg
           width="100%"
           height="100%"
@@ -212,7 +212,7 @@ const Footer = () => {
           <ul className="text-[#F7F8F8]">
             <li className="!mb-[20px]">
               <a
-                href="#"
+                href="/#"
                 className="hover:text-primary text-[16px] !font-normal transition-colors duration-300"
               >
                 Home
@@ -220,7 +220,7 @@ const Footer = () => {
             </li>
             <li className="!mb-[20px]">
               <a
-                href="#"
+                href="/about"
                 className="hover:text-primary !font-normal transition-colors duration-300"
               >
                 About
@@ -228,7 +228,7 @@ const Footer = () => {
             </li>
             <li className="!mb-[20px]">
               <a
-                href="#"
+                href="/scootrr"
                 className="hover:text-primary !font-normal transition-colors duration-300"
               >
                 Scootrr
@@ -244,7 +244,7 @@ const Footer = () => {
             </li>
             <li className="!mb-[20px]">
               <a
-                href="#"
+                href="/blogs"
                 className="hover:text-primary !font-normal transition-colors duration-300"
               >
                 Blogs
@@ -252,7 +252,7 @@ const Footer = () => {
             </li>
             <li className="!mb-[20px]">
               <a
-                href="#"
+                href="/contact"
                 className="hover:text-primary !font-normal transition-colors duration-300"
               >
                 Contact
