@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useLayoutEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -24,8 +24,8 @@ function SideVideo() {
   const notchRef = useRef<HTMLDivElement>(null);
   const svgPathRef = useRef<SVGPathElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const ctxRef = useRef<gsap.Context | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isReady, setIsReady] = useState(false);
 
   const statisticsData = [
     {
@@ -83,35 +83,42 @@ function SideVideo() {
     }
   }, []);
 
+  // Mark component as ready after mount
   useEffect(() => {
-    if (!pinRef.current) return;
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
-    ScrollTrigger.getById("sidevideo-scroll-trigger")?.kill();
+  useEffect(() => {
+    if (!isReady || !pinRef.current) return;
 
-    const initTimeout = setTimeout(() => {
-      const gsapCtx = gsap.context(() => {
+    // Kill existing trigger for this component
+    const existingTrigger = ScrollTrigger.getById("sidevideo-scroll-trigger");
+    if (existingTrigger) {
+      existingTrigger.kill();
+    }
+
+    let ctx: gsap.Context | null = null;
+    let currentIdx = 0;
+
+    const initScrollTrigger = () => {
+      ctx = gsap.context(() => {
         const items = textItemsRef.current.filter(
           (el): el is HTMLDivElement => !!el
         );
 
         if (!items.length) return;
 
+        // Set initial states
         items.forEach((item, i) => {
-          if (i === 0) {
-            gsap.set(item, {
-              opacity: 1,
-              y: 0,
-              scale: 1,
-              display: "block",
-            });
-          } else {
-            gsap.set(item, {
-              opacity: 0,
-              y: 40,
-              scale: 0.95,
-              display: "none",
-            });
-          }
+          gsap.set(item, {
+            opacity: i === 0 ? 1 : 0,
+            y: i === 0 ? 0 : 40,
+            scale: i === 0 ? 1 : 0.95,
+            display: i === 0 ? "block" : "none",
+          });
         });
 
         if (notchRef.current) {
@@ -121,8 +128,6 @@ function SideVideo() {
           gsap.set(svgPathRef.current, { attr: { d: generateNotchPath(0) } });
         }
 
-        let currentIdx = 0;
-
         ScrollTrigger.create({
           id: "sidevideo-scroll-trigger",
           trigger: pinRef.current,
@@ -130,8 +135,9 @@ function SideVideo() {
           end: `+=${statisticsData.length * 500}`,
           pin: true,
           pinSpacing: true,
-          scrub: 0.5,
+          scrub: 0.8,
           anticipatePin: 1,
+          invalidateOnRefresh: true,
           onUpdate: (self) => {
             const progress = self.progress;
             const total = statisticsData.length;
@@ -219,20 +225,27 @@ function SideVideo() {
           },
         });
       }, pinRef);
+    };
 
-      ctxRef.current = gsapCtx;
-      ScrollTrigger.refresh();
-    }, 150);
+    // Use requestAnimationFrame for better timing
+    const rafId = requestAnimationFrame(() => {
+      const timer = setTimeout(() => {
+        initScrollTrigger();
+        ScrollTrigger.refresh();
+      }, 250);
+
+      return () => clearTimeout(timer);
+    });
 
     return () => {
-      clearTimeout(initTimeout);
+      cancelAnimationFrame(rafId);
       ScrollTrigger.getById("sidevideo-scroll-trigger")?.kill();
-      if (ctxRef.current) {
-        ctxRef.current.revert();
-        ctxRef.current = null;
+      if (ctx) {
+        ctx.revert();
       }
     };
-  }, []);
+  }, [isReady]);
+
 
   return (
     <section ref={sectionRef} className="relative z-10 bg-white">

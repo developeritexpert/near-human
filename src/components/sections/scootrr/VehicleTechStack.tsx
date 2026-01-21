@@ -15,58 +15,37 @@ function VehicleTechStack() {
   const carouselContainerRef = useRef<HTMLDivElement>(null);
   const imagesRef = useRef<HTMLDivElement[]>([]);
   const [activeIndex, setActiveIndex] = useState(1);
+  const [isReady, setIsReady] = useState(false);
 
   const slides = [
-    {
-      id: 1,
-      src: "/img/Scootr-slidr-img2.png",
-      alt: "Smart Safety Features",
-    },
-    {
-      id: 2,
-      src: "/img/Scootr-slidr-img1.png",
-      alt: "AI-Powered Navigation",
-    },
-    {
-      id: 3,
-      src: "/img/Scootr-slidr-img3.png",
-      alt: "Performance Analytics",
-    },
+    { id: 1, src: "/img/Scootr-slidr-img2.png", alt: "Smart Safety Features" },
+    { id: 2, src: "/img/Scootr-slidr-img1.png", alt: "AI-Powered Navigation" },
+    { id: 3, src: "/img/Scootr-slidr-img3.png", alt: "Performance Analytics" },
   ];
 
   useEffect(() => {
-    if (!sectionRef.current || !carouselContainerRef.current) return;
+    const timer = setTimeout(() => setIsReady(true), 200);
+    return () => clearTimeout(timer);
+  }, []);
 
-    // Kill existing trigger
+  useEffect(() => {
+    if (!isReady || !sectionRef.current || !carouselContainerRef.current) return;
+
     ScrollTrigger.getById("vehicle-carousel-section")?.kill();
 
-    const timer = setTimeout(() => {
-      const ctx = gsap.context(() => {
+    let ctx: gsap.Context | null = null;
+
+    const initScrollTrigger = () => {
+      ctx = gsap.context(() => {
         const slots = imagesRef.current.filter(Boolean);
         if (slots.length !== 3) return;
 
         const positions = {
-          left: {
-            x: -320,
-            scale: 0.7,
-            opacity: 0.3,
-            zIndex: 1,
-          },
-          center: {
-            x: 0,
-            scale: 1,
-            opacity: 1,
-            zIndex: 3,
-          },
-          right: {
-            x: 320,
-            scale: 0.7,
-            opacity: 0.3,
-            zIndex: 1,
-          },
+          left: { x: -320, scale: 0.7, opacity: 0.3, zIndex: 1 },
+          center: { x: 0, scale: 1, opacity: 1, zIndex: 3 },
+          right: { x: 320, scale: 0.7, opacity: 0.3, zIndex: 1 },
         };
 
-        // Initial positions
         gsap.set(slots[0], positions.left);
         gsap.set(slots[1], positions.center);
         gsap.set(slots[2], positions.right);
@@ -83,6 +62,7 @@ function VehicleTechStack() {
             pin: carouselContainerRef.current,
             pinSpacing: true,
             anticipatePin: 1,
+            invalidateOnRefresh: true,
             onUpdate: (self) => {
               const progress = self.progress;
               const index = Math.round(progress * (slides.length - 1));
@@ -91,40 +71,34 @@ function VehicleTechStack() {
           },
         });
 
-        // Carousel rotation
         for (let step = 0; step < slides.length - 1; step++) {
           const label = `step-${step}`;
 
-          tl.to(
-            currentSlots[2],
-            { ...positions.center, duration: 1, ease: "power2.inOut" },
-            label
-          )
-            .to(
-              currentSlots[1],
-              { ...positions.left, duration: 1, ease: "power2.inOut" },
-              label
-            )
-            .to(
-              currentSlots[0],
-              { ...positions.right, duration: 1, ease: "power2.inOut" },
-              label
-            );
+          tl.to(currentSlots[2], { ...positions.center, duration: 1, ease: "power2.inOut" }, label)
+            .to(currentSlots[1], { ...positions.left, duration: 1, ease: "power2.inOut" }, label)
+            .to(currentSlots[0], { ...positions.right, duration: 1, ease: "power2.inOut" }, label);
 
           currentSlots = [currentSlots[1], currentSlots[2], currentSlots[0]];
         }
-
-        ScrollTrigger.refresh();
       }, sectionRef);
+    };
 
-      return () => ctx.revert();
-    }, 200);
+    const rafId = requestAnimationFrame(() => {
+      const timer = setTimeout(() => {
+        initScrollTrigger();
+        ScrollTrigger.refresh();
+      }, 350);
+
+      return () => clearTimeout(timer);
+    });
 
     return () => {
-      clearTimeout(timer);
+      cancelAnimationFrame(rafId);
       ScrollTrigger.getById("vehicle-carousel-section")?.kill();
+      ctx?.revert();
     };
-  }, [slides.length]);
+  }, [isReady, slides.length]);
+
 
   return (
     <section ref={sectionRef} className="relative bg-white">

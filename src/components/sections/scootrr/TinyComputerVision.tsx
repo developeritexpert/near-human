@@ -12,62 +12,46 @@ function TinyComputerVision() {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const textItemsRef = useRef<(HTMLDivElement | null)[]>([]);
-  const ctxRef = useRef<gsap.Context | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isReady, setIsReady] = useState(false);
 
   const featuresData = [
-    {
-      id: 1,
-      title: "Safety Features that redefine micromobility",
-    },
-    {
-      id: 2,
-      title: "AI-Powered Object Recognition with 99.9% accuracy",
-    },
-    {
-      id: 3,
-      title: "Ultra-Low Power Consumption for extended battery life",
-    },
+    { id: 1, title: "Safety Features that redefine micromobility" },
+    { id: 2, title: "AI-Powered Object Recognition with 99.9% accuracy" },
+    { id: 3, title: "Ultra-Low Power Consumption for extended battery life" },
   ];
 
   useEffect(() => {
-    // Start video playback when component mounts
     if (videoRef.current) {
-      videoRef.current.play().catch((error) => {
-        console.log("Auto-play was prevented:", error);
-      });
+      videoRef.current.play().catch(() => {});
     }
   }, []);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    const timer = setTimeout(() => setIsReady(true), 150);
+    return () => clearTimeout(timer);
+  }, []);
 
-    // Clean up any existing ScrollTrigger
+  useEffect(() => {
+    if (!isReady || !containerRef.current) return;
+
     ScrollTrigger.getById("tiny-cv-trigger")?.kill();
 
-    const timeout = setTimeout(() => {
-      const ctx = gsap.context(() => {
+    let ctx: gsap.Context | null = null;
+    let currentIdx = 0;
+
+    const initScrollTrigger = () => {
+      ctx = gsap.context(() => {
         const items = textItemsRef.current.filter(Boolean) as HTMLDivElement[];
         if (!items.length) return;
 
-        // Set initial states for all items
         items.forEach((item, i) => {
-          if (i === 0) {
-            gsap.set(item, {
-              autoAlpha: 1,
-              y: 0,
-            });
-          } else {
-            gsap.set(item, {
-              autoAlpha: 0,
-              y: 30,
-            });
-          }
+          gsap.set(item, {
+            autoAlpha: i === 0 ? 1 : 0,
+            y: i === 0 ? 0 : 30,
+          });
         });
 
-        let currentIdx = 0;
-
-        // Create the ScrollTrigger
         ScrollTrigger.create({
           id: "tiny-cv-trigger",
           trigger: containerRef.current,
@@ -75,12 +59,12 @@ function TinyComputerVision() {
           end: () => `+=${featuresData.length * 400}`,
           pin: true,
           pinSpacing: true,
-          scrub: 0.5,
+          scrub: 0.8,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
             const progress = self.progress;
             const total = featuresData.length;
-            const rawIndex = progress * (total - 0.01); // Prevent reaching exact total
+            const rawIndex = progress * (total - 0.01);
             let newIdx = Math.floor(rawIndex);
             newIdx = Math.max(0, Math.min(newIdx, total - 1));
 
@@ -92,10 +76,8 @@ function TinyComputerVision() {
               const prevItem = items[prevIdx];
               const nextItem = items[newIdx];
 
-              // Create timeline for smooth transition
               const tl = gsap.timeline();
 
-              // Fade out previous item
               if (prevItem) {
                 tl.to(prevItem, {
                   autoAlpha: 0,
@@ -105,40 +87,35 @@ function TinyComputerVision() {
                 }, 0);
               }
 
-              // Fade in next item
               if (nextItem) {
                 tl.fromTo(nextItem, 
-                  {
-                    autoAlpha: 0,
-                    y: 30,
-                  },
-                  {
-                    autoAlpha: 1,
-                    y: 0,
-                    duration: 0.4,
-                    ease: "power2.out",
-                  }, 
+                  { autoAlpha: 0, y: 30 },
+                  { autoAlpha: 1, y: 0, duration: 0.4, ease: "power2.out" }, 
                   0.1
                 );
               }
             }
           },
         });
-
-        // Refresh ScrollTrigger after setup
-        ScrollTrigger.refresh();
       }, containerRef);
+    };
 
-      ctxRef.current = ctx;
-    }, 200); // Slight delay to ensure DOM is ready
+    const rafId = requestAnimationFrame(() => {
+      const timer = setTimeout(() => {
+        initScrollTrigger();
+        ScrollTrigger.refresh();
+      }, 300);
+
+      return () => clearTimeout(timer);
+    });
 
     return () => {
-      clearTimeout(timeout);
+      cancelAnimationFrame(rafId);
       ScrollTrigger.getById("tiny-cv-trigger")?.kill();
-      ctxRef.current?.revert();
+      ctx?.revert();
     };
-  }, [featuresData.length]);
-
+  }, [isReady, featuresData.length]);
+  
   return (
     <section className="relative">
       {/* Pinned Container */}
