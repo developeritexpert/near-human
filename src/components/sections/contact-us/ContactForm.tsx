@@ -1,6 +1,7 @@
 "use client"
 import React from 'react'
  import Link from 'next/link';
+import CTAbutton from '@/components/layout/CTAbutton';
 
 function ContactForm() {
   return (
@@ -215,8 +216,16 @@ function ContactForm() {
     />
   </div>
 
-
-  <button
+            <CTAbutton
+              href="/contact"
+              text="Submit"
+              svgColor="#00B0B2"
+              textColor="text-[#fff]"
+              hoverTextColor="hover:text-[#000]"
+              borderColor="border-[#00B0B2]"
+              bgColor="bg-[#fff]"
+            />
+  {/* <button
     type="submit"
     className="
        px-[42px] py-[16px]
@@ -225,10 +234,9 @@ function ContactForm() {
       text-white text-[16px] font-[#00B0B2]
       hover:bg-[#4FD6D8]
       transition-colors duration-300
-    "
-  >
+    "  >
     Submit
-  </button>
+  </button> */}
                      </form>
 
                    </div>

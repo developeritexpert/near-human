@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import CTAbutton from "@/components/layout/CTAbutton";
 
 // Register ScrollTrigger
 if (typeof window !== "undefined") {
@@ -230,33 +231,15 @@ function WhyReliability() {
 
             {/* Button */}
             <div ref={buttonRef}>
-              <Link
-                href="/blogs-detail"
-                className="relative inline-flex items-center gap-2 text-[16px] bg-[#00B0B2] text-white font-[450] py-[18px] px-[44px] rounded-[7px] overflow-hidden group/btn"
-                onMouseEnter={handleButtonEnter}
-                onMouseLeave={handleButtonLeave}
-              >
-                {/* Button background animation */}
-                <span className="btn-bg absolute inset-0 bg-[#1FC4C6] transform scale-0 origin-center rounded-[7px]" />
-                
-                {/* Button text */}
-                <span className="relative z-10 flex items-center gap-2">
-                  Read More
-                  <svg 
-                    className="w-5 h-5 transform group-hover/btn:translate-x-1 transition-transform duration-300" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M17 8l4 4m0 0l-4 4m4-4H3" 
-                    />
-                  </svg>
-                </span>
-              </Link>
+             <CTAbutton
+              href="/blogs-detail"
+              text="Read More"
+              svgColor="#00B0B2"
+              textColor="text-[#fff]"
+              hoverTextColor="hover:text-[#000]"
+              borderColor="border-[#00B0B2]"
+              bgColor="bg-[#fff]"
+            />      
             </div>
           </div>
         </div>

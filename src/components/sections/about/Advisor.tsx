@@ -1,6 +1,7 @@
 "use client"
 import React from 'react'
 import Link from 'next/link';
+import CTAbutton from '@/components/layout/CTAbutton';
 function Advisor() {
     const advisor = [
   {
@@ -95,25 +96,34 @@ function Advisor() {
                   </div>
                   <div className="flex  flex-wrap sm:flex-nowrap gap-4 mt-[60px] justify-center">
    
-      <Link
-        href="/early-access"
-        className="rounded-lg border border-[#00B0B2] bg-[#00B0B2] w-full max-w-[211px] py-[18px] text-[16px] flex justify-center text-white transition hover:bg-white hover:text-[#101717] hover:border-[#101717]">
-        Join the early access
-      </Link>
-
-      
-      <Link
-        href="/contact"
-        className="rounded-lg border border-[#101717] w-full max-w-[211px] py-[18px] text-[16px] flex justify-center  text-[#101717] transition hover:bg-[#00B0B2] hover:text-[#fff] hover:border-[#00B0B2]">
-        Talk to us
-      </Link>
-
      
-      <Link
-        href="/explore"
-        className="rounded-lg border border-[#101717] w-full max-w-[211px] py-[18px] text-[16px] flex justify-center text-[#101717] transition hover:bg-[#00B0B2] hover:text-[#fff] hover:border-[#00B0B2]">
-        Explore Scootrr
-      </Link>
+             <CTAbutton
+              href="/early-access"
+              text="Join the early access"
+              svgColor="#00B0B2"
+              textColor="text-[#fff]"
+              hoverTextColor="hover:text-[#000]"
+              borderColor="border-[#00B0B2]"
+              bgColor="bg-[#fff]"
+            />
+            <CTAbutton
+              href="/contact"
+              text="Talk to us"
+              svgColor="#fff"
+              textColor="text-[#000]"
+              hoverTextColor="hover:text-[#fff]"
+              borderColor="border-[#000]"
+              bgColor="bg-[#000]"
+            />
+            <CTAbutton
+              href="/explore"
+              text=" Explore Scootrr"
+              svgColor="#fff"
+              textColor="text-[#000]"
+              hoverTextColor="hover:text-[#fff]"
+              borderColor="border-[#000]"
+              bgColor="bg-[#000]"
+            />
                   </div>
 
               </div>

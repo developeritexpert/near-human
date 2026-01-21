@@ -19,7 +19,7 @@ function EcoSystem() {
           </div>
 
           <div className="mt-[37px] flex justify-center">
-            <Link href="" className="text-[16px] text-[#052424] underline">
+            <Link href="#" className="text-[16px] text-[#052424] underline hover:text-[#00B0B2]">
               Get in Touch
             </Link>
           </div>

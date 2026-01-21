@@ -20,7 +20,7 @@ export default function Navbar() {
     { name: "Home", href: "/" },
     { name: "About", href: "/about" },
     { name: "Scootrr", href: "/scootrr" },
-    { name: "Our Work", href: "/work" },
+    { name: "Our Work", href: "/#" },
     { name: "Blogs", href: "/blogs" },
   ];
 
@@ -175,31 +175,31 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="  hidden  items-center gap-5 lg:gap-10 md:flex">
-            {navItems.map((item, index) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`text-[15px] leading-none font-bold tracking-normal transition-colors duration-300 ${
-                  pathname === item.href
-                    ? "text-white"
-                    : "text-white/70 hover:text-white"
-                } ${
-                  isHomePage
-                    ? isVisible
-                      ? "animate-fadeInUp"
-                      : "opacity-0"
-                    : "opacity-100" // Always visible on non-home pages
-                } `}
-                style={{
-                  fontFamily: "var(--font-geist-sans), sans-serif",
-                  animationDelay: `${index * 0.1}s`,
-                }}
-              >
-                {item.name}
-              </Link>
-            ))}
-          </div>
+          <div className="hidden items-center gap-5 lg:gap-10 md:flex">
+  {navItems.map((item, index) => (
+    <Link
+      key={item.name}
+      href={item.href}
+      className={`text-[15px] leading-none font-bold tracking-normal transition-colors duration-300 ${
+        pathname === item.href
+          ? "text-[#00B0B2]"
+          : "text-white/70 hover:text-white"
+      } ${
+        isHomePage
+          ? isVisible
+            ? "animate-fadeInUp"
+            : "opacity-0"
+          : "opacity-100"
+      }`}
+      style={{
+        fontFamily: "var(--font-geist-sans), sans-serif",
+        animationDelay: `${index * 0.1}s`,
+      }}
+    >
+      {item.name}
+    </Link>
+  ))}
+</div>
 
           {/* Get In Touch Button */}
           <div className="md:block hidden basis-[20%]">

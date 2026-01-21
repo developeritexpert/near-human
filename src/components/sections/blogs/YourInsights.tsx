@@ -1,3 +1,4 @@
+import CTAbutton from '@/components/layout/CTAbutton';
 import React from 'react'
 
 function YourInsights() {
@@ -40,7 +41,27 @@ function YourInsights() {
             
               <div className="w-full flex flex-wrap lg:flex-nowrap items-center justify-center gap-[12px]">
   
-                      <button className="h-[60px] w-[200px] rounded-[6px] border border-[#1017171A] px-[16px] text-[#101717] bg-white
+            <CTAbutton
+              href="/#"
+              text="Topic"
+              svgColor="#fff"
+              textColor="text-[#000]"
+              hoverTextColor="hover:text-[#fff]"
+              borderColor="border-[#000]"
+              bgColor="bg-[#000]"
+            />
+             <CTAbutton
+              href="/#"
+              text="Type: Blog"
+              svgColor="#fff"
+              textColor="text-[#000]"
+              hoverTextColor="hover:text-[#fff]"
+              borderColor="border-[#000]"
+              bgColor="bg-[#000]"
+            />
+
+
+                      {/* <button className="h-[60px] w-[200px] rounded-[6px] border border-[#1017171A] px-[16px] text-[#101717] bg-white
                            flex items-center justify-center font-[450] cursor-pointer transition-colors duration-200 hover:border-[#000] text-[18px]">
                             Topic
                          </button>
@@ -49,7 +70,7 @@ function YourInsights() {
                            <button className="h-[60px] w-[200px] rounded-[6px] border border-[#1017171A]  hover:border-[#000] px-[16px] text-[#101717] bg-white flex items-center justify-center
                                 font-[450] cursor-pointer transition-all duration-200 ">
                                    Type: Blog
-                                   </button>
+                                   </button> */}
 
                                 <div className="flex ">
                                    <input  type="text" placeholder="Search: Blogs" className=" h-[60px] w-[60%] md:w-[320px] rounded-l-[6px] border border-[#1017171F] hover:border-[#000]
@@ -59,7 +80,8 @@ function YourInsights() {
                                   <button className="inline-block h-[60px] px-[32px] rounded-r-[6px] bg-[#00B0B2] text-white font-[450]  hover:bg-[#4FD6D8]
                                             transition-colors duration-300">
                                         Search
-                                       </button>
+                                       </button>                                       
+                                       
                                        </div>
                </div>
               

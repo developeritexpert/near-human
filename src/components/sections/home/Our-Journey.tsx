@@ -352,8 +352,8 @@ function OurJourney() {
               bgColor="bg-[#fff]"
             />
             <CTAbutton
-              href="/contact"
-              text="MDP"
+              href="/scootrr"
+              text="Scootrr"
               svgColor="#fff"
               textColor="text-[#000]"
               hoverTextColor="hover:text-[#fff]"
@@ -362,7 +362,7 @@ function OurJourney() {
             />
             <CTAbutton
               href="/contact"
-              text="MDP"
+              text="Contact us"
               svgColor="#fff"
               textColor="text-[#000]"
               hoverTextColor="hover:text-[#fff]"

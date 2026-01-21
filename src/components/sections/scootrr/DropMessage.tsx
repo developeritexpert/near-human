@@ -19,7 +19,7 @@ function DropMessage() {
           <p className='text-[#052424] text-[24px] font-[450] text-center'>From product demos to partnership inquiries, drop us a message and we’ll get back quickly.</p> 
            </div>
            <div className="flex justify-center mt-[37px]">
-                    <Link href="" className='text-[16px] text-[#052424] underline'>
+                    <Link href="#" className='text-[16px] text-[#052424] underline hover:text-[#00B0B2]'>
                      Send a Message                 
                     </Link>
                 </div>
