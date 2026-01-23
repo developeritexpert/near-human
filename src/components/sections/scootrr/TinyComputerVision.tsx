@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Image from "next/image";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -10,22 +11,29 @@ if (typeof window !== "undefined") {
 
 function TinyComputerVision() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const textItemsRef = useRef<(HTMLDivElement | null)[]>([]);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const slidesRef = useRef<(HTMLDivElement | null)[]>([]);
   const [isReady, setIsReady] = useState(false);
 
   const featuresData = [
-    { id: 1, title: "Safety Features that redefine micromobility" },
-    { id: 2, title: "AI-Powered Object Recognition with 99.9% accuracy" },
-    { id: 3, title: "Ultra-Low Power Consumption for extended battery life" },
+    { 
+      id: 1, 
+      title: "Safety Features that redefine micromobility",
+      image: "/img/img-sc-1.png",
+      layout: "text-left" // Text Left, Img Right
+    },
+    { 
+      id: 2, 
+      title: "AI-Powered Object Recognition with 99.9% accuracy",
+      image: "/img/img-sc-2.png",
+      layout: "img-left" // Img Left, Text Right
+    },
+    { 
+      id: 3, 
+      title: "Ultra-Low Power Consumption for extended battery life",
+      image: "/img/img-sc-3.png",
+      layout: "img-left" // Img Left, Text Right
+    },
   ];
-
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.play().catch(() => {});
-    }
-  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsReady(true), 150);
@@ -35,188 +43,98 @@ function TinyComputerVision() {
   useEffect(() => {
     if (!isReady || !containerRef.current) return;
 
-    ScrollTrigger.getById("tiny-cv-trigger")?.kill();
+    let ctx: gsap.Context = gsap.context(() => {
+        const slides = slidesRef.current;
+        
+        // Initial States: Slide 1 visible, others hidden
+        gsap.set(slides, { opacity: 0, zIndex: (i) => i + 1 });
+        gsap.set(slides[0], { opacity: 1 });
 
-    let ctx: gsap.Context | null = null;
-    let currentIdx = 0;
-
-    const initScrollTrigger = () => {
-      ctx = gsap.context(() => {
-        const items = textItemsRef.current.filter(Boolean) as HTMLDivElement[];
-        if (!items.length) return;
-
-        items.forEach((item, i) => {
-          gsap.set(item, {
-            autoAlpha: i === 0 ? 1 : 0,
-            y: i === 0 ? 0 : 30,
-          });
-        });
-
-        ScrollTrigger.create({
-          id: "tiny-cv-trigger",
-          trigger: containerRef.current,
-          start: "top top",
-          end: () => `+=${featuresData.length * 400}`,
-          pin: true,
-          pinSpacing: true,
-          scrub: 0.8,
-          invalidateOnRefresh: true,
-          onUpdate: (self) => {
-            const progress = self.progress;
-            const total = featuresData.length;
-            const rawIndex = progress * (total - 0.01);
-            let newIdx = Math.floor(rawIndex);
-            newIdx = Math.max(0, Math.min(newIdx, total - 1));
-
-            if (newIdx !== currentIdx) {
-              const prevIdx = currentIdx;
-              currentIdx = newIdx;
-              setActiveIndex(newIdx);
-
-              const prevItem = items[prevIdx];
-              const nextItem = items[newIdx];
-
-              const tl = gsap.timeline();
-
-              if (prevItem) {
-                tl.to(prevItem, {
-                  autoAlpha: 0,
-                  y: -30,
-                  duration: 0.4,
-                  ease: "power2.inOut",
-                }, 0);
-              }
-
-              if (nextItem) {
-                tl.fromTo(nextItem, 
-                  { autoAlpha: 0, y: 30 },
-                  { autoAlpha: 1, y: 0, duration: 0.4, ease: "power2.out" }, 
-                  0.1
-                );
-              }
+        // Master Timeline attached to ScrollTrigger Pin
+        const tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: containerRef.current,
+                start: "top top",
+                end: "+=300%", // Pin for 3 screen heights
+                pin: true,
+                scrub: 0.5,
             }
-          },
         });
-      }, containerRef);
-    };
 
-    const rafId = requestAnimationFrame(() => {
-      const timer = setTimeout(() => {
-        initScrollTrigger();
-        ScrollTrigger.refresh();
-      }, 300);
+        // TRANSITION 1: Slide 0 -> Slide 1
+        // Sequential to avoid "messy" overlap
+        tl.to(slides[0], { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 0.2); // Fade Out 0
+        tl.to(slides[1], { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 0.7); // Fade In 1 (After 0 is gone)
 
-      return () => clearTimeout(timer);
-    });
+        // TRANSITION 2: Slide 1 -> Slide 2
+        tl.to(slides[1], { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 1.7); // Fade Out 1
+        tl.to(slides[2], { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 2.2); // Fade In 2 (After 1 is gone)
 
-    return () => {
-      cancelAnimationFrame(rafId);
-      ScrollTrigger.getById("tiny-cv-trigger")?.kill();
-      ctx?.revert();
-    };
-  }, [isReady, featuresData.length]);
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, [isReady]);
   
   return (
-    <section className="relative">
-      {/* Pinned Container */}
-      <div
-        ref={containerRef}
-        className="relative min-h-screen bg-[#0A1016] overflow-hidden"
-      >
-        {/* Video Background Layer */}
-        <div className="absolute inset-0 w-full h-full">
-          {/* Video overlay gradients for text readability */}
-          <div className="absolute inset-0 z-20">
-            <div className="absolute inset-0 bg-gradient-to-b from-[#0A1016]/20 via-[#0A1016]/40 to-[#0A1016]/80"></div>
-          </div>
-          
-          {/* Video Element */}
-          <video
-            ref={videoRef}
-            className="absolute inset-0 w-full h-full object-cover object-center"
-            style={{ zIndex: 10 }}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            poster="/img/tiny-comp-bg-img.png"
-          >
-            <source src="/Videos/scootr/scootr_2.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        </div>
-
-        {/* Content Layer */}
-        <div className="relative z-30 min-h-screen flex flex-col justify-center px-[20px] md:px-[30px] lg:px-[50px] py-[50px] md:py-[90px] lg:py-[110px]">
-          <div className="container max-w-[1440px] mx-auto w-full">
-            {/* Header - Always Visible */}
-            <div className="max-w-[760px] mx-auto mb-[40px] md:mb-[60px] lg:mb-[107px]">
-              <h3 className="text-[28px] sm:text-[32px] md:text-[45px] lg:text-[57px] text-[#FFF] text-center font-[450] drop-shadow-2xl">
-                Tiny Computer Vision Camera module
-                <span className="text-[#00B0B2]"> packed with features</span>
-              </h3>
-            </div>
-
-            {/* Features Container */}
-            <div className="flex justify-center">
-              <div className="relative w-full max-w-[400px]" style={{ minHeight: "150px" }}>
-                {featuresData.map((item, index) => (
-                  <div
-                    key={item.id}
-                    ref={(el) => {
-                      textItemsRef.current[index] = el;
-                    }}
-                    className="absolute top-0 left-0 right-0 flex flex-col items-center"
-                    style={{
-                      visibility: index === 0 ? "visible" : "hidden",
-                      opacity: index === 0 ? 1 : 0,
-                    }}
-                  >
-                    {/* Number Circle */}
-                    <div className="h-[43px] w-[43px] border-2 border-[#00B0B2] rounded-full flex justify-center items-center text-[#00B0B2] bg-[#0A1016]/80 backdrop-blur-sm shadow-lg">
-                      {item.id}
-                    </div>
-                    
-                    {/* Title Text */}
-                    <p className="mt-[19px] text-[26px] font-[450] text-white text-center drop-shadow-2xl px-4">
-                      {item.title}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Progress Dots */}
-            <div className="mt-[50px] flex justify-center items-center gap-[10px]">
-              {featuresData.map((_, index) => (
-                <div
-                  key={index}
-                  className="relative"
-                >
-                  <div
-                    className={`w-[8px] h-[8px] rounded-full transition-all duration-500 ${
-                      index === activeIndex 
-                        ? "bg-[#00B0B2] scale-125" 
-                        : "bg-white/30 scale-100"
-                    }`}
-                  />
-                  {index === activeIndex && (
-                    <div className="absolute inset-0 w-[8px] h-[8px] rounded-full bg-[#00B0B2] animate-ping" />
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Scroll Indicator */}
-            <div className="mt-[30px] flex justify-center">
-              <div className="text-white/40 text-sm animate-bounce">
-                ↓ Scroll to explore
-              </div>
-            </div>
-          </div>
-        </div>
+    <section 
+        ref={containerRef} 
+        className="relative w-full h-screen overflow-hidden" 
+    >
+      
+      {/* SCOPED BACKGROUND */}
+      <div className="absolute inset-0 w-full h-full z-0">
+          <Image
+            src="/img/bg-for-animation.png"
+            alt="Background"
+            fill
+            className="object-cover"
+            priority
+          />
+          {/* Subtle overlay */}
+          <div className="absolute inset-0 bg-[#0A1016]/30" />
       </div>
+
+      {/* SLIDES CONTAINER */}
+      <div className="relative w-full h-full z-10 max-w-[1440px] mx-auto">
+         
+            {featuresData.map((item, index) => (
+                <div 
+                    key={item.id}
+                    ref={(el) => { slidesRef.current[index] = el; }}
+                    className="absolute inset-0 w-full h-full flex items-center justify-center px-[20px] md:px-[50px] lg:px-[80px]"
+                >
+                    <div className={`flex flex-col lg:flex-row items-center justify-between w-full h-full lg:h-auto gap-10 lg:gap-20 ${item.layout === 'text-left' ? '' : 'lg:flex-row-reverse'}`}>
+                        
+                        {/* TEXT SIDE */}
+                        <div className="w-full lg:w-1/2 flex flex-col justify-center">
+                            <div className="w-[60px] h-[60px] border-2 border-[#00B0B2] rounded-full flex justify-center items-center text-[#00B0B2] text-xl font-bold mb-6">
+                                {item.id}
+                            </div>
+                            <h2 className="text-[32px] md:text-[45px] lg:text-[60px] leading-tight font-[450] text-white drop-shadow-lg">
+                                {item.title}
+                            </h2>
+                        </div>
+
+                        {/* IMAGE SIDE */}
+                        <div className="w-full lg:w-1/2 flex justify-center items-center">
+                            {/* Constrained Image Size - Much Smaller */}
+                            <div className="relative w-full max-w-[280px] aspect-square flex items-center justify-center">
+                                <Image
+                                    src={item.image}
+                                    alt={item.title}
+                                    width={400}
+                                    height={400}
+                                    className="w-full h-auto object-contain drop-shadow-2xl"
+                                />
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            ))}
+
+      </div>
+
     </section>
   );
 }
