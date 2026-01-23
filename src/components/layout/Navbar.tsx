@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
-import CTAbutton from "./CTAbutton";
+import CTAbuttonNav from "./CTAbuttonNav";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -159,7 +159,7 @@ export default function Navbar() {
             : "opacity-100" // Always visible on non-home pages
         } transition-opacity duration-300`}
       >
-        <nav className="relative flex h-[75px] w-full max-w-[1002px] items-center justify-between rounded-[15px] border border-white/10 bg-[#0b0f0f]/20 px-[20px] backdrop-blur-[34px]  lg:px-[60px]">
+        <nav className="relative flex h-[75px] w-full max-w-[1002px] items-center justify-between rounded-[15px] border border-white/10 bg-[#0b0f0f]/40 backdrop-blur-2xl px-[20px] backdrop-blur-[34px]  lg:px-[30px]">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className=" flex-shrink-0">
@@ -168,7 +168,7 @@ export default function Navbar() {
                 alt="near HUMAN"
                 width={170}
                 height={19}
-                className="h-[19px] w-[170px] object-contain"
+                className="h-[30px] w-[170px] object-contain"
                 priority
               />
             </Link>
@@ -183,7 +183,7 @@ export default function Navbar() {
       className={`text-[15px] leading-none font-bold tracking-normal transition-colors duration-300 ${
         pathname === item.href
           ? "text-[#00B0B2]"
-          : "text-white/70 hover:text-white"
+          : "text-white"
       } ${
         isHomePage
           ? isVisible
@@ -203,15 +203,15 @@ export default function Navbar() {
 
           {/* Get In Touch Button */}
           <div className="md:block hidden basis-[20%]">
-            <CTAbutton
-              href="/contact"
-              text="Get In Touch"
-              svgColor="#00B0B2"
-              textColor="text-[#fff]"
-              hoverTextColor="hover:text-[#00B0B2]"
-              borderColor="border-[#00B0B2]"
-              bgColor="transparent"
-            />
+            <CTAbuttonNav
+                href="/contact"
+                text="Get In Touch"
+                svgColor="#fff"
+                textColor="text-[#101717]"
+                hoverTextColor="hover:text-[#fff]"
+                borderColor="border-[#fff]"
+                bgColor="transparent"               
+              />
           </div>
 
           {/* Mobile Menu Toggle */}
