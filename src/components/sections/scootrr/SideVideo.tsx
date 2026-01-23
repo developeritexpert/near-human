@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useLayoutEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -18,13 +18,9 @@ const THEME = {
 function SideVideo() {
   const sectionRef = useRef<HTMLElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
-  const textContainerRef = useRef<HTMLDivElement>(null);
   const textItemsRef = useRef<(HTMLDivElement | null)[]>([]);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const notchRef = useRef<HTMLDivElement>(null);
+  const videoItemsRef = useRef<(HTMLDivElement | null)[]>([]);
   const svgPathRef = useRef<SVGPathElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
   const [isReady, setIsReady] = useState(false);
 
   const statisticsData = [
@@ -32,53 +28,45 @@ function SideVideo() {
       id: "01",
       number: "30,000+",
       description: "injuries in the UK and EU alone",
+      video: "/Videos/scootr/scottr.mp4",
     },
     {
       id: "02",
       number: "1,300",
       description:
         "reported casualties in the UK alone, costing the NHS and Insurers ~£7M",
+      video: "/Videos/scootr/scootr_2.mp4",
     },
     {
       id: "03",
       number: "9,425",
       description:
         "Germany reported 9,425 E-Scooter accidents, marking a 14.1% increase from the previous year.",
+      video: "/Videos/scootr/scooter-last.mp4",
     },
   ];
 
-  const CONTENT_HEIGHT = 700;
-  const VIDEO_SIZE = 450;
+  const generateNotchPath = (progress: number) => {
+    // progress is 0 to 2 (since 3 items, 2 intervals)
+    const minY = 150; // Starting Y position
+    const totalTravel = 250; // Total distance to travel down
+    const notchY = minY + (progress / 2) * totalTravel;
 
-const generateNotchPath = (index: number) => {
-  const totalItems = statisticsData.length;
-  const minY = 150;
-  const maxY = 400;
-  const notchY = minY + ((maxY - minY) / (totalItems - 1)) * index;
+    const notchHeight = 220;
+    const notchDepth = 35;
 
-  const notchHeight = 220;
-  const notchDepth = 35;
-
-  return `
-    M 0 0
-    H ${notchDepth}
-    V ${notchY}
-    L ${notchDepth + 20} ${notchY + 40}
-    V ${notchY + notchHeight - 40}
-    L ${notchDepth} ${notchY + notchHeight}
-    V 700
-    H 0
-    Z
-  `;
-};
-
-
-  // Video autoplay
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.play().catch(() => {});
-    }
-  }, []);
+    return `
+      M 0 0
+      H ${notchDepth}
+      V ${notchY}
+      L ${notchDepth + 20} ${notchY + 40}
+      V ${notchY + notchHeight - 40}
+      L ${notchDepth} ${notchY + notchHeight}
+      V 700
+      H 0
+      Z
+    `;
+  };
 
   // Mark component as ready after mount
   useEffect(() => {
@@ -91,226 +79,90 @@ const generateNotchPath = (index: number) => {
   useEffect(() => {
     if (!isReady || !pinRef.current) return;
 
-    // Kill existing trigger for this component
-    const existingTrigger = ScrollTrigger.getById("sidevideo-scroll-trigger");
-    if (existingTrigger) {
-      existingTrigger.kill();
-    }
+    let ctx: gsap.Context = gsap.context(() => {
+      const texts = textItemsRef.current;
+      const videos = videoItemsRef.current;
 
-    let ctx: gsap.Context | null = null;
-    let currentIdx = 0;
+      // Initial States for Texts
+      gsap.set(texts, { opacity: 0, display: "none" });
+      gsap.set(texts[0], { opacity: 1, display: "block" });
 
-    const initScrollTrigger = () => {
-      ctx = gsap.context(() => {
-        const items = textItemsRef.current.filter(
-          (el): el is HTMLDivElement => !!el
-        );
+      // Initial States for Videos
+      // Stack videos: zIndex increases
+      gsap.set(videos, { zIndex: (i) => i + 1, opacity: 0 });
+      gsap.set(videos[0], { opacity: 1 });
 
-        if (!items.length) return;
+      if (svgPathRef.current) {
+        gsap.set(svgPathRef.current, { attr: { d: generateNotchPath(0) } });
+      }
 
-        // Set initial states
-        items.forEach((item, i) => {
-          gsap.set(item, {
-            opacity: i === 0 ? 1 : 0,
-            y: i === 0 ? 0 : 40,
-            scale: i === 0 ? 1 : 0.95,
-            display: i === 0 ? "block" : "none",
-          });
-        });
-
-        if (notchRef.current) {
-          gsap.set(notchRef.current, { y: 0 });
-        }
-        if (svgPathRef.current) {
-          gsap.set(svgPathRef.current, { attr: { d: generateNotchPath(0) } });
-        }
-
-        ScrollTrigger.create({
-          id: "sidevideo-scroll-trigger",
+      const totalSections = statisticsData.length;
+      const timeline = gsap.timeline({
+        scrollTrigger: {
           trigger: pinRef.current,
           start: "top top",
-          end: `+=${statisticsData.length * 500}`,
+          end: `+=${totalSections * 700}`,
           pin: true,
-          pinSpacing: true,
-          scrub: 0.8,
-          anticipatePin: 1,
+          scrub: 1,
           invalidateOnRefresh: true,
-          onUpdate: (self) => {
-            const progress = self.progress;
-            const total = statisticsData.length;
-            const rawIndex = progress * total;
-            let newIdx = Math.floor(rawIndex);
-            newIdx = Math.max(0, Math.min(newIdx, total - 1));
+        },
+      });
 
-            if (newIdx === currentIdx) return;
+      // Transition 0 -> 1
+      timeline
+        // Text 0 fades out
+        .to(texts[0], { opacity: 0, duration: 0.5 }, 0)
+        .set(texts[0], { display: "none" }, 0.5)
+        
+        // Text 1 fades in
+        .set(texts[1], { display: "block" }, 0.5)
+        .to(texts[1], { opacity: 1, duration: 0.5 }, 0.5)
+        
+        // Video 1 fades in ON TOP of Video 0 (Direct fade)
+        .to(videos[1], { opacity: 1, duration: 0.5 }, 0.25) // Start fade slightly into the transition
+        
+        // Match notch animation
+        .to(svgPathRef.current, {
+           attr: { d: generateNotchPath(1) },
+           ease: "none",
+           duration: 1
+        }, 0);
 
-            const prevIdx = currentIdx;
-            currentIdx = newIdx;
-            setActiveIndex(newIdx);
+      // Transition 1 -> 2
+      timeline
+        // Text 1 fades out
+        .to(texts[1], { opacity: 0, duration: 0.5 }, 1)
+        .set(texts[1], { display: "none" }, 1.5)
+        
+        // Text 2 fades in
+        .set(texts[2], { display: "block" }, 1.5)
+        .to(texts[2], { opacity: 1, duration: 0.5 }, 1.5)
 
-            const prevItem = items[prevIdx];
-            const nextItem = items[newIdx];
+        // Video 2 fades in ON TOP of Video 1
+        .to(videos[2], { opacity: 1, duration: 0.5 }, 1.25)
 
-            const tl = gsap.timeline();
+         // Match notch animation
+        .to(svgPathRef.current, {
+           attr: { d: generateNotchPath(2) },
+           ease: "none",
+           duration: 1
+        }, 1);
 
-            if (prevItem) {
-              tl.to(
-                prevItem,
-                {
-                  opacity: 0,
-                  y: -30,
-                  scale: 0.98,
-                  duration: 0.4,
-                  ease: "power2.in",
-                  onComplete: () => {
-                    gsap.set(prevItem, { display: "none" });
-                  },
-                },
-                0
-              );
-            }
+    }, pinRef);
 
-            if (nextItem) {
-              gsap.set(nextItem, {
-                display: "block",
-                opacity: 0,
-                y: 40,
-                scale: 0.95,
-              });
-
-              tl.to(
-                nextItem,
-                {
-                  opacity: 1,
-                  y: 0,
-                  scale: 1,
-                  duration: 0.5,
-                  ease: "power2.out",
-                },
-                0.15
-              );
-            }
-
-            if (notchRef.current && trackRef.current) {
-              const trackHeight = trackRef.current.offsetHeight;
-              const indicatorHeight = 70;
-              const maxTravel = trackHeight - indicatorHeight;
-              const targetY = (newIdx / (total - 1)) * maxTravel;
-
-              tl.to(
-                notchRef.current,
-                {
-                  y: targetY,
-                  duration: 0.45,
-                  ease: "power2.inOut",
-                },
-                0
-              );
-            }
-
-            if (svgPathRef.current) {
-              tl.to(
-                svgPathRef.current,
-                {
-                  attr: { d: generateNotchPath(newIdx) },
-                  duration: 0.5,
-                  ease: "power2.inOut",
-                },
-                0
-              );
-            }
-          },
-        });
-      }, pinRef);
-    };
-
-    // Use requestAnimationFrame for better timing
-    const rafId = requestAnimationFrame(() => {
-      const timer = setTimeout(() => {
-        initScrollTrigger();
-        ScrollTrigger.refresh();
-      }, 250);
-
-      return () => clearTimeout(timer);
-    });
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      ScrollTrigger.getById("sidevideo-scroll-trigger")?.kill();
-      if (ctx) {
-        ctx.revert();
-      }
-    };
+    return () => ctx.revert();
   }, [isReady]);
 
 
   return (
     <section ref={sectionRef} className="relative z-10 bg-white">
-      <div ref={pinRef} className="px-[20px] md:px-[30px] lg:px-[50px] bg-white">
-        <div
-          className="
-            flex flex-col lg:flex-row items-center
-            pt-[60px] pb-[40px] md:py-[80px]
-            min-h-[auto]
-            md:min-h-[500px]
-            lg:min-h-[700px]
-          "
-        >
+      <div ref={pinRef} className="px-[20px] md:px-[30px] lg:px-[50px] bg-white h-screen flex flex-col justify-center">
+        <div className="flex flex-col lg:flex-row items-center w-full max-w-[1600px] mx-auto">
+          
           {/* LEFT: Statistics */}
-          <div className="w-full lg:w-1/2 flex items-center relative h-full">
-            {/* Parallelogram scroll track */}
-            {/* <div
-              ref={trackRef}
-              className="hidden lg:block absolute left-0 top-1/2 -translate-y-1/2"
-              style={{ height: "200px", width: "4px" }}
-            >
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: "#E8E8E8",
-                  clipPath: "polygon(0 8px, 100% 0, 100% calc(100% - 8px), 0 100%)",
-                }}
-              />
-
-              <div
-                ref={notchRef}
-                className="absolute left-0 top-0"
-                style={{ height: "70px", width: "4px" }}
-              >
-                <div
-                  className="w-full h-full"
-                  style={{
-                    background: THEME.primary,
-                    clipPath: "polygon(0 6px, 100% 0, 100% calc(100% - 6px), 0 100%)",
-                    boxShadow: `0 0 12px ${THEME.primary}60`,
-                  }}
-                />
-                <div
-                  className="absolute -top-2 left-1/2 -translate-x-1/2"
-                  style={{
-                    width: "10px",
-                    height: "10px",
-                    background: THEME.primary,
-                    clipPath: "polygon(20% 0, 80% 0, 100% 100%, 0 100%)",
-                  }}
-                />
-                <div
-                  className="absolute -bottom-2 left-1/2 -translate-x-1/2"
-                  style={{
-                    width: "10px",
-                    height: "10px",
-                    background: THEME.primary,
-                    clipPath: "polygon(0 0, 100% 0, 80% 100%, 20% 100%)",
-                  }}
-                />
-              </div>
-            </div> */}
-
-            {/* Text Content */}
+          <div className="w-full lg:w-1/2 flex items-center relative h-full order-2 lg:order-1 mt-10 lg:mt-0">
             <div className="lg:pl-[50px] xl:pl-[100px] 2xl:pl-[200px] w-full">
-             <div
-                    ref={textContainerRef}
-                    className="relative min-h-[150px] md:min-h-[200px] lg:min-h-[280px]" >
+             <div className="relative min-h-[250px] md:min-h-[300px]">
                 {statisticsData.map((item, index) => (
                   <div
                     key={item.id}
@@ -318,10 +170,6 @@ const generateNotchPath = (index: number) => {
                       textItemsRef.current[index] = el;
                     }}
                     className="absolute top-0 left-0 w-full lg:max-w-[450px]"
-                    style={{
-                      opacity: index === 0 ? 1 : 0,
-                      display: index === 0 ? "block" : "none",
-                    }}
                   >
                     <h2 className="mb-[8px] text-[36px] md:text-[50px] lg:text-[60px] xl:text-[77px] font-[450] leading-tight text-[#101717]">
                       {item.number}
@@ -332,127 +180,48 @@ const generateNotchPath = (index: number) => {
                   </div>
                 ))}
               </div>
-
-              {/* Progress bar */}
-              {/* <div className="mt-6 flex items-center gap-3">
-                <span
-                  className="font-semibold tabular-nums text-sm"
-                  style={{ color: THEME.primary }}
-                >
-                  {String(activeIndex + 1).padStart(2, "0")}
-                </span>
-                <div className="w-24 lg:w-28 h-1 bg-[#E5E5E5] rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500 ease-out"
-                    style={{
-                      width: `${((activeIndex + 1) / statisticsData.length) * 100}%`,
-                      background: THEME.primary,
-                      boxShadow: `0 0 8px ${THEME.primary}60`,
-                    }}
-                  />
-                </div>
-                <span
-                  className="tabular-nums text-sm"
-                  style={{ color: THEME.mutedText }}
-                >
-                  {String(statisticsData.length).padStart(2, "0")}
-                </span>
-              </div> */}
             </div>
           </div>
 
           {/* RIGHT: Video */}
-          {/* coorection  */}
-        <div className="w-full lg:w-1/2 flex justify-center items-center mt-8 lg:mt-0">
-                    <div className="relative w-full lg:w-[90%] xl:w-full aspect-[900/700] rounded-xl overflow-hidden">
-
-                      {/* VIDEO */}
-                      <video
-                        ref={videoRef}
-                        className="absolute inset-0 w-full h-full object-cover z-10 pointer-events-none"
-                        src="/Videos/scootr/scottr.mp4"
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        preload="auto"
-                      />
-
-                      {/* SVG CUT */}
-                      <svg
-                        className="absolute inset-0 w-full h-full pointer-events-none z-20"
-                        viewBox="0 0 900 700"
-                        preserveAspectRatio="none"
-                      >
-                        <path
-                          ref={svgPathRef}
-                          d={generateNotchPath(activeIndex)}
-                          fill="#ffffff"
+          <div className="w-full lg:w-1/2 flex justify-center items-center order-1 lg:order-2">
+            <div className="relative w-full lg:w-[90%] xl:w-full aspect-[900/700] rounded-xl overflow-hidden">
+                
+                {/* VIDEOS STACK */}
+                {statisticsData.map((item, index) => (
+                    <div 
+                        key={item.id}
+                        ref={(el) => { videoItemsRef.current[index] = el; }}
+                        className="absolute inset-0 w-full h-full"
+                    >
+                        <video
+                            className="w-full h-full object-cover pointer-events-none"
+                            src={item.video}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            preload="auto"
                         />
-                      </svg>
-
-                      {/* GLOW */}
-                      <div
-                        className="absolute rounded-full blur-3xl z-0 pointer-events-none"
-                        style={{
-                          width: "200px",
-                          height: "200px",
-                          background: THEME.primary,
-                          opacity: 0.15,
-                          top: "50%",
-                          left: "50%",
-                          transform: "translate(-50%, -50%)",
-                        }}
-                      />
                     </div>
-          </div>
+                ))}
 
-
-          {/* <div className="w-full lg:w-1/2 flex justify-center items-center mt-8 lg:mt-0">
-            <div
-              className="relative w-full max-w-[600px] flex items-center justify-center"
-              style={{ height: `${CONTENT_HEIGHT}px` }}
-            >
-             
+              {/* AVG OVERLAY (Combined) */}
               <svg
-                className="absolute inset-0 w-full h-full"
+                className="absolute inset-0 w-full h-full pointer-events-none z-20"
                 viewBox="0 0 900 700"
-                preserveAspectRatio="xMidYMid meet"
-                style={{ zIndex: 1 }}
+                preserveAspectRatio="none"
               >
                 <path
                   ref={svgPathRef}
                   d={generateNotchPath(0)}
-                  fill="#020203"
+                  fill="#ffffff"
                 />
               </svg>
 
-          
+              {/* GLOW */}
               <div
-                className="relative object-cover"
-                style={{
-                  width: VIDEO_SIZE,
-                  height: VIDEO_SIZE,
-                  maxWidth: "100%",
-                  maxHeight: "100%",
-                  zIndex: 10,
-                }}
-              >
-                <video
-                  ref={videoRef}
-                  className="w-full h-full object-contain  xl:object-cover pointer-events-none "
-                  src="/Videos/scootr/scottr.mp4"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  preload="auto"
-                />
-              </div>
-
-            
-              <div
-                className="absolute rounded-full blur-3xl"
+                className="absolute rounded-full blur-3xl z-0 pointer-events-none"
                 style={{
                   width: "200px",
                   height: "200px",
@@ -461,14 +230,13 @@ const generateNotchPath = (index: number) => {
                   top: "50%",
                   left: "50%",
                   transform: "translate(-50%, -50%)",
-                  zIndex: 5,
                 }}
               />
             </div>
-          </div> */}
+          </div>
+
         </div>
       </div>
-
       <div className="h-12" />
     </section>
   );

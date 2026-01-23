@@ -14,7 +14,7 @@ export default function Navbar() {
   const [hasScrolled, setHasScrolled] = useState(false);
   const pathname = usePathname();
 
-  const isHomePage = pathname === "/";
+  const isHomePage = pathname === "/old-home";
 
   const navItems = [
     { name: "Home", href: "/" },
