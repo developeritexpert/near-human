@@ -61,21 +61,21 @@ function ScootrrSec() {
         </h5>
 
         {/* Accent Line */}
-        <span
+        {/* <span
           ref={lineRef}
           className="block mx-auto mt-[14px] mb-[24px] h-[2px] w-[90px]
-          bg-[#63b7f7]"
-        />
+          bg-[#00B0B2]"
+        /> */}
 
         {/* Main Heading */}
         <h3
           ref={headingRef}
           className="text-[28px] md:text-[45px] lg:text-[57px]
           text-[#101717] font-[450]
-          max-w-[967px] mx-auto leading-[1.2]"
+          max-w-[950px] mx-auto leading-[1.2]"
         >
           Scootrr is the safety intelligence for{" "}
-          <span className="text-[#63b7f7]">
+          <span className="text-[#00B0B2]">
             e-scooters, e-bikes
           </span>{" "}
           and other micromobility vehicles.

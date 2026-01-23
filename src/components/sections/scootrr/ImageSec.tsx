@@ -1,66 +1,29 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
-import gsap from "gsap";
+import { useEffect, useRef, useState } from "react";
 
 function ImageSec() {
-  const imageWrapperRef = useRef<HTMLDivElement | null>(null);
-  const imageRef = useRef<HTMLImageElement | null>(null);
+  const iframeRef = useRef(null);
+  const containerRef = useRef(null);
+  const [play, setPlay] = useState(false);
 
   useEffect(() => {
-    if (!imageWrapperRef.current || !imageRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setPlay(true);
+        } else {
+          setPlay(false);
+        }
+      },
+      { threshold: 0.6 } // 60% visible
+    );
 
-    const ctx = gsap.context(() => {
-      const wrapper = imageWrapperRef.current!;
-      const img = imageRef.current!;
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
 
-      // Hover In
-      wrapper.addEventListener("mouseenter", () => {
-        gsap.to(img, {
-          scale: 1.08,
-          duration: 0.6,
-          ease: "power3.out",
-        });
-
-        gsap.to(wrapper, {
-          boxShadow: "0px 40px 80px rgba(0,0,0,0.35)",
-          duration: 0.6,
-          ease: "power3.out",
-        });
-      });
-
-      // Hover Out
-      wrapper.addEventListener("mouseleave", () => {
-        gsap.to([img, wrapper], {
-          scale: 1,
-          rotateX: 0,
-          rotateY: 0,
-          boxShadow: "0px 0px 0px rgba(0,0,0,0)",
-          duration: 0.6,
-          ease: "power3.out",
-        });
-      });
-
-      // Mouse Move (3D Tilt Effect)
-      wrapper.addEventListener("mousemove", (e: MouseEvent) => {
-        const rect = wrapper.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        const rotateY = gsap.utils.mapRange(0, rect.width, -8, 8, x);
-        const rotateX = gsap.utils.mapRange(0, rect.height, 8, -8, y);
-
-        gsap.to(wrapper, {
-          rotateX,
-          rotateY,
-          transformPerspective: 800,
-          duration: 0.4,
-          ease: "power2.out",
-        });
-      });
-    });
-
-    return () => ctx.revert();
+    return () => observer.disconnect();
   }, []);
 
   return (
@@ -69,19 +32,30 @@ function ImageSec() {
       after:content-[''] after:-z-1
       after:bg-[url('/img/scooter-bgimg.png')] after:bg-cover after:bg-center after:no-repeat">
 
-      <div className="container max-w-[1440px] mx-auto">
-        <div
-          ref={imageWrapperRef}
-          className="rounded-[15px] md:rounded-[30px] overflow-hidden will-change-transform cursor-pointer"
-        >
-          <img
-            ref={imageRef}
-            src="/img/Sctr-img-sec.png"
-            alt="Scooter"
-            className="w-full h-full object-cover"
-          />
-        </div>
-      </div>
+       <div ref={containerRef} className="w-full">
+      <div className="relative overflow-hidden h-[60vh] sm:h-[70vh] md:h-[90vh] rounded-[15px] md:rounded-[30px]">
+
+  {/* 🔹 Background Image */}
+  <img
+    src="/img/Sctr-img-sec.png"
+    alt="Scooter"
+    className="absolute inset-0 w-full h-full object-cover"
+  />
+
+  {/* 🔹 Video (same size as image) */}
+  {play && (
+    <iframe
+      className="absolute inset-0 w-full h-full object-cover"
+      src="https://www.youtube.com/embed/6-AjSG7Zw_4?autoplay=1&mute=1&controls=1&rel=0"
+      title="YouTube video player"
+      frameBorder="0"
+      allow="autoplay; encrypted-media"
+      allowFullScreen
+    />
+  )}
+
+</div>
+    </div>
     </section>
   );
 }

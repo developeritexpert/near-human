@@ -50,31 +50,28 @@ function SideVideo() {
   const CONTENT_HEIGHT = 700;
   const VIDEO_SIZE = 450;
 
-  const generateNotchPath = (index: number) => {
-    const totalItems = statisticsData.length;
-    const minY = 150;
-    const maxY = 400;
-    const notchY = minY + ((maxY - minY) / (totalItems - 1)) * index;
-    const notchHeight = 220;
-    const notchDepth = 35;
+const generateNotchPath = (index: number) => {
+  const totalItems = statisticsData.length;
+  const minY = 150;
+  const maxY = 400;
+  const notchY = minY + ((maxY - minY) / (totalItems - 1)) * index;
 
-    return `
-      M 40,0 
-      H 860 
-      A 40,40 0 0 1 900,40 
-      V 660 
-      A 40,40 0 0 1 860,700 
-      H 40 
-      A 40,40 0 0 1 0,660 
-      V ${notchY + notchHeight}
-      L ${notchDepth},${notchY + notchHeight - 55}
-      V ${notchY + 55}
-      L 0,${notchY}
-      V 40 
-      A 40,40 0 0 1 40,0 
-      Z
-    `;
-  };
+  const notchHeight = 220;
+  const notchDepth = 35;
+
+  return `
+    M 0 0
+    H ${notchDepth}
+    V ${notchY}
+    L ${notchDepth + 20} ${notchY + 40}
+    V ${notchY + notchHeight - 40}
+    L ${notchDepth} ${notchY + notchHeight}
+    V 700
+    H 0
+    Z
+  `;
+};
+
 
   // Video autoplay
   useEffect(() => {
@@ -251,17 +248,18 @@ function SideVideo() {
     <section ref={sectionRef} className="relative z-10 bg-white">
       <div ref={pinRef} className="px-[20px] md:px-[30px] lg:px-[50px] bg-white">
         <div
-          className="flex flex-col lg:flex-row items-center"
-          style={{
-            minHeight: `${CONTENT_HEIGHT}px`,
-            paddingTop: "80px",
-            paddingBottom: "80px",
-          }}
+          className="
+            flex flex-col lg:flex-row items-center
+            pt-[60px] pb-[40px] md:py-[80px]
+            min-h-[auto]
+            md:min-h-[500px]
+            lg:min-h-[700px]
+          "
         >
           {/* LEFT: Statistics */}
           <div className="w-full lg:w-1/2 flex items-center relative h-full">
             {/* Parallelogram scroll track */}
-            <div
+            {/* <div
               ref={trackRef}
               className="hidden lg:block absolute left-0 top-1/2 -translate-y-1/2"
               style={{ height: "200px", width: "4px" }}
@@ -306,15 +304,13 @@ function SideVideo() {
                   }}
                 />
               </div>
-            </div>
+            </div> */}
 
             {/* Text Content */}
             <div className="lg:pl-[50px] xl:pl-[100px] 2xl:pl-[200px] w-full">
-              <div
-                ref={textContainerRef}
-                className="relative"
-                style={{ minHeight: "280px" }}
-              >
+             <div
+                    ref={textContainerRef}
+                    className="relative min-h-[150px] md:min-h-[200px] lg:min-h-[280px]" >
                 {statisticsData.map((item, index) => (
                   <div
                     key={item.id}
@@ -338,7 +334,7 @@ function SideVideo() {
               </div>
 
               {/* Progress bar */}
-              <div className="mt-6 flex items-center gap-3">
+              {/* <div className="mt-6 flex items-center gap-3">
                 <span
                   className="font-semibold tabular-nums text-sm"
                   style={{ color: THEME.primary }}
@@ -361,17 +357,63 @@ function SideVideo() {
                 >
                   {String(statisticsData.length).padStart(2, "0")}
                 </span>
-              </div>
+              </div> */}
             </div>
           </div>
 
           {/* RIGHT: Video */}
-          <div className="w-full lg:w-1/2 flex justify-center items-center mt-8 lg:mt-0">
+          {/* coorection  */}
+        <div className="w-full lg:w-1/2 flex justify-center items-center mt-8 lg:mt-0">
+                    <div className="relative w-full lg:w-[90%] xl:w-full aspect-[900/700] rounded-xl overflow-hidden">
+
+                      {/* VIDEO */}
+                      <video
+                        ref={videoRef}
+                        className="absolute inset-0 w-full h-full object-cover z-10 pointer-events-none"
+                        src="/Videos/scootr/scottr.mp4"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        preload="auto"
+                      />
+
+                      {/* SVG CUT */}
+                      <svg
+                        className="absolute inset-0 w-full h-full pointer-events-none z-20"
+                        viewBox="0 0 900 700"
+                        preserveAspectRatio="none"
+                      >
+                        <path
+                          ref={svgPathRef}
+                          d={generateNotchPath(activeIndex)}
+                          fill="#ffffff"
+                        />
+                      </svg>
+
+                      {/* GLOW */}
+                      <div
+                        className="absolute rounded-full blur-3xl z-0 pointer-events-none"
+                        style={{
+                          width: "200px",
+                          height: "200px",
+                          background: THEME.primary,
+                          opacity: 0.15,
+                          top: "50%",
+                          left: "50%",
+                          transform: "translate(-50%, -50%)",
+                        }}
+                      />
+                    </div>
+          </div>
+
+
+          {/* <div className="w-full lg:w-1/2 flex justify-center items-center mt-8 lg:mt-0">
             <div
               className="relative w-full max-w-[600px] flex items-center justify-center"
               style={{ height: `${CONTENT_HEIGHT}px` }}
             >
-              {/* SVG Background */}
+             
               <svg
                 className="absolute inset-0 w-full h-full"
                 viewBox="0 0 900 700"
@@ -385,14 +427,14 @@ function SideVideo() {
                 />
               </svg>
 
-              {/* Video */}
+          
               <div
                 className="relative object-cover"
                 style={{
                   width: VIDEO_SIZE,
                   height: VIDEO_SIZE,
-                  maxWidth: "80%",
-                  maxHeight: "60%",
+                  maxWidth: "100%",
+                  maxHeight: "100%",
                   zIndex: 10,
                 }}
               >
@@ -408,7 +450,7 @@ function SideVideo() {
                 />
               </div>
 
-              {/* Glow effect */}
+            
               <div
                 className="absolute rounded-full blur-3xl"
                 style={{
@@ -423,7 +465,7 @@ function SideVideo() {
                 }}
               />
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 
