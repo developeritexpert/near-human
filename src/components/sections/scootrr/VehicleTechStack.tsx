@@ -108,8 +108,8 @@ function VehicleTechStack() {
         className="relative bg-white px-[20px] md:px-[30px] lg:px-[50px] pt-[50px] md:pt-[70px] lg:pt-[100px] xl:pt-[136px] pb-[30px] md:pb-[50px]"
       >
         <div className="container mx-auto max-w-[1440px]">
-          <div className="max-w-[730px] mx-auto text-center">
-            <h2 className="text-[32px] md:text-[42px] lg:text-[55px] xl:text-[77px] text-[#101717] font-[450] leading-tight">
+          <div className="max-w-[550px] mx-auto text-center">
+            <h2 className="text-[32px] md:text-[42px] lg:text-[55px]  text-[#101717] font-medium leading-tight">
               Seamless Retrofitting with your vehicle
               <span className="text-[#00B0B2]"> tech stack.</span>
             </h2>
