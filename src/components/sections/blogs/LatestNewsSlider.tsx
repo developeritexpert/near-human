@@ -154,7 +154,7 @@ function LatestNewsSlider() {
             onClick={handlePrev}
             className="h-[40px] w-[40px] md:h-[50px] md:w-[50px] xl:h-[90px] xl:w-[90px] rounded-[8px] bg-[#1017170F] flex justify-center items-center hover:bg-[#1017171A] transition-colors"
           >
-            <svg width="10" height="20" viewBox="0 0 10 20" fill="none">
+            <svg width="10" height="20" viewBox="0 0 10 20" fill="white">
               <path d="M8.61437 0.901119L1.78396 9.74401L8.61437 17.8692" stroke="#101717" strokeWidth="1.5" />
             </svg>
           </button>
@@ -200,7 +200,7 @@ function LatestNewsSlider() {
                     style={{ opacity: isHovered ? 1 : 0 }}
                   >
                     {/* SVG for clip path definition */}
-                    <svg className="absolute" width="0" height="0">
+                    <svg className="absolute" width="0" height="0" >
                       <defs>
                         <clipPath id={clipId} clipPathUnits="objectBoundingBox">
                           <path

@@ -5,7 +5,7 @@ import React from 'react'
 function OurJourney() {
   return (
     <div>      
-        <section className=' px-[20px] md:px-[30px] lg:px-[50px] pt-[62px] pb-[40px] md:pb-[70px] lg:pb[100px] xl:pb-[124px] overflow-hidden'>
+        <section className='h-[100vh] px-[20px] md:px-[30px] lg:px-[50px] pt-[62px] pb-[40px] md:pb-[70px] lg:pb[100px] xl:pb-[124px] overflow-hidden'>
             <div className="">
                <h5 className="text-[22px] md:text-[24px]  text-[#10171738] mb-[21px] text-center">Our Journey</h5>                 
                                     <AnimatedText
