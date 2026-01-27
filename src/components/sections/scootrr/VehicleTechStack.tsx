@@ -29,7 +29,8 @@ function VehicleTechStack() {
   }, []);
 
   useEffect(() => {
-    if (!isReady || !sectionRef.current || !carouselContainerRef.current) return;
+    if (!isReady || !sectionRef.current || !carouselContainerRef.current)
+      return;
 
     ScrollTrigger.getById("vehicle-carousel-section")?.kill();
 
@@ -74,9 +75,21 @@ function VehicleTechStack() {
         for (let step = 0; step < slides.length - 1; step++) {
           const label = `step-${step}`;
 
-          tl.to(currentSlots[2], { ...positions.center, duration: 1, ease: "power2.inOut" }, label)
-            .to(currentSlots[1], { ...positions.left, duration: 1, ease: "power2.inOut" }, label)
-            .to(currentSlots[0], { ...positions.right, duration: 1, ease: "power2.inOut" }, label);
+          tl.to(
+            currentSlots[2],
+            { ...positions.center, duration: 1, ease: "power2.inOut" },
+            label
+          )
+            .to(
+              currentSlots[1],
+              { ...positions.left, duration: 1, ease: "power2.inOut" },
+              label
+            )
+            .to(
+              currentSlots[0],
+              { ...positions.right, duration: 1, ease: "power2.inOut" },
+              label
+            );
 
           currentSlots = [currentSlots[1], currentSlots[2], currentSlots[0]];
         }
@@ -99,17 +112,16 @@ function VehicleTechStack() {
     };
   }, [isReady, slides.length]);
 
-
   return (
     <section ref={sectionRef} className="relative bg-white">
       {/* Header Section - Scrolls normally */}
       <div
         ref={headerRef}
-        className="relative bg-white px-[20px] md:px-[30px] lg:px-[50px] pt-[50px] md:pt-[70px] lg:pt-[100px] xl:pt-[136px] pb-[30px] md:pb-[50px]"
+        className="relative bg-white px-[20px] pt-[50px] pb-[30px] md:px-[30px] md:pt-[70px] md:pb-[50px] lg:px-[50px] lg:pt-[100px] xl:pt-[136px]"
       >
         <div className="container mx-auto max-w-[1440px]">
-          <div className="max-w-[550px] mx-auto text-center">
-            <h2 className="text-[32px] md:text-[42px] lg:text-[55px]  text-[#101717] font-medium leading-tight">
+          <div className="mx-auto max-w-[550px] text-center">
+            <h2 className="text-[32px] leading-tight font-medium text-[#101717] md:text-[42px] lg:text-[55px]">
               Seamless Retrofitting with your vehicle
               <span className="text-[#00B0B2]"> tech stack.</span>
             </h2>
@@ -120,26 +132,33 @@ function VehicleTechStack() {
       {/* Carousel Section - This pins and animates */}
       <div
         ref={carouselContainerRef}
-        className="relative bg-white px-[20px] md:px-[30px] lg:px-[50px] py-[30px] md:py-[50px]"
+        className="relative bg-white px-[20px] py-[30px] md:px-[30px] md:py-[50px] lg:px-[50px]"
       >
         <div className="container mx-auto max-w-[1440px]">
-          <div className="max-w-[1060px] mx-auto">
+          <div className="mx-auto max-w-[1060px]">
             {/* Images Carousel */}
-            <div className="relative h-[350px] sm:h-[400px] lg:h-[500px] flex items-center justify-center overflow-hidden">
+            <div className="relative flex h-[350px] items-center justify-center overflow-hidden sm:h-[400px] lg:h-[500px]">
+              <Image
+                src="/img/camera.webp"
+                alt="Camera"
+                width={100}
+                height={100}
+                className="absolute top-1/2 left-1/2 z-[10] h-auto w-auto -translate-x-[50%] -translate-y-[120px]"
+              />
               {slides.map((item, i) => (
                 <div
                   key={item.id}
                   ref={(el) => {
                     if (el) imagesRef.current[i] = el;
                   }}
-                  className="absolute flex justify-center items-center"
+                  className="absolute flex items-center justify-center"
                 >
                   <Image
                     src={item.src}
                     alt={item.alt}
                     width={500}
                     height={500}
-                    className="w-auto h-auto max-w-[300px] sm:max-w-[350px] lg:max-w-[450px] xl:max-w-[500px] object-contain"
+                    className="h-auto w-auto max-w-[300px] object-contain sm:max-w-[350px] lg:max-w-[450px] xl:max-w-[500px]"
                     priority={i === 1}
                   />
                 </div>
@@ -147,7 +166,7 @@ function VehicleTechStack() {
             </div>
 
             {/* Progress Indicators */}
-            <div className="flex justify-center gap-2 mt-[30px]">
+            <div className="mt-[30px] flex justify-center gap-2">
               {slides.map((_, index) => (
                 <div
                   key={index}
@@ -164,14 +183,10 @@ function VehicleTechStack() {
       </div>
 
       {/* Bottom Section - Scrolls after carousel unpins */}
-      <div className="relative bg-white px-[20px] md:px-[30px] lg:px-[50px] pb-[50px] md:pb-[70px]">
+      <div className="relative bg-white px-[20px] pb-[50px] md:px-[30px] md:pb-[70px] lg:px-[50px]">
         <div className="container mx-auto max-w-[1440px]">
           {/* Bottom Border */}
-          <div
-            className="border border-transparent
-            [border-image-source:linear-gradient(90deg,rgba(16,23,23,0)_0%,rgba(16,23,23,0.11)_50%,rgba(16,23,23,0)_100%)]
-            [border-image-slice:1]"
-          />
+          <div className="border border-transparent [border-image-slice:1] [border-image-source:linear-gradient(90deg,rgba(16,23,23,0)_0%,rgba(16,23,23,0.11)_50%,rgba(16,23,23,0)_100%)]" />
         </div>
       </div>
     </section>
