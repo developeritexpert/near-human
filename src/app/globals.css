@@ -110,6 +110,9 @@ body {
   color: #111;
   background: #fff;
 }
+nav a{
+   font-family: "Suisse Int", Arial, sans-serif !important;
+}
 
 h1,
 h2,
