@@ -18,14 +18,14 @@ export default function CTAbuttonNav({ href, text }: CTAbuttonProps) {
         transition-colors duration-300
         hover:text-white
         hover:underline
-        
+
       "
     >
       {/* black sliding background */}
       <span
         className="
           absolute inset-0
-          bg-black
+          bg-[#00B0B2]
           translate-y-full
           transition-transform duration-300 ease-in-out
           group-hover:translate-y-0
