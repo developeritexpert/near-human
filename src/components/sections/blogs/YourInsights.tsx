@@ -44,20 +44,12 @@ function YourInsights() {
             <CTAbutton
               href="/#"
               text="Topic"
-              svgColor="#fff"
-              textColor="text-[#000]"
-              hoverTextColor="hover:text-[#fff]"
-              borderColor="border-[#000]"
-              bgColor="bg-[#000]"
+             
             />
              <CTAbutton
               href="/#"
               text="Type: Blog"
-              svgColor="#fff"
-              textColor="text-[#000]"
-              hoverTextColor="hover:text-[#fff]"
-              borderColor="border-[#000]"
-              bgColor="bg-[#000]"
+             
             />
 
 

@@ -200,12 +200,7 @@ function  FutureIntelligent () {
                         </Link> */}
                         <CTAbutton
                               href="#"
-                              text="Share"
-                              svgColor="#fff"
-                              textColor="text-[#000]"
-                              hoverTextColor="hover:text-[#fff]"
-                              borderColor="border-[#000]"
-                              bgColor="bg-[#000]"
+                              text="Share"                              
                             />
                       </div>
 

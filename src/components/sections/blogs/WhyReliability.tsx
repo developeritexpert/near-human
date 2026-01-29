@@ -233,12 +233,7 @@ function WhyReliability() {
             <div ref={buttonRef}>
              <CTAbutton
               href="/blogs-detail"
-              text="Read More"
-              svgColor="#00B0B2"
-              textColor="text-[#fff]"
-              hoverTextColor="hover:text-[#000]"
-              borderColor="border-[#00B0B2]"
-              bgColor="bg-[#fff]"
+              text="Read More"              
             />      
             </div>
           </div>

@@ -86,33 +86,33 @@ function OurPartners() {
             </div>
 
             <div className="relative z-10 flex grid grid-cols-[0.2fr_1fr_0.2fr] justify-center gap-[2px] md:grid-cols-[0.3fr_1fr_1fr_1fr_0.3fr]">
-              <div className="h-[250px] bg-[#ffffff]"></div>
-              <div className="flex h-[250px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa]">
+              <div className=" h-[160px] sm:h-[200px] md:h-[250px]  bg-[#ffffff]"></div>
+              <div className="flex h-[160px] sm:h-[200px] md:h-[250px]   items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa]">
                 <img
                   src="/img/partner-logo1.png"
                   alt=""
-                  className="mix-blend-luminosity"
+                  className="mix-blend-luminosity max-w-[130px] sm:max-w-full"
                 />
               </div>
-              <div className="block h-[250px] bg-[#ffffff] md:hidden"></div>
-              <div className="block h-[250px] bg-[#ffffff] md:hidden"></div>
-              <div className="flex h-[250px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa]">
+              <div className="block h-[160px] sm:h-[200px] md:h-[250px]  bg-[#ffffff] md:hidden"></div>
+              <div className="block h-[160px] sm:h-[200px] md:h-[250px]  bg-[#ffffff] md:hidden"></div>
+              <div className="flex h-[160px] sm:h-[200px] md:h-[250px]  items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa]">
                 <img
                   src="/img/partner-logo2.png"
                   alt=""
-                  className="mix-blend-luminosity"
+                  className="mix-blend-luminosity max-w-[130px] sm:max-w-full"
                 />
               </div>
-              <div className="block h-[250px] bg-[#ffffff] md:hidden"></div>
-              <div className="block h-[250px] bg-[#ffffff] md:hidden"></div>
-              <div className="flex h-[250px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa]">
+              <div className="block h-[160px] sm:h-[200px] md:h-[250px]   bg-[#ffffff] md:hidden"></div>
+              <div className="block h-[160px] sm:h-[200px] md:h-[250px]  bg-[#ffffff] md:hidden"></div>
+              <div className="flex h-[160px] sm:h-[200px] md:h-[250px]   items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa]">
                 <img
                   src="/img/partner-logo3.png"
                   alt=""
-                  className="mix-blend-luminosity"
+                  className="mix-blend-luminosity max-w-[130px] sm:max-w-full"
                 />
               </div>
-              <div className="h-[250px] bg-[#ffffff]"></div>
+              <div className="h-[160px] sm:h-[200px] md:h-[250px]   bg-[#ffffff]"></div>
             </div>
 
             <div className="relative z-10 flex grid grid-cols-[0.2fr_1fr_0.2fr] justify-center gap-[2px] md:grid-cols-[0.3fr_1fr_1fr_1fr_0.3fr]">

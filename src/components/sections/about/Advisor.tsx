@@ -100,29 +100,17 @@ function Advisor() {
              <CTAbutton
               href="/early-access"
               text="Join the early access"
-              svgColor="#00B0B2"
-              textColor="text-[#fff]"
-              hoverTextColor="hover:text-[#000]"
-              borderColor="border-[#00B0B2]"
-              bgColor="bg-[#fff]"
+             
             />
             <CTAbutton
               href="/contact"
-              text="Talk to us"
-              svgColor="#fff"
-              textColor="text-[#000]"
-              hoverTextColor="hover:text-[#fff]"
-              borderColor="border-[#000]"
-              bgColor="bg-[#000]"
+              text="Talk to us"          
+              
             />
             <CTAbutton
               href="/explore"
-              text=" Explore Scootrr"
-              svgColor="#fff"
-              textColor="text-[#000]"
-              hoverTextColor="hover:text-[#fff]"
-              borderColor="border-[#000]"
-              bgColor="bg-[#000]"
+              text=" Explore Scootrr"            
+             
             />
                   </div>
 

@@ -137,7 +137,7 @@ function VehicleTechStack() {
         <div className="container mx-auto max-w-[1440px]">
           <div className="mx-auto max-w-[1060px]">
             {/* Images Carousel */}
-            <div className="relative flex h-[350px] items-center justify-center overflow-hidden sm:h-[400px] lg:h-[500px]">
+            <div className="relative flex h-[430px] items-center justify-center overflow-hidden sm:h-[400px] lg:h-[500px]">
               <Image
                 src="/img/camera.webp"
                 alt="Camera"
