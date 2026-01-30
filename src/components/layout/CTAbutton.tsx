@@ -86,7 +86,7 @@ export default function CTAbutton({ href, text }: CTAbuttonProps) {
       href={href}
       className="
         group relative block
-        h-[56px] w-full max-w-[170px]
+        h-[56px] w-full max-w-[190px]
         overflow-hidden rounded-[7px]
         border border-[#727272]
         hover:border-[#00B0B2]
@@ -94,6 +94,7 @@ export default function CTAbutton({ href, text }: CTAbuttonProps) {
         text-center text-[16px] text-black
         transition-colors duration-300
         hover:text-white
+        hover:underline
       "
     >
       {/* 🔥 Sliding background */}

@@ -1,7 +1,8 @@
 "use client";
 import React from 'react'
 import Link from 'next/link';
-import { FaLinkedin } from "react-icons/fa";
+import { FaLinkedinIn } from "react-icons/fa";
+
 
 
 function Team() {
@@ -84,21 +85,36 @@ const teamMembers = [
                     src={item.image}
                      alt={item.name}
                         className="rounded-[20px] h-full w-full "
-                         />                       
-                              <Link
-                                href={item.linkedin}
-                                target="_blank"
-                                className=" absolute bottom-[20px] left-[20px]
-                                  inline-flex  opacity-0 group-hover:opacity-100 items-center justify-center
-                                 py-3 px-3
-                                  rounded-[6px]
-                                  bg-white text-black
-                                  border border-black/20
-                                  text-[15px] font-medium
-                                  transition-all duration-300
-                                  hover:bg-[#00B0B2] hover:text-white">
-                                <FaLinkedin />
-                              </Link>
+                         />     
+                                          <Link
+                                            href={item.linkedin}
+                                            target="_blank"
+                                            className="absolute bottom-[20px] left-[20px]
+                                              inline-flex items-center justify-center
+                                              py-3 px-3
+                                              rounded-[6px]
+                                              border border-black/20
+                                              bg-white text-black
+                                              overflow-hidden
+                                              opacity-0 group-hover:opacity-100   
+                                              transition-opacity duration-300
+                                              hover:border-[#00B0B2]
+                                              hover:text-white
+                                              hover:[&_span.bg-slide]:translate-y-0">
+                                            
+                                            <span
+                                              className="
+                                                bg-slide
+                                                absolute inset-0
+                                                bg-[#00B0B2]
+                                                translate-y-full
+                                                transition-transform duration-300 ease-in-out
+                                              "
+                                            />
+                                            <span className="relative z-10">
+                                              <FaLinkedinIn />
+                                            </span>
+                                          </Link>
                         
                          </div>
                      <div className="mb-[38px] mt-[55px]">

@@ -156,7 +156,7 @@ function WhyReliability() {
           {/* Image Container */}
           <div 
             ref={imageRef}
-            className="relative rounded-[15px] overflow-hidden group cursor-pointer flex-shrink-0"
+            className="flex-1 relative rounded-[15px] overflow-hidden group cursor-pointer "
           >
             {/* Image reveal overlay */}
             <div 

@@ -28,7 +28,7 @@ function Advisor() {
     <div>
         <section className='px-[20px] md:px-[30px] lg:px-[50px] pt-[40px] md:pt-[70px] lg:pt-[100px] xl:pt-[135px]  pb-[40px] md:pb-[70px] lg:pb-[100px] xl:pb-[120px] relative overflow-hidden'>
            <div className="absolute top-0 left-0 w-full -z-1 h-full  max-h-[974px]">
-                <img src="img/about-team-bg.png" alt="" />
+                <img src="img/about-team-bg.png" alt="" className='object-contain h-full w-full' />
               </div>
               <div className="max-w-[1440px] mx-auto relative z-5">
                 <h2 className='text-[35px] md:text-[40px] lg:text-[55px] xl:text-[77px] text-black text-center'>Advisors</h2>

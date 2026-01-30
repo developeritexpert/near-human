@@ -25,11 +25,11 @@ function  FutureIntelligent () {
 
                   <div className=" mt-[40px] md:mt-[70px]">
                     <div className='flex gap-[12px] flex-wrap sm:flex-nowrap items-center justify-center mb-[24px]'>
-                    <p className='text-[24px] text-[#10171738]'>Announcement</p>
+                    <p className='text-[20px] md:text-[24px] text-[#10171738]'>Announcement</p>
                     <svg width="7" height="7" viewBox="0 0 7 7" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <circle cx="3.5" cy="3.5" r="3.5" fill="#D9D9D9"/>
                     </svg>
-                      <p className='text-[24px] text-[#10171738]'>January 8, 2026</p>
+                      <p className='text-[20px] md:text-[24px] text-[#10171738]'>January 8, 2026</p>
                       </div>
 
 

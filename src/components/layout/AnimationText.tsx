@@ -20,11 +20,10 @@ export default function AnimatedText({
 }: AnimatedTextProps) {
   const ref = useRef<HTMLHeadingElement>(null);
 
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start 80%", "end 30%"],
-  });
-
+ const { scrollYProgress } = useScroll({
+  target: ref,
+  offset: ["start 95%", "center center"],
+});
   // Split by words
   const words = text.split(" ");
   const totalChars = text.replace(/\s/g, "").length;
@@ -84,3 +83,18 @@ export default function AnimatedText({
     </h2>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

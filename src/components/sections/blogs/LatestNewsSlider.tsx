@@ -5,6 +5,7 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 const THEME = {
   primary: "#00B0B2",
@@ -143,7 +144,7 @@ function LatestNewsSlider() {
   };
 
   return (
-    <section className="px-[10px] sm:px-[20px] md:px-[30px] lg:px-[60px] pb-[40px] md:pb-[70px] lg:pb-[100px] xl:pb-[120px]">
+    <section className="px-[10px] sm:px-[20px] md:px-[30px] xl:px-[60px] pb-[40px] md:pb-[70px] lg:pb-[100px] xl:pb-[120px]">
       {/* Header */}
       <div className="flex justify-between items-center">
         <h3 className="text-[#101717] text-[32px] md:text-[45px] lg:text-[55px] xl:text-[77px] font-[450]">
@@ -287,28 +288,45 @@ function LatestNewsSlider() {
                         transform: isHovered ? "translateY(0)" : "translateY(20px)",
                       }}
                     >
-                      <Link
-                        href="/blogs-detail"
-                        className="inline-flex items-center gap-2 text-[16px] py-[13px] px-[34px] rounded-[7px] transition-all duration-300 border"
-                        style={{
-                          color: "#fff",
-                          borderColor: "rgba(255,255,255,0.5)",
-                          background: "transparent",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "#fff";
-                          e.currentTarget.style.color = THEME.dark;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "transparent";
-                          e.currentTarget.style.color = "#fff";
-                        }}
-                      >
-                        Read More
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M5 12h14M12 5l7 7-7 7" />
-                        </svg>
-                      </Link>
+                     
+                    
+                              <Link
+                                href="/blogs-detail"
+                                className="
+                                  group relative inline-flex
+                                  h-[48px] px-[34px]
+                                  items-center justify-center gap-2
+                                  overflow-hidden rounded-[7px]
+                                  border border-[rgba(255,255,255,0.5)]
+                                  text-[16px] text-white
+                                  transition-colors duration-300
+                                  hover:border-white
+                                  hover:text-black">
+                               
+                                <span
+                                  className="
+                                    absolute inset-0
+                                    bg-white
+                                    translate-y-full
+                                    transition-transform duration-300 ease-in-out
+                                    group-hover:translate-y-0"/>
+
+                                {/* CONTENT */}
+                                <span className="relative z-10 inline-flex items-center gap-2">
+                                  Read More
+                                  <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    className="transition-transform duration-300 group-hover:translate-x-1"
+                                  >
+                                    <path d="M5 12h14M12 5l7 7-7 7" />
+                                  </svg>
+                                </span>
+                              </Link>
                     </div>
                   </div>
 
