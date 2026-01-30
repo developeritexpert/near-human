@@ -194,7 +194,7 @@ const Footer = () => {
             <img
               src="/img/footer-logo.png"
               alt=""
-              className="max-w-[200px] md:max-w-[300px] lg:max-w-full"
+              className="max-w-[200px] md:max-w-[250px] lg:max-w-full"
             />
           </a>
 
@@ -206,7 +206,7 @@ const Footer = () => {
         </div>
 
         <div>
-          <h4 className="!mb-[15px] text-[27px] font-normal text-white">
+          <h4 className="!mb-[15px] text-[22px] md:text-[19px] lg:text-[27px]  font-normal text-white">
             Quick Links
           </h4>
           <ul className="text-[#F7F8F8]">
@@ -262,7 +262,7 @@ const Footer = () => {
         </div>
 
         <div>
-          <h4 className="!mb-[15px] text-[27px] font-normal text-white">
+          <h4 className="!mb-[15px] text-[22px] md:text-[19px] lg:text-[27px] font-normal text-white">
             Connect with our experts today
           </h4>
           <ul className="text-[#F7F8F8]">

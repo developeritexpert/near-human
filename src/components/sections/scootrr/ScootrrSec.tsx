@@ -53,12 +53,12 @@ function ScootrrSec() {
       <div className="container max-w-[1440px] mx-auto text-center">
 
         {/* Top Tag */}
-        <h5
+        {/* <h5
           ref={tagRef}
           className="text-[24px] font-[450] tracking-wide text-[#10171738]"
         >
           Scootrr
-        </h5>
+        </h5> */}
 
         {/* Accent Line */}
         {/* <span
