@@ -345,29 +345,17 @@ function OurJourney() {
             <CTAbutton
               href="/contact"
               text="MDP"
-              svgColor="#00B0B2"
-              textColor="text-[#fff]"
-              hoverTextColor="hover:text-[#000]"
-              borderColor="border-[#00B0B2]"
-              bgColor="bg-[#fff]"
+            
             />
             <CTAbutton
               href="/scootrr"
               text="Scootrr"
-              svgColor="#fff"
-              textColor="text-[#000]"
-              hoverTextColor="hover:text-[#fff]"
-              borderColor="border-[#000]"
-              bgColor="bg-[#000]"
+              
             />
             <CTAbutton
               href="/contact"
               text="Contact us"
-              svgColor="#fff"
-              textColor="text-[#000]"
-              hoverTextColor="hover:text-[#fff]"
-              borderColor="border-[#000]"
-              bgColor="bg-[#000]"
+            
             />
           </div>
         </div>

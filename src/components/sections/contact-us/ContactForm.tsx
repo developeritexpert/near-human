@@ -219,11 +219,7 @@ function ContactForm() {
             <CTAbutton
               href="/contact"
               text="Submit"
-              svgColor="#00B0B2"
-              textColor="text-[#fff]"
-              hoverTextColor="hover:text-[#000]"
-              borderColor="border-[#00B0B2]"
-              bgColor="bg-[#fff]"
+             
             />
   {/* <button
     type="submit"

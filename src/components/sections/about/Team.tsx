@@ -1,5 +1,7 @@
 "use client";
 import React from 'react'
+import Link from 'next/link';
+import { FaLinkedin } from "react-icons/fa";
 
 
 function Team() {
@@ -9,54 +11,59 @@ const teamMembers = [
     name: "Faizan Mir",
     designation: "Founder & CEO",
     image: "img/abt-team-usr1.png",
+    linkedin: "https://www.linkedin.com/in/faizanfaiiz/"
   },
   {
     id: 2,
     name: "Ali Ekbal",
     designation: "COO",
     image: "img/abt-team-usr2.png",
+    linkedin: "https://www.linkedin.com/in/aliekbal/"
   },
   {
     id: 3,
     name: "Hatim Shaherawala",
     designation: "VP R&D",
     image: "img/abt-team-usr3.png",
-  },
-   {
-    "id": 4,
-    "name": "Dushyant Goel",
-    "designation": " AI R&D intern",
-    "image": "img/abt-team-usr4.png",
-    
+    linkedin: "https://www.linkedin.com/in/hatim-shaherawala/"
   },
   {
-    "id": 5,
-    "name": "Madiha Trumboo",
-    "designation": "Finance Management",
-    "image": "img/abt-team-usr5.png",
-    
+    id: 4,
+    name: "Dushyant Goel",
+    designation: "AI R&D Intern",
+    image: "img/abt-team-usr4.png",
+    linkedin: "https://www.linkedin.com/in/dushyant-goel/"
   },
   {
-    "id": 6,
-    "name": "Amin Alhawary",
-    "designation": " AI Engineer",
-    "image": "img/abt-team-usr6.png",
-    
-  },
-    {
-    "id": 7,
-    "name": "Cameron Setiadi",
-    "designation": "Legal Intern",
-    "image": "img/abt-team-usr7.png",
+    id: 5,
+    name: "Madiha Trumboo",
+    designation: "Finance Management",
+    image: "img/abt-team-usr5.png",
+    linkedin: "https://www.linkedin.com/in/madiha-trumboo/"
   },
   {
-    "id": 8,
-    "name": "Catherine Lau",
-    "designation": "Legal Intern",
-    "image": "img/abt-team-usr8.png",
+    id: 6,
+    name: "Amin Alhawary",
+    designation: "AI Engineer",
+    image: "img/abt-team-usr6.png",
+    linkedin: "https://www.linkedin.com/in/aminalhawary/"
   },
-   
+  {
+    id: 7,
+    name: "Cameron Setiadi",
+    designation: "Legal Intern",
+    image: "img/abt-team-usr7.png",
+    linkedin: "https://www.linkedin.com/in/cameron-setiadi-5b49aa223/"
+  },
+  {
+    id: 8,
+    name: "Catherine Lau",
+    designation: "Legal Intern",
+    image: "img/abt-team-usr8.png",
+    linkedin: "https://www.linkedin.com/in/catherine-lau-95b61a213/"
+  },
 ];
+
   return (
     <div>
         <section className='px-[20px] md:px-[30px] lg:px-[50px] pt-[40px] md:pt-[70px] lg:pt-[90px] xl:pt-[107px]  pb-[40px] md:pb-[70px]  lg:pb-[100px] xl:pb-[140px] relative overflow-hidden'>            
@@ -72,11 +79,28 @@ const teamMembers = [
                 
                {teamMembers.map((item) => (
                    <div key={item.id} className="border-t border-l nth-[3n]:border-r nth-last-of-type-2:border-b nth-last-of-type-3:border-b last-of-type:border-r last-of-type:border-b border-[#1017171a] p-[17px]">
+                  <div className='relative group'>
                   <img
                     src={item.image}
                      alt={item.name}
-                        className="rounded-[20px]"
-                         />
+                        className="rounded-[20px] h-full w-full "
+                         />                       
+                              <Link
+                                href={item.linkedin}
+                                target="_blank"
+                                className=" absolute bottom-[20px] left-[20px]
+                                  inline-flex  opacity-0 group-hover:opacity-100 items-center justify-center
+                                 py-3 px-3
+                                  rounded-[6px]
+                                  bg-white text-black
+                                  border border-black/20
+                                  text-[15px] font-medium
+                                  transition-all duration-300
+                                  hover:bg-[#00B0B2] hover:text-white">
+                                <FaLinkedin />
+                              </Link>
+                        
+                         </div>
                      <div className="mb-[38px] mt-[55px]">
                          <h5 className="text-[22px] font-[450] text-center">
                          {item.name}

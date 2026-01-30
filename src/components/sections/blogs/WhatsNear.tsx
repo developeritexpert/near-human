@@ -25,11 +25,7 @@ function WhatsNear() {
                              <CTAbutton
                                 href="/#"
                               text="Join the Newsletter"
-                                svgColor="#00B0B2"
-                                textColor="text-[#fff]"
-                                hoverTextColor="hover:text-[#000]"
-                                borderColor="border-[#00B0B2]"
-                                bgColor="bg-[#fff]"
+                                
                               />
                      </div>
 
