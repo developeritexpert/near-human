@@ -15,7 +15,7 @@ export default function AnimatedText({
   text,
   fromColor = "#10171730", // Light grey
   toColor = "#101717", // Dark grey/black
-  glowColor = "#00B0B2", // Teal blue
+  glowColor = "#00B0B2", // Teal blue 
   className = "",
 }: AnimatedTextProps) {
   const ref = useRef<HTMLHeadingElement>(null);
