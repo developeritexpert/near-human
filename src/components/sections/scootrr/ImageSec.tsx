@@ -200,9 +200,9 @@ function ImageSec() {
   }, []);
 
   return (
-    <section className="relative px-[20px] md:px-[30px]">
+    <section className="relative">
       <div className="relative">
-        <div className="relative h-[60vh] sm:h-[70vh] md:h-[90vh]">
+        <div className="relative h-[100vh]">
           <div
             ref={containerRef}
             className="relative h-full overflow-hidden rounded-[15px] md:rounded-[30px]"
