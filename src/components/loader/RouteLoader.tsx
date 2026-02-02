@@ -3,8 +3,13 @@
 
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
+import Image from "next/image";
 
-export default function RouteLoader({ onComplete }: { onComplete: () => void }) {
+export default function RouteLoader({
+  onComplete,
+}: {
+  onComplete: () => void;
+}) {
   const loaderRef = useRef<HTMLDivElement>(null);
   const horizontalLineRef = useRef<HTMLDivElement>(null);
   const verticalLineRef = useRef<HTMLDivElement>(null);
@@ -121,16 +126,32 @@ export default function RouteLoader({ onComplete }: { onComplete: () => void }) 
       {/* Top Curtain */}
       <div
         ref={curtainTopRef}
-        className="absolute left-0 top-0 w-full h-1/2 bg-white z-30"
+        className="absolute top-0 left-0 z-30 h-1/2 w-full bg-[#eee]"
         style={{ boxShadow: "0 10px 60px rgba(0, 176, 178, 0.15)" }}
-      />
+      >
+        <Image
+          src="/img/upper.png"
+          height={40}
+          width={1500}
+          alt="Upper"
+          className="absolute top-full right-0 left-0 w-full"
+        />
+      </div>
 
       {/* Bottom Curtain */}
       <div
         ref={curtainBottomRef}
-        className="absolute left-0 bottom-0 w-full h-1/2 bg-white z-30"
+        className="absolute bottom-0 left-0 z-30 h-1/2 w-full bg-[#eee]"
         style={{ boxShadow: "0 -10px 60px rgba(0, 176, 178, 0.15)" }}
-      />
+      >
+        <Image
+          src="/img/lower.png"
+          height={40}
+          width={1500}
+          alt="Upper"
+          className="absolute right-0 bottom-full left-0 w-full"
+        />
+      </div>
 
       {/* Center Elements */}
       <div className="relative z-20 flex items-center justify-center">
@@ -143,7 +164,8 @@ export default function RouteLoader({ onComplete }: { onComplete: () => void }) 
             height: "100px",
             border: "3px solid #00B0B2",
             borderRadius: "50%",
-            boxShadow: "0 0 40px rgba(0, 176, 178, 0.4), inset 0 0 20px rgba(0, 176, 178, 0.1)",
+            boxShadow:
+              "0 0 40px rgba(0, 176, 178, 0.4), inset 0 0 20px rgba(0, 176, 178, 0.1)",
             opacity: 0,
           }}
         />
@@ -156,7 +178,8 @@ export default function RouteLoader({ onComplete }: { onComplete: () => void }) 
             height: "20px",
             backgroundColor: "#00B0B2",
             borderRadius: "50%",
-            boxShadow: "0 0 40px rgba(0, 176, 178, 0.8), 0 0 80px rgba(0, 176, 178, 0.4)",
+            boxShadow:
+              "0 0 40px rgba(0, 176, 178, 0.8), 0 0 80px rgba(0, 176, 178, 0.4)",
             opacity: 0,
           }}
         />
@@ -165,12 +188,14 @@ export default function RouteLoader({ onComplete }: { onComplete: () => void }) 
       {/* Horizontal Line - Bold */}
       <div
         ref={horizontalLineRef}
-        className="absolute left-0 top-1/2 -translate-y-1/2 z-10"
+        className="absolute top-1/2 left-0 z-10 -translate-y-1/2"
         style={{
           width: "100%",
           height: "3px",
-          background: "linear-gradient(90deg, transparent 0%, #00B0B2 20%, #00B0B2 80%, transparent 100%)",
-          boxShadow: "0 0 30px rgba(0, 176, 178, 0.8), 0 0 60px rgba(0, 176, 178, 0.4)",
+          background:
+            "linear-gradient(90deg, transparent 0%, #00B0B2 20%, #00B0B2 80%, transparent 100%)",
+          boxShadow:
+            "0 0 30px rgba(0, 176, 178, 0.8), 0 0 60px rgba(0, 176, 178, 0.4)",
           transformOrigin: "center",
           opacity: 0,
         }}
@@ -179,12 +204,14 @@ export default function RouteLoader({ onComplete }: { onComplete: () => void }) 
       {/* Vertical Line - Bold */}
       <div
         ref={verticalLineRef}
-        className="absolute left-1/2 top-0 -translate-x-1/2 z-10"
+        className="absolute top-0 left-1/2 z-10 -translate-x-1/2"
         style={{
           width: "3px",
           height: "100%",
-          background: "linear-gradient(180deg, transparent 0%, #00B0B2 20%, #00B0B2 80%, transparent 100%)",
-          boxShadow: "0 0 30px rgba(0, 176, 178, 0.8), 0 0 60px rgba(0, 176, 178, 0.4)",
+          background:
+            "linear-gradient(180deg, transparent 0%, #00B0B2 20%, #00B0B2 80%, transparent 100%)",
+          boxShadow:
+            "0 0 30px rgba(0, 176, 178, 0.8), 0 0 60px rgba(0, 176, 178, 0.4)",
           transformOrigin: "center",
           opacity: 0,
         }}

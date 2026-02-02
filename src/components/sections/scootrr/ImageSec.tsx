@@ -5,11 +5,14 @@ import { useEffect, useRef, useCallback } from "react";
 function ImageSec() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoContainerRef = useRef<HTMLDivElement>(null); // New ref for scaling container
+  const videoContainerRef = useRef<HTMLDivElement>(null);
   const isPlayingRef = useRef(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
-  const scaleRef = useRef(0.8); // Start at 80% scale
+  const scaleRef = useRef(0.8);
   const animationFrameRef = useRef<number>(0);
+  const lastScrollTimeRef = useRef<number>(0);
+  const isScrollingRef = useRef(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Debounced play/pause function
   const handleVisibilityChange = useCallback((isVisible: boolean) => {
@@ -34,9 +37,9 @@ function ImageSec() {
     }, 100);
   }, []);
 
-  // Handle scroll-based scaling
+  // Handle scroll-based scaling - FIXED VERSION
   useEffect(() => {
-    const handleScroll = () => {
+    const updateScale = () => {
       if (!containerRef.current || !videoContainerRef.current) return;
 
       // Get container position relative to viewport
@@ -44,14 +47,12 @@ function ImageSec() {
       const windowHeight = window.innerHeight;
 
       // Calculate progress based on container's vertical position
-      // When container is at the top: scale = 0.8 (80%)
-      // When container is in the middle: scale = 1 (100%)
       const progress = Math.max(
         0,
         Math.min(1, (windowHeight / 2 - rect.top) / (windowHeight / 2))
       );
 
-      // Smooth easing function for natural scaling
+      // Smooth easing function
       const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
       const easedProgress = easeOutCubic(progress);
 
@@ -59,19 +60,57 @@ function ImageSec() {
       const newScale = 0.8 + 0.2 * easedProgress;
       scaleRef.current = newScale;
 
+      // Apply transform WITHOUT transition during scroll
+      videoContainerRef.current.style.transform = `scale(${newScale})`;
+    };
+
+    const handleScroll = () => {
+      const now = Date.now();
+      lastScrollTimeRef.current = now;
+
+      if (!isScrollingRef.current) {
+        isScrollingRef.current = true;
+        // Remove transition during active scrolling
+        if (videoContainerRef.current) {
+          videoContainerRef.current.style.transition = "none";
+        }
+      }
+
+      // Clear any pending scroll end timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+
       // Cancel previous animation frame
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
 
       // Use requestAnimationFrame for smooth updates
-      animationFrameRef.current = requestAnimationFrame(() => {
-        if (videoContainerRef.current) {
-          videoContainerRef.current.style.transform = `scale(${newScale})`;
-          videoContainerRef.current.style.transition =
-            "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+      animationFrameRef.current = requestAnimationFrame(updateScale);
+
+      // Set timeout for scroll end detection
+      scrollTimeoutRef.current = setTimeout(() => {
+        const timeSinceLastScroll = Date.now() - lastScrollTimeRef.current;
+
+        // If no scroll for 100ms, consider scrolling ended
+        if (timeSinceLastScroll > 100) {
+          isScrollingRef.current = false;
+
+          // Re-enable transition after scroll ends for smooth return
+          if (videoContainerRef.current) {
+            videoContainerRef.current.style.transition =
+              "transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+
+            // One final update with transition
+            requestAnimationFrame(() => {
+              if (videoContainerRef.current) {
+                videoContainerRef.current.style.transform = `scale(${scaleRef.current})`;
+              }
+            });
+          }
         }
-      });
+      }, 100);
     };
 
     // Throttle scroll events
@@ -87,12 +126,15 @@ function ImageSec() {
     };
 
     window.addEventListener("scroll", throttledScroll);
-    handleScroll(); // Initial call
+    updateScale(); // Initial call
 
     return () => {
       window.removeEventListener("scroll", throttledScroll);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
       }
     };
   }, []);
@@ -134,6 +176,8 @@ function ImageSec() {
         videoContainerRef.current.style.transform = "scale(0.8)";
         videoContainerRef.current.style.transformOrigin = "center center";
         videoContainerRef.current.style.willChange = "transform";
+        videoContainerRef.current.style.transition =
+          "transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
       }
 
       // Give YouTube player time to initialize
@@ -157,16 +201,13 @@ function ImageSec() {
 
   return (
     <section className="relative px-[20px] md:px-[30px]">
-      {/* Background image moved outside container for proper scaling */}
-
       <div className="relative">
-        {/* This wrapper ensures the video container is positioned correctly */}
         <div className="relative h-[60vh] sm:h-[70vh] md:h-[90vh]">
           <div
             ref={containerRef}
             className="relative h-full overflow-hidden rounded-[15px] md:rounded-[30px]"
           >
-            {/* Video container with scaling - NOW THIS DIV GETS SCALED */}
+            {/* Video container with scaling */}
             <div
               ref={videoContainerRef}
               className="relative h-full w-full origin-center overflow-hidden rounded-[15px] md:rounded-[30px]"

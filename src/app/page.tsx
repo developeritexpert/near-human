@@ -199,10 +199,6 @@
 
 // function page() {
 
-
-
-
-
 // new scooter page
 
 // app/scootr/page.tsx
@@ -222,7 +218,6 @@ import ImageSec from "@/components/sections/scootrr/ImageSec";
 import ScootrrSec from "@/components/sections/scootrr/ScootrrSec";
 import SideVideo from "@/components/sections/scootrr/SideVideo";
 import TinyComputerVision from "@/components/sections/scootrr/TinyComputerVision";
-import VehicleTechStack from "@/components/sections/scootrr/VehicleTechStack";
 import RouteLoaderWrapper from "@/components/loader/RouteLoaderWrapper";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -233,9 +228,9 @@ export default function ScootrPage() {
 
   useEffect(() => {
     // Kill all existing ScrollTriggers first
-    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+    ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     ScrollTrigger.clearMatchMedia();
-    
+
     // Reset scroll position
     window.scrollTo(0, 0);
 
@@ -285,18 +280,18 @@ export default function ScootrPage() {
 
     return () => {
       clearTimeout(initTimeout);
-      
+
       if (rafIdRef.current) {
         cancelAnimationFrame(rafIdRef.current);
       }
-      
+
       if (lenisRef.current) {
         lenisRef.current.destroy();
         lenisRef.current = null;
       }
 
       // Clean up all ScrollTriggers on unmount
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
       gsap.ticker.remove(() => {});
     };
   }, []);
@@ -309,12 +304,12 @@ export default function ScootrPage() {
         <ImageSec />
         <SideVideo />
         <TinyComputerVision />
-        <VehicleTechStack />
+
         <OurPartners />
         <DropMessage />
       </main>
       <Footer />
-      
+
       <div className="pointer-events-none fixed inset-0 z-[999] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]" />
     </RouteLoaderWrapper>
   );
