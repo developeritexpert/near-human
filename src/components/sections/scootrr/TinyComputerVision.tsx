@@ -32,12 +32,36 @@ function TinyComputerVision() {
   const startFrame = 66;
 
   const features = [
-    { side: "left", title: "Safety Features", desc: "Safety features that redefine electric mobility" },
-    { side: "right", title: "Real-Time Hazard Detection", desc: "Alerts riders to potential hazards, including pedestrians, vehicles, and obstacles." },
-    { side: "left", title: "Semi-Autonomous Throttle Control", desc: "Dynamically adjusts the throttle to ensure safe speeds in different environments." },
-    { side: "right", title: "Pavement Riding Prevention", desc: "Discourages illegal riding on sidewalks by detecting surfaces and modifying controls." },
-    { side: "left", title: "Emergency Braking Support", desc: "Provides advanced braking assistance during sudden stops, reducing collision risks." },
-    { side: "right", title: "Enhanced Rider Behavior", desc: "Encourages compliance with traffic laws and promotes responsible riding." }
+    {
+      side: "left",
+      title: "Safety Features",
+      desc: "Safety features that redefine electric mobility",
+    },
+    {
+      side: "right",
+      title: "Real-Time Hazard Detection",
+      desc: "Alerts riders to potential hazards, including pedestrians, vehicles, and obstacles.",
+    },
+    {
+      side: "left",
+      title: "Semi-Autonomous Throttle Control",
+      desc: "Dynamically adjusts the throttle to ensure safe speeds in different environments.",
+    },
+    {
+      side: "right",
+      title: "Pavement Riding Prevention",
+      desc: "Discourages illegal riding on sidewalks by detecting surfaces and modifying controls.",
+    },
+    {
+      side: "left",
+      title: "Emergency Braking Support",
+      desc: "Provides advanced braking assistance during sudden stops, reducing collision risks.",
+    },
+    {
+      side: "right",
+      title: "Enhanced Rider Behavior",
+      desc: "Encourages compliance with traffic laws and promotes responsible riding.",
+    },
   ];
 
   const slides = [
@@ -96,7 +120,7 @@ function TinyComputerVision() {
       gsap.set(headerRef.current, { autoAlpha: 0, y: 30 });
       gsap.set(finalCameraRef.current, { autoAlpha: 0, scale: 0.5 });
       gsap.set(canvasWrapperRef.current, { scale: 1, x: 0, y: 0 });
-      
+
       textRefs.current.forEach((ref) => {
         if (ref) gsap.set(ref, { autoAlpha: 0, y: 50 });
       });
@@ -233,9 +257,19 @@ function TinyComputerVision() {
       );
 
       const positions = {
-        left: { x: -config.carouselXOffset, scale: 0.7, autoAlpha: 0.4, zIndex: 1 },
+        left: {
+          x: -config.carouselXOffset,
+          scale: 0.7,
+          autoAlpha: 0.4,
+          zIndex: 1,
+        },
         center: { x: 0, scale: 1, autoAlpha: 1, zIndex: 3 },
-        right: { x: config.carouselXOffset, scale: 0.7, autoAlpha: 0.4, zIndex: 1 },
+        right: {
+          x: config.carouselXOffset,
+          scale: 0.7,
+          autoAlpha: 0.4,
+          zIndex: 1,
+        },
       };
 
       // Set initial positions for carousel items
@@ -259,9 +293,9 @@ function TinyComputerVision() {
       let currentSlots = [...slots];
       for (let step = 0; step < slides.length - 1; step++) {
         const stepLabel = `carousel-step-${step}`;
-        
+
         mainTl.addLabel(stepLabel, "+=1");
-        
+
         mainTl.to(
           currentSlots[2],
           {
@@ -271,7 +305,7 @@ function TinyComputerVision() {
           },
           stepLabel
         );
-        
+
         mainTl.to(
           currentSlots[1],
           {
@@ -281,7 +315,7 @@ function TinyComputerVision() {
           },
           stepLabel
         );
-        
+
         mainTl.to(
           currentSlots[0],
           {
@@ -298,7 +332,6 @@ function TinyComputerVision() {
 
       // Final hold
       mainTl.to({}, { duration: 2 });
-
     }, containerRef);
 
     // Refresh after setup
@@ -318,11 +351,11 @@ function TinyComputerVision() {
       ref={containerRef}
       className="relative w-full overflow-hidden bg-[#0A1016]"
     >
-      <div className="relative min-h-screen flex flex-col items-center justify-center">
+      <div className="relative flex min-h-screen flex-col items-center justify-center">
         {/* Carousel Header */}
         <div
           ref={headerRef}
-          className="absolute top-[10%] z-[35] w-full text-center px-6 pointer-events-none"
+          className="pointer-events-none absolute top-[10%] z-[35] w-full px-6 text-center"
           style={{ opacity: 0, visibility: "hidden" }}
         >
           {/* <h2 className="text-[32px] md:text-[52px] leading-tight font-medium text-[#101717]">
@@ -334,12 +367,12 @@ function TinyComputerVision() {
         {/* Animation Canvas - Wrapped for proper centering during scale */}
         <div
           ref={canvasWrapperRef}
-          className="absolute inset-0 flex items-center justify-center pointer-events-none z-20"
+          className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
           style={{ transformOrigin: "center center" }}
         >
           <canvas
             ref={canvasRef}
-            className="w-full h-full object-contain max-h-[85vh] block"
+            className="block h-full max-h-[85vh] w-full object-contain"
             style={{ margin: "auto" }}
           />
         </div>
@@ -347,7 +380,7 @@ function TinyComputerVision() {
         {/* Static Camera - Properly centered */}
         <div
           ref={finalCameraRef}
-          className="absolute z-[40] pointer-events-none flex items-center justify-center"
+          className="pointer-events-none absolute z-[40] flex items-center justify-center"
           style={{
             top: `calc(50% + ${config.cameraFinalY}px)`,
             left: "50%",
@@ -367,22 +400,22 @@ function TinyComputerVision() {
         </div>
 
         {/* Text Layers */}
-        <div className="relative z-30 w-full max-w-[1440px] h-full mx-auto px-10 pointer-events-none">
+        <div className="pointer-events-none relative z-30 mx-auto h-full w-full max-w-[1440px] px-10">
           {features.map((f, i) => (
             <div
               key={i}
               ref={(el) => {
                 textRefs.current[i] = el;
               }}
-              className={`absolute top-1/2 -translate-y-1/2 max-w-[420px] ${
+              className={`absolute top-1/2 max-w-[420px] -translate-y-1/2 ${
                 f.side === "left" ? "left-10 text-left" : "right-10 text-right"
               }`}
               style={{ opacity: 0, visibility: "hidden" }}
             >
-              <h2 className="text-[#00B0B2] text-xl font-bold mb-3 uppercase tracking-widest">
+              <h2 className="3xl:text-xl text-md mb-3 font-bold tracking-widest text-[#00B0B2] uppercase xl:text-lg">
                 {f.title}
               </h2>
-              <p className="text-white text-3xl md:text-5xl font-semibold leading-tight mix-blend-difference">
+              <p className="3xl:text-5xl text-lg leading-tight font-semibold text-white mix-blend-difference xl:text-3xl">
                 {f.desc}
               </p>
             </div>
@@ -392,7 +425,7 @@ function TinyComputerVision() {
         {/* Carousel */}
         <div
           ref={carouselContainerRef}
-          className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none"
+          className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center"
           style={{ opacity: 0, visibility: "hidden" }}
         >
           <div className="relative flex h-[550px] w-full items-center justify-center overflow-hidden">
@@ -410,7 +443,7 @@ function TinyComputerVision() {
                   alt={item.alt}
                   width={500}
                   height={500}
-                  className="h-auto w-auto max-w-[340px] lg:max-w-[500px] object-contain"
+                  className="h-auto w-auto max-w-[340px] object-contain lg:max-w-[500px]"
                   priority={i === 1}
                 />
               </div>
