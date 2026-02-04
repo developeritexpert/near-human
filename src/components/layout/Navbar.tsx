@@ -162,7 +162,7 @@ export default function Navbar() {
         <nav className="relative flex h-[75px] w-full max-w-[700px] items-center justify-between rounded-[15px] border border-white/10 bg-[#0b0f0f]/40 backdrop-blur-2xl px-[20px] backdrop-blur-[34px]  lg:px-[30px]">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className=" flex-shrink-0 pb-[5px]">
+            <Link href="/" className=" flex-shrink-0 pb-[12px]">
               {/* <Image
                 src="/img/white-logo.png"
                 alt="near HUMAN"
