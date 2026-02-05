@@ -10,8 +10,10 @@ if (typeof window !== "undefined") {
 }
 
 function TinyComputerVision() {
+  const [isMobile, setIsMobile] = useState(false);
+
   const config = {
-    cameraFinalY: -120,
+    cameraFinalY: isMobile ? -60 : -120,
     cameraFinalX: 0,
     cameraFinalScale: 0.08,
     carouselXOffset: 350,
@@ -74,6 +76,20 @@ function TinyComputerVision() {
     const frameNumber = (startFrame + index).toString().padStart(4, "0");
     return `/img/sequence/Animation${frameNumber}.png`;
   };
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+
+    checkMobile();
+
+    window.addEventListener("resize", checkMobile);
+
+    return () => {
+      window.removeEventListener("resize", checkMobile);
+    };
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -394,7 +410,7 @@ function TinyComputerVision() {
             alt="Camera"
             width={100}
             height={100}
-            className="h-auto w-auto"
+            className="h-auto w-[100] lg:w-auto"
             priority
           />
         </div>
@@ -407,8 +423,10 @@ function TinyComputerVision() {
               ref={(el) => {
                 textRefs.current[i] = el;
               }}
-              className={`absolute top-1/2 max-w-[420px] -translate-y-1/2 ${
-                f.side === "left" ? "left-10 text-left" : "right-10 text-right"
+              className={`absolute top-3/4 max-w-[320px] -translate-y-1/2 md:top-1/2 ${
+                f.side === "left"
+                  ? "left-10 w-[calc(100%-40px)] text-left"
+                  : "right-10 w-[calc(100%-40px)] text-right"
               }`}
               style={{ opacity: 0, visibility: "hidden" }}
             >
