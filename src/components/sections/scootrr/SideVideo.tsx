@@ -48,40 +48,72 @@ function SideVideo() {
     },
   ];
 
-  const generateNotchPath = (progress: number) => {
-    // progress is 0 to 2 (since 3 items, 2 intervals)
-    const minY = 100; // Starting Y position
-    const totalTravel = 250; // Total distance to travel down
-    const notchY = minY + (progress / 2) * totalTravel;
+  const generateNotchPath = (progress: number, isMobile: boolean = false) => {
+    const cornerRadius = 20;
+    const offset = 2; // Offset to cover video edges
 
-    const notchHeight = 220;
-    const notchDepth = 30;
-    const radius = 20;
+    if (isMobile) {
+      // Mobile: notch at bottom, moves horizontally
+      const minX = 100;
+      const totalTravel = 600;
+      const notchX = minX + (progress / 2) * totalTravel;
+      const notchWidth = 220;
+      const notchDepth = 30;
 
-    return `
-      M 0 0
-      H ${notchDepth}
-      V ${notchY}
-      L ${notchDepth + 20} ${notchY + 40}
-      V ${notchY + notchHeight - 40}
-      L ${notchDepth} ${notchY + notchHeight}
-      V 700
-      H 0
-      Z
-    `;
+      return `
+        M 0 0
+        H 900
+        V 700
+        H 0
+        Z
+        M ${cornerRadius + offset} ${cornerRadius + offset}
+        Q ${offset} ${cornerRadius + offset} ${offset} ${cornerRadius * 2 + offset}
+        V ${700 - notchDepth - cornerRadius - offset}
+        Q ${offset} ${700 - notchDepth - offset} ${cornerRadius + offset} ${700 - notchDepth - offset}
+        H ${notchX}
+        L ${notchX + 40} ${700 - notchDepth - 20 - offset}
+        H ${notchX + notchWidth - 40}
+        L ${notchX + notchWidth} ${700 - notchDepth - offset}
+        H ${900 - cornerRadius - offset}
+        Q ${900 - offset} ${700 - notchDepth - offset} ${900 - offset} ${700 - notchDepth - cornerRadius - offset}
+        V ${cornerRadius * 2 + offset}
+        Q ${900 - offset} ${cornerRadius + offset} ${900 - cornerRadius - offset} ${cornerRadius + offset}
+        Z
+      `;
+    } else {
+      // Desktop: notch at left, moves vertically
+      const minY = 100;
+      const totalTravel = 250;
+      const notchY = minY + (progress / 2) * totalTravel;
+      const notchHeight = 220;
+      const notchDepth = 30;
+
+      return `
+        M 0 0
+        H 900
+        V 700
+        H 0
+        Z
+        M ${notchDepth + offset} ${notchY}
+        L ${notchDepth + 20 + offset} ${notchY + 40}
+        V ${notchY + notchHeight - 40}
+        L ${notchDepth + offset} ${notchY + notchHeight}
+        V ${700 - cornerRadius - offset}
+        Q ${notchDepth + offset} ${700 - offset} ${notchDepth + cornerRadius + offset} ${700 - offset}
+        H ${900 - cornerRadius - offset}
+        Q ${900 - offset} ${700 - offset} ${900 - offset} ${700 - cornerRadius - offset}
+        V ${cornerRadius + offset}
+        Q ${900 - offset} ${offset} ${900 - cornerRadius - offset} ${offset}
+        H ${notchDepth + cornerRadius + offset}
+        Q ${notchDepth + offset} ${offset} ${notchDepth + offset} ${cornerRadius + offset}
+        Z
+      `;
+    }
   };
 
- useEffect(() => {
-  if (!svgPathRef.current) return;
-
-  const svgEl = svgPathRef.current.ownerSVGElement;
-
-  gsap.set(svgEl, {
-    top: "auto",
-    bottom: window.innerWidth < 768 ? 0 : "auto",
-  });
-}, []);
-
+  useEffect(() => {
+    // Component mounted, ready to animate
+  }, []);
 
   // Mark component as ready after mount
   useEffect(() => {
@@ -91,198 +123,99 @@ function SideVideo() {
     return () => clearTimeout(timer);
   }, []);
 
-  // useEffect(() => {
-  //   if (!isReady || !pinRef.current) return;
+  useEffect(() => {
+    if (!isReady || !pinRef.current) return;
 
-  //   let ctx: gsap.Context = gsap.context(() => {
-  //     const texts = textItemsRef.current;
-  //     const videos = videoItemsRef.current;
+    const mm = gsap.matchMedia();
 
-  //     // Initial setup for vertical scroll
-  //     // Position each text item vertically stacked
-  //     const itemHeight = 400; // Approximate height of each text block
-  //     gsap.set(texts, {
-  //       position: "relative",
-  //       y: (i) => i * itemHeight,
-  //       opacity: 1,
-  //     });
+    mm.add(
+      {
+        isMobile: "(max-width: 767px)",
+        isDesktop: "(min-width: 768px)",
+      },
+      (context) => {
+        const { isMobile, isDesktop } = context.conditions as {
+          isMobile: boolean;
+          isDesktop: boolean;
+        };
 
-  //     // Initial States for Videos - stacked
-  //     gsap.set(videos, { zIndex: (i) => i + 1, opacity: 0 });
-  //     gsap.set(videos[0], { opacity: 1 });
+        const texts = textItemsRef.current;
+        const videos = videoItemsRef.current;
 
-  //     // Setup notch
-  //     if (svgPathRef.current) {
-  //       gsap.set(svgPathRef.current, { attr: { d: generateNotchPath(0) } });
-  //     }
+        const itemSize = isMobile ? window.innerWidth : 600;
 
-  //     const totalSections = statisticsData.length;
-  //     const timeline = gsap.timeline({
-  //       scrollTrigger: {
-  //         trigger: pinRef.current,
-  //         start: "top top",
-  //         end: `+=${totalSections * 900}`,
-  //         pin: true,
-  //         scrub: 1,
-  //         invalidateOnRefresh: true,
-  //       },
-  //     });
-
-  //     // Transition 0 -> 1
-  //     timeline
-  //       // Scroll text container up by one item height
-  //       .to(
-  //         texts,
-  //         {
-  //           y: `-=${itemHeight}`,
-  //           duration: 1,
-  //           ease: "none",
-  //         },
-  //         0
-  //       )
-
-  //       // Video 1 fades in ON TOP of Video 0
-  //       .to(videos[1], { opacity: 1, duration: 0.5 }, 0.25)
-
-  //       // Match notch animation
-  //       .to(
-  //         svgPathRef.current,
-  //         {
-  //           attr: { d: generateNotchPath(1) },
-  //           ease: "none",
-  //           duration: 1,
-  //         },
-  //         0
-  //       );
-
-  //     // Transition 1 -> 2
-  //     timeline
-  //       // Scroll text container up by another item height
-  //       .to(
-  //         texts,
-  //         {
-  //           y: `-=${itemHeight * 2}`, // Scroll two items to show the third one
-  //           duration: 1,
-  //           ease: "none",
-  //         },
-  //         1
-  //       )
-
-  //       // Video 2 fades in ON TOP of Video 1
-  //       .to(videos[2], { opacity: 1, duration: 0.5 }, 1.25)
-
-  //       // Match notch animation
-  //       .to(
-  //         svgPathRef.current,
-  //         {
-  //           attr: { d: generateNotchPath(2) },
-  //           ease: "none",
-  //           duration: 1,
-  //         },
-  //         1
-  //       );
-  //   }, pinRef);
-
-  //   return () => ctx.revert();
-  // }, [isReady]);
-  
- useEffect(() => {
-  if (!isReady || !pinRef.current) return;
-
-  const mm = gsap.matchMedia();
-
-  mm.add(
-    {
-      isMobile: "(max-width: 767px)",
-      isDesktop: "(min-width: 768px)",
-    },
-    (context) => {
-      const { isMobile, isDesktop } = context.conditions as {
-        isMobile: boolean;
-        isDesktop: boolean;
-      };
-
-      const texts = textItemsRef.current;
-      const videos = videoItemsRef.current;
-
-      const itemSize = isMobile ? window.innerWidth : 400;
-
-      /* =========================
+        /* =========================
          INITIAL SETUP
       ========================== */
 
-      gsap.set(texts, {
-        position: "relative",
-        x: isMobile ? (i) => i * itemSize : 0,
-        y: isDesktop ? (i) => i * itemSize : 0,
-        opacity: 1,
-      });
-
-      gsap.set(videos, { zIndex: (i) => i + 1, opacity: 0 });
-      gsap.set(videos[0], { opacity: 1 });
-
-      if (svgPathRef.current) {
-        gsap.set(svgPathRef.current, {
-          attr: { d: generateNotchPath(0) },
+        gsap.set(texts, {
+          position: "absolute",
+          x: isMobile ? (i) => i * itemSize : 0,
+          y: isDesktop ? (i) => i * itemSize : 0,
+          opacity: 1,
         });
-      }
 
-      const totalSections = statisticsData.length;
+        gsap.set(videos, { zIndex: (i) => i + 1, opacity: 0 });
+        gsap.set(videos[0], { opacity: 1 });
 
-      const timeline = gsap.timeline({
-        scrollTrigger: {
-          trigger: pinRef.current,
-          start: "top top",
-          end: `+=${totalSections * 900}`,
-          pin: true,
-          scrub: 1,
-          invalidateOnRefresh: true,
-        },
-      });
+        if (svgPathRef.current) {
+          gsap.set(svgPathRef.current, {
+            attr: { d: generateNotchPath(0, isMobile) },
+          });
+        }
 
-      /* =========================
+        const totalSections = statisticsData.length;
+
+        const timeline = gsap.timeline({
+          scrollTrigger: {
+            trigger: pinRef.current,
+            start: "top top",
+            end: `+=${totalSections * 900}`,
+            pin: true,
+            scrub: 1,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        /* =========================
          LOOP THROUGH SECTIONS
       ========================== */
-      statisticsData.forEach((_, index) => {
-        if (index === 0) return;
+        statisticsData.forEach((_, index) => {
+          if (index === 0) return;
 
-        const positionValue = `-=${itemSize}`;
+          const positionValue = `-=${itemSize}`;
 
-        timeline
-          .to(
-            texts,
-            {
-              x: isMobile ? positionValue : 0,
-              y: isDesktop ? positionValue : 0,
-              duration: 1,
-              ease: "none",
-            },
-            index
-          )
-          .to(
-            videos[index],
-            { opacity: 1, duration: 0.5 },
-            index + 0.25
-          )
-          .to(
-            svgPathRef.current,
-            {
-              attr: { d: generateNotchPath(index) },
-              duration: 1,
-              ease: "none",
-            },
-            index
-          );
-      });
+          timeline
+            .to(
+              texts,
+              {
+                x: isMobile ? positionValue : 0,
+                y: isDesktop ? positionValue : 0,
+                duration: 1,
+                ease: "none",
+              },
+              index
+            )
+            .to(videos[index], { opacity: 1, duration: 0.5 }, index + 0.25)
+            .to(
+              svgPathRef.current,
+              {
+                attr: { d: generateNotchPath(index, isMobile) },
+                duration: 1,
+                ease: "none",
+              },
+              index
+            );
+        });
 
-      return () => {
-        ScrollTrigger.getAll().forEach((t) => t.kill());
-      };
-    }
-  );
+        return () => {
+          ScrollTrigger.getAll().forEach((t) => t.kill());
+        };
+      }
+    );
 
-  return () => mm.revert();
-}, [isReady]);
+    return () => mm.revert();
+  }, [isReady]);
 
   return (
     <section
@@ -291,20 +224,20 @@ function SideVideo() {
     >
       <div
         ref={pinRef}
-        className="flex flex-col  justify-center bg-white px-[20px] md:px-[30px] lg:px-[50px]"
+        className="flex !h-screen flex-col justify-center bg-white px-[20px] md:px-[30px] lg:px-[50px]"
       >
         <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center lg:flex-row">
           {/* LEFT: Statistics - Vertical Scroll */}
           <div className="relative order-2 mt-10 flex h-full w-full items-center lg:order-1 lg:mt-0 lg:w-1/2">
-            <div className="w-full  flex flex-row  lg:pl-[50px] xl:pl-[100px] 2xl:pl-[200px]">
-              <div ref={textContainerRef} className="relative  py-[70px] sm:py-[150px] lg:py-[500px]">
+            <div className="flex w-full flex-row lg:pl-[50px] xl:pl-[100px] 2xl:pl-[200px]">
+              <div ref={textContainerRef} className="relative w-full">
                 {statisticsData.map((item, index) => (
                   <div
                     key={item.id}
                     ref={(el) => {
                       textItemsRef.current[index] = el;
                     }}
-                    className="absolute top-[20%] left-0 w-full lg:max-w-[450px]"
+                    className="absolute top-0 left-0 w-full lg:max-w-[450px]"
                   >
                     <h2 className="mb-[8px] text-[36px] leading-tight font-[450] text-[#101717] md:text-[50px] lg:text-[60px] xl:text-[77px]">
                       <AnimatedText
@@ -323,11 +256,9 @@ function SideVideo() {
               </div>
             </div>
           </div>
-   
-
 
           {/* RIGHT: Video */}
-          <div className=" relative order-1 flex items-center justify-center after:absolute after:top-1/2 after:right-full after:z-[999] after:h-full after:w-full after:bg-[repeating-linear-gradient(360deg,white,transparent)] after:content-[''] lg:order-2 w-full lg:w-1/2">
+          <div className="relative order-1 flex w-full items-center justify-center after:absolute after:top-1/2 after:right-full after:z-[999] after:h-full after:w-full after:bg-[repeating-linear-gradient(360deg,white,transparent)] after:content-[''] lg:order-2 lg:w-1/2">
             <div className="relative aspect-[900/700] w-full overflow-hidden rounded-xl lg:w-[90%] xl:w-full">
               {/* VIDEOS STACK */}
               {statisticsData.map((item, index) => (
@@ -336,10 +267,10 @@ function SideVideo() {
                   ref={(el) => {
                     videoItemsRef.current[index] = el;
                   }}
-                  className="absolute inset-0 h-full w-full "
+                  className="absolute inset-0 h-full w-full"
                 >
                   <video
-                    className="pointer-events-none h-full w-full object-cover  "
+                    className="pointer-events-none h-full w-full object-cover"
                     src={item.video}
                     autoPlay
                     loop
@@ -351,9 +282,9 @@ function SideVideo() {
               ))}
 
               {/* AVG OVERLAY (Combined) */}
-                       
+
               <svg
-                className="pointer-events-none absolute inset-0 z-20 h-full w-full"
+                className="pointer-events-none absolute inset-0 z-20 h-full w-full scale-[1.01]"
                 viewBox="0 0 900 700"
                 preserveAspectRatio="none"
               >
@@ -363,9 +294,6 @@ function SideVideo() {
                   fill="#ffffff"
                 />
               </svg>
-            
-
-               
 
               {/* GLOW */}
               <div
