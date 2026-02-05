@@ -29,8 +29,8 @@ export default function ImageSec() {
     gsap.fromTo(
       maskRef.current,
       {
-        width: "50%",
-        height: "50%",
+        width: isMobile ? "70%" : "50%",
+        height: isMobile ? "70%" : "50%",
       },
       {
         width: "100%",
@@ -172,10 +172,8 @@ export default function ImageSec() {
           {/* White overlay mask with expanding window */}
           <div
             ref={maskRef}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[32px]"
+            className="absolute top-1/2 left-1/2 h-3/4 w-3/4 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[32px] md:h-1/2 md:w-1/2"
             style={{
-              width: "50%",
-              height: "50%",
               boxShadow: "0 0 0 200vmax white",
               willChange: "width, height, border-radius",
             }}
