@@ -180,20 +180,20 @@ function TinyComputerVision() {
           {
             autoAlpha: 1,
             y: 0,
-            duration: 1.2,
+            duration: 0.5,
             ease: "power3.out",
           },
           `feature-${index}`
         );
 
         // Hold
-        mainTl.to(element, { duration: 1.5 });
+        mainTl.to(element, { duration: 0.2 });
 
         // Fade out
         mainTl.to(element, {
           autoAlpha: 0,
           y: -50,
-          duration: 1.2,
+          duration: 0.5,
           ease: "power3.in",
         });
       });

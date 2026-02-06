@@ -40,7 +40,7 @@ export default function ImageSec() {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top 90%",
-          end: "bottom 10%",
+          end: "bottom 50%",
           scrub: 4,
           anticipatePin: 1,
         },
@@ -51,12 +51,12 @@ export default function ImageSec() {
        ZOOM + PIN (SMOOTHER)
     =============================== */
     gsap.to(videoContainerRef.current, {
-      scale: 1.08,
+      scale: 1,
       ease: "power1.inOut",
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: "+=400%",
+        end: "+=120%",
         scrub: 4,
         pin: true,
         anticipatePin: 1,
@@ -69,7 +69,7 @@ export default function ImageSec() {
     ScrollTrigger.create({
       trigger: sectionRef.current,
       start: "top 50%",
-      end: "bottom -300%",
+      end: "bottom -120%",
       onEnter: () => {
         if (iframeRef.current) {
           if (isMobile) {
