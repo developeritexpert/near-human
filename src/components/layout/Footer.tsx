@@ -206,7 +206,7 @@ const Footer = () => {
         </div>
 
         <div>
-          <h4 className="!mb-[15px] text-[22px] md:text-[19px] lg:text-[27px]  font-normal text-white">
+          <h4 className="!mb-[15px] text-[22px] font-normal text-white md:text-[19px] lg:text-[27px]">
             Quick Links
           </h4>
           <ul className="text-[#F7F8F8]">
@@ -224,22 +224,6 @@ const Footer = () => {
                 className="hover:text-primary !font-normal transition-colors duration-300"
               >
                 About
-              </a>
-            </li>
-            <li className="!mb-[20px]">
-              <a
-                href="/scootrr"
-                className="hover:text-primary !font-normal transition-colors duration-300"
-              >
-                Scootrr
-              </a>
-            </li>
-            <li className="!mb-[20px]">
-              <a
-                href="#"
-                className="hover:text-primary !font-normal transition-colors duration-300"
-              >
-                Our Work
               </a>
             </li>
             <li className="!mb-[20px]">
@@ -262,61 +246,13 @@ const Footer = () => {
         </div>
 
         <div>
-          <h4 className="!mb-[15px] text-[22px] md:text-[19px] lg:text-[27px] font-normal text-white">
+          <h4 className="!mb-[15px] text-[22px] font-normal text-white md:text-[19px] lg:text-[27px]">
             Connect with our experts today
           </h4>
           <ul className="text-[#F7F8F8]">
             <li className="!mb-[20px]">
               <a
-                href="#"
-                className="hover:text-primary flex items-center gap-2 text-[16px] !font-normal transition-colors duration-300"
-              >
-                <span className="text-[8px]">
-                  <div className="w-[20px]">
-                    <svg
-                      width="14"
-                      height="13"
-                      viewBox="0 0 14 13"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M11.012 0H13.1484L8.45752 5.3411L13.938 12.5864H9.63721L6.26999 8.1835L2.41511 12.5864H0.278666L5.24821 6.87377L0 0H4.40757L7.44968 4.02208L11.012 0ZM10.2642 11.3324H11.4485L3.78522 1.20755H2.51264L10.2642 11.3324Z"
-                        fill="#F7F8F8"
-                      />
-                    </svg>
-                  </div>
-                </span>
-                Twitter
-              </a>
-            </li>
-            <li className="!mb-[20px]">
-              <a
-                href="#"
-                className="hover:text-primary flex items-center gap-2 text-[16px] !font-normal transition-colors duration-300"
-              >
-                <span className="text-[8px]">
-                  <div className="w-[20px]">
-                    <svg
-                      width="7"
-                      height="15"
-                      viewBox="0 0 7 15"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M1.57486 15.0004H4.59378V7.4348H6.70231L6.92729 4.90247H4.59378C4.59378 4.90247 4.59378 3.95545 4.59378 3.45841C4.59378 2.86195 4.71411 2.6265 5.28964 2.6265C5.7553 2.6265 6.92206 2.6265 6.92206 2.6265V0C6.92206 0 5.2007 0 4.82922 0C2.57942 0 1.56963 0.988855 1.56963 2.88287C1.56963 4.53098 1.56963 4.90247 1.56963 4.90247H0V7.46619H1.56963V15.0004H1.57486Z"
-                        fill="#F7F8F8"
-                      />
-                    </svg>
-                  </div>
-                </span>
-                Facebook
-              </a>
-            </li>
-            <li className="!mb-[20px]">
-              <a
-                href="#"
+                href="https://www.linkedin.com/company/nearhuman"
                 className="hover:text-primary flex items-center gap-2 text-[16px] !font-normal transition-colors duration-300"
               >
                 <span className="text-[8px]">
@@ -348,7 +284,7 @@ const Footer = () => {
             </li>
             <li className="!mb-[20px]">
               <a
-                href="#"
+                href="https://www.instagram.com/near.human/"
                 className="hover:text-primary flex items-center gap-2 text-[16px] !font-normal transition-colors duration-300"
               >
                 <span className="text-[8px]">

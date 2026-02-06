@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import AnimatedText from "@/components/layout/AnimationText";
+import { motion, useTransform, useMotionValue } from "framer-motion";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -16,44 +16,119 @@ const THEME = {
   mutedText: "#10171740",
 };
 
+// Animated text component that uses a motion value
+function ScrollAnimatedText({
+  text,
+  fromColor = "#10171730",
+  toColor = "#101717",
+  glowColor = "#00B0B2",
+  className = "",
+  progress,
+}: {
+  text: string;
+  fromColor?: string;
+  toColor?: string;
+  glowColor?: string;
+  className?: string;
+  progress: any;
+}) {
+  const words = text.split(" ");
+  const totalChars = text.replace(/\s/g, "").length;
+  let charIndex = 0;
+
+  return (
+    <span className={`leading-tight font-medium ${className}`}>
+      {words.map((word, wordIndex) => (
+        <span key={wordIndex} className="inline-flex whitespace-nowrap">
+          {word.split("").map((char, i) => {
+            const start = charIndex / totalChars;
+            const end = start + 1 / totalChars;
+            charIndex++;
+
+            const color = useTransform(
+              progress,
+              [start, Math.min(start + 0.2, end), end],
+              [fromColor, glowColor, toColor]
+            );
+
+            const textShadow = useTransform(
+              progress,
+              [
+                start,
+                Math.min(start + 0.1, end),
+                Math.min(start + 0.3, end),
+                end,
+              ],
+              [
+                "0 0 0px rgba(0, 176, 178, 0)",
+                "0 0 8px rgba(0, 176, 178, 0.8)",
+                "0 0 12px rgba(0, 176, 178, 0.6)",
+                "0 0 0px rgba(0, 176, 178, 0)",
+              ]
+            );
+
+            return (
+              <motion.span
+                key={i}
+                style={{
+                  color,
+                  textShadow,
+                }}
+                className="inline-block"
+              >
+                {char}
+              </motion.span>
+            );
+          })}
+          <span className="inline-block">&nbsp;</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function SideVideo() {
   const sectionRef = useRef<HTMLElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
   const textContainerRef = useRef<HTMLDivElement>(null);
   const textItemsRef = useRef<(HTMLDivElement | null)[]>([]);
-  const videoItemsRef = useRef<(HTMLDivElement | null)[]>([]);
   const svgPathRef = useRef<SVGPathElement>(null);
   const [isReady, setIsReady] = useState(false);
+
+  // Motion values for each slide's text animation progress
+  const progress0 = useMotionValue(0);
+  const progress1 = useMotionValue(0);
+  const progress2 = useMotionValue(0);
+  const progressValues = [progress0, progress1, progress2];
 
   const statisticsData = [
     {
       id: "01",
       number: "30,000+",
       description: "injuries in the UK and EU alone",
-      video: "/Videos/scootr/scottr.mp4",
     },
     {
       id: "02",
       number: "1,300",
       description:
         "reported casualties in the UK alone, costing the NHS and Insurers ~£7M",
-      video: "/Videos/scootr/scootr_2.mp4",
     },
     {
       id: "03",
       number: "9,425",
       description:
         "Germany reported 9,425 E-Scooter accidents, marking a 14.1% increase from the previous year.",
-      video: "/Videos/scootr/scooter-last.mp4",
     },
   ];
 
+  // Single video
+  const videoSrc = "/Videos/scootr/Vid1.mp4";
+
   const generateNotchPath = (progress: number, isMobile: boolean = false) => {
     const cornerRadius = 20;
-    const offset = 2; // Offset to cover video edges
+    const offset = 2;
 
     if (isMobile) {
-      // Mobile: notch at bottom, moves horizontally
       const minX = 100;
       const totalTravel = 600;
       const notchX = minX + (progress / 2) * totalTravel;
@@ -81,7 +156,6 @@ function SideVideo() {
         Z
       `;
     } else {
-      // Desktop: notch at left, moves vertically
       const minY = 100;
       const totalTravel = 250;
       const notchY = minY + (progress / 2) * totalTravel;
@@ -112,11 +186,6 @@ function SideVideo() {
   };
 
   useEffect(() => {
-    // Component mounted, ready to animate
-  }, []);
-
-  // Mark component as ready after mount
-  useEffect(() => {
     const timer = setTimeout(() => {
       setIsReady(true);
     }, 100);
@@ -140,23 +209,15 @@ function SideVideo() {
         };
 
         const texts = textItemsRef.current;
-        const videos = videoItemsRef.current;
+        const itemSize = isMobile ? window.innerWidth : 400;
 
-        const itemSize = isMobile ? window.innerWidth : 600;
-
-        /* =========================
-         INITIAL SETUP
-      ========================== */
-
+        // Initial setup
         gsap.set(texts, {
           position: "absolute",
           x: isMobile ? (i) => i * itemSize : 0,
           y: isDesktop ? (i) => i * itemSize : 0,
           opacity: 1,
         });
-
-        gsap.set(videos, { zIndex: (i) => i + 1, opacity: 0 });
-        gsap.set(videos[0], { opacity: 1 });
 
         if (svgPathRef.current) {
           gsap.set(svgPathRef.current, {
@@ -165,48 +226,133 @@ function SideVideo() {
         }
 
         const totalSections = statisticsData.length;
+        const scrollAmount = 400; // Scroll amount per transition
+        const pauseAmount = 500; // Pause/pin amount between slides
+        const finalLockAmount = 400; // Lock time after last slide
+        const textAnimationDelay = 0.3; // Delay before text starts animating (0-1, where 0.3 = 30% into transition)
+        const textAnimationDuration = 0.5; // How much of the scroll to use for text animation (0.5 = 50% of scroll)
 
         const timeline = gsap.timeline({
           scrollTrigger: {
             trigger: pinRef.current,
             start: "top top",
-            end: `+=${totalSections * 900}`,
+            end: `+=${totalSections * scrollAmount + (totalSections - 1) * pauseAmount + finalLockAmount}`,
             pin: true,
-            scrub: 1,
+            scrub: 2,
             invalidateOnRefresh: true,
+            onUpdate: (self) => {
+              const rawProgress = self.progress;
+              const totalScrollDistance =
+                totalSections * scrollAmount +
+                (totalSections - 1) * pauseAmount +
+                finalLockAmount;
+              const currentScrollPosition = rawProgress * totalScrollDistance;
+
+              // Calculate which section is active
+              statisticsData.forEach((_, index) => {
+                let slideProgress = 0;
+
+                if (index === 0) {
+                  // First slide: starts at 0, transition happens during first scrollAmount
+                  const slideStart = 0;
+                  const slideEnd = scrollAmount;
+                  const animStartPoint =
+                    slideStart + scrollAmount * textAnimationDelay;
+                  const animEndPoint =
+                    animStartPoint + scrollAmount * textAnimationDuration;
+
+                  if (currentScrollPosition <= animStartPoint) {
+                    slideProgress = 0;
+                  } else if (
+                    currentScrollPosition >= animStartPoint &&
+                    currentScrollPosition <= animEndPoint
+                  ) {
+                    slideProgress =
+                      (currentScrollPosition - animStartPoint) /
+                      (scrollAmount * textAnimationDuration);
+                  } else {
+                    slideProgress = 1;
+                  }
+                } else {
+                  // For slides 2+, use a progressive delay that increases with each slide
+                  // This compensates for the cumulative timing drift
+                  const progressiveDelay = textAnimationDelay + index * 0.5; // Increase delay by 15% per slide
+
+                  const slideStart = index * scrollAmount + index * pauseAmount;
+                  const slideEnd = slideStart + scrollAmount;
+                  const animStartPoint =
+                    slideStart + scrollAmount * progressiveDelay;
+                  const animEndPoint =
+                    animStartPoint + scrollAmount * textAnimationDuration;
+
+                  if (currentScrollPosition <= animStartPoint) {
+                    slideProgress = 0;
+                  } else if (
+                    currentScrollPosition >= animStartPoint &&
+                    currentScrollPosition <= animEndPoint
+                  ) {
+                    slideProgress =
+                      (currentScrollPosition - animStartPoint) /
+                      (scrollAmount * textAnimationDuration);
+                  } else if (currentScrollPosition > animEndPoint) {
+                    slideProgress = 1;
+                  }
+                }
+
+                progressValues[index].set(slideProgress);
+              });
+            },
           },
         });
 
-        /* =========================
-         LOOP THROUGH SECTIONS
-      ========================== */
+        // Build timeline with pauses between slides
+        let timelinePosition = 0;
+
         statisticsData.forEach((_, index) => {
-          if (index === 0) return;
+          if (index === 0) {
+            // First slide is visible from the start, just add scroll time
+            timelinePosition += scrollAmount;
 
-          const positionValue = `-=${itemSize}`;
+            // Add pause after first slide
+            timeline.to({}, { duration: pauseAmount }, timelinePosition);
+            timelinePosition += pauseAmount;
+          } else {
+            const positionValue = `-=${itemSize}`;
 
-          timeline
-            .to(
+            // Animate to next slide
+            timeline.to(
               texts,
               {
                 x: isMobile ? positionValue : 0,
                 y: isDesktop ? positionValue : 0,
-                duration: 1,
+                duration: scrollAmount,
                 ease: "none",
               },
-              index
-            )
-            .to(videos[index], { opacity: 1, duration: 0.5 }, index + 0.25)
-            .to(
+              timelinePosition
+            );
+
+            timeline.to(
               svgPathRef.current,
               {
                 attr: { d: generateNotchPath(index, isMobile) },
-                duration: 1,
+                duration: scrollAmount,
                 ease: "none",
               },
-              index
+              timelinePosition
             );
+
+            timelinePosition += scrollAmount;
+
+            // Add pause after slide (except last one)
+            if (index < totalSections - 1) {
+              timeline.to({}, { duration: pauseAmount }, timelinePosition);
+              timelinePosition += pauseAmount;
+            }
+          }
         });
+
+        // Add final lock after last slide
+        timeline.to({}, { duration: finalLockAmount }, timelinePosition);
 
         return () => {
           ScrollTrigger.getAll().forEach((t) => t.kill());
@@ -240,15 +386,17 @@ function SideVideo() {
                     className="absolute top-0 left-0 w-full lg:max-w-[450px]"
                   >
                     <h2 className="mb-[8px] text-[36px] leading-tight font-[450] text-[#101717] md:text-[50px] lg:text-[60px] xl:text-[77px]">
-                      <AnimatedText
+                      <ScrollAnimatedText
                         text={item.number}
                         className="text-[36px] font-[450] md:text-[50px] lg:text-[60px] xl:text-[77px]"
+                        progress={progressValues[index]}
                       />
                     </h2>
                     <p className="text-[18px] leading-relaxed font-normal text-[#101717] md:text-[22px] xl:text-[25px]">
-                      <AnimatedText
+                      <ScrollAnimatedText
                         text={item.description}
                         className="text-[18px] font-normal md:text-[22px] xl:text-[25px]"
+                        progress={progressValues[index]}
                       />
                     </p>
                   </div>
@@ -257,32 +405,21 @@ function SideVideo() {
             </div>
           </div>
 
-          {/* RIGHT: Video */}
+          {/* RIGHT: Single Video */}
           <div className="relative order-1 flex w-full items-center justify-center after:absolute after:top-1/2 after:right-full after:z-[999] after:h-full after:w-full after:bg-[repeating-linear-gradient(360deg,white,transparent)] after:content-[''] lg:order-2 lg:w-1/2">
             <div className="relative aspect-[900/700] w-full overflow-hidden rounded-xl lg:w-[90%] xl:w-full">
-              {/* VIDEOS STACK */}
-              {statisticsData.map((item, index) => (
-                <div
-                  key={item.id}
-                  ref={(el) => {
-                    videoItemsRef.current[index] = el;
-                  }}
-                  className="absolute inset-0 h-full w-full"
-                >
-                  <video
-                    className="pointer-events-none h-full w-full object-cover"
-                    src={item.video}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    preload="auto"
-                  />
-                </div>
-              ))}
+              {/* Single Video */}
+              <video
+                className="pointer-events-none h-full w-full object-cover"
+                src={videoSrc}
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="auto"
+              />
 
-              {/* AVG OVERLAY (Combined) */}
-
+              {/* SVG OVERLAY */}
               <svg
                 className="pointer-events-none absolute inset-0 z-20 h-full w-full scale-[1.01]"
                 viewBox="0 0 900 700"
