@@ -17,8 +17,7 @@ function DropMessage() {
               We’d Love to Hear From You
             </h2>
             <p className="mx-auto mt-[10px] max-w-[725px] text-center text-[24px] font-[450] text-[#052424]">
-              From product demos to partnership inquiries, drop us a message and
-              we’ll get back quickly.
+              From product demos to partnership inquiries, drop us a message.
             </p>
           </div>
           <div className="mt-[37px] flex justify-center">

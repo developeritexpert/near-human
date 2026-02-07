@@ -253,6 +253,7 @@ const Footer = () => {
             <li className="!mb-[20px]">
               <a
                 href="https://www.linkedin.com/company/nearhuman"
+                target="_blank"
                 className="hover:text-primary flex items-center gap-2 text-[16px] !font-normal transition-colors duration-300"
               >
                 <span className="text-[8px]">
@@ -285,6 +286,7 @@ const Footer = () => {
             <li className="!mb-[20px]">
               <a
                 href="https://www.instagram.com/near.human/"
+                target="_blank"
                 className="hover:text-primary flex items-center gap-2 text-[16px] !font-normal transition-colors duration-300"
               >
                 <span className="text-[8px]">

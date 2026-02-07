@@ -81,7 +81,7 @@ function ScootrrSec() {
   return (
     <section
       ref={sectionRef}
-      className="flex min-h-[calc(100vh-125px)] items-center justify-center px-[20px] pt-[140px] pb-[40px] md:px-[30px] md:pt-[170px] md:pb-[70px] lg:px-[50px] lg:pt-[200px] lg:pb-[90px] xl:pt-[260px] xl:pb-[134px]"
+      className="flex items-center justify-center px-[20px] pt-[140px] pb-[40px] md:px-[30px] md:pt-[170px] md:pb-[70px] lg:px-[50px] lg:pt-[349px] lg:pb-[44px] xl:pt-[369px] xl:pb-[24px]"
     >
       <div className="container mx-auto max-w-[1440px] text-center">
         {/* Main Heading */}
