@@ -227,8 +227,8 @@ function SideVideo() {
 
         const totalSections = statisticsData.length;
         const scrollAmount = 600; // Increased for smoother transitions
-        const textAnimationDelay = 0.4; // Text starts animating earlier
-        const textAnimationDuration = 0.2; // Longer animation duration
+        const textAnimationDelay = 0.5; // Text starts animating earlier
+        const textAnimationDuration = 0.5; // Longer animation duration
 
         const timeline = gsap.timeline({
           scrollTrigger: {
