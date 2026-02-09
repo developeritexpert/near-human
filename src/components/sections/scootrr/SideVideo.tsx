@@ -325,7 +325,10 @@ function SideVideo() {
           {/* LEFT: Statistics - Vertical Scroll */}
           <div className="relative order-2 mt-10 flex h-full w-full items-center lg:order-1 lg:mt-0 lg:w-1/2">
             <div className="flex w-full flex-row lg:pl-[50px] xl:pl-[100px] 2xl:pl-[200px]">
-              <div ref={textContainerRef} className="relative w-full">
+              <div
+                ref={textContainerRef}
+                className="relative mb-[200px] w-full"
+              >
                 {statisticsData.map((item, index) => (
                   <div
                     key={item.id}
