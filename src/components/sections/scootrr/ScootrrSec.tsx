@@ -1,78 +1,32 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
 
 function ScootrrSec() {
   const sectionRef = useRef<HTMLDivElement | null>(null);
-  const tagRef = useRef<HTMLHeadingElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
-  const lineRef = useRef<HTMLSpanElement | null>(null);
-  const [startPoint, setStartPoint] = useState("top 75%");
 
   useEffect(() => {
-    // Set start point based on screen size
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setStartPoint("top 30%"); // Mobile
-      } else if (window.innerWidth < 1024) {
-        setStartPoint("top 50%"); // Tablet
-      } else {
-        setStartPoint("top 75%"); // Desktop
-      }
-    };
-
-    // Initial check
-    handleResize();
-
-    // Add resize listener
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!sectionRef.current) return;
+    if (!headingRef.current) return;
 
     const ctx = gsap.context(() => {
-      gsap
-        .timeline({
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: startPoint,
-          },
-        })
-        .fromTo(
-          tagRef.current,
-          { y: 20, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" }
-        )
-        .fromTo(
-          lineRef.current,
-          { scaleX: 0 },
-          {
-            scaleX: 1,
-            transformOrigin: "left center",
-            duration: 0.6,
-            ease: "power3.out",
-          },
-          "-=0.3"
-        )
-        .fromTo(
-          headingRef.current,
-          { y: 40, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.9, ease: "power3.out" },
-          "-=0.3"
-        );
+      // Animate immediately on page load, no ScrollTrigger needed
+      gsap.fromTo(
+        headingRef.current,
+        { y: 40, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.9,
+          ease: "power3.out",
+          delay: 0.2, // Small delay for smoother page load
+        }
+      );
     }, sectionRef);
 
     return () => ctx.revert();
-  }, [startPoint]);
+  }, []); // Empty dependency array - run once on mount
 
   return (
     <section
