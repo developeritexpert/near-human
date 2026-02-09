@@ -23,8 +23,11 @@ export default function ImageSec() {
     if (!sectionRef.current || !videoContainerRef.current || !maskRef.current)
       return;
 
+    // Clear any existing ScrollTriggers
+    ScrollTrigger.getAll().forEach((t) => t.kill());
+
     /* ===============================
-       MASK WINDOW EXPANSION (SMOOTHER)
+       MASK WINDOW EXPANSION (OPTIMIZED)
     =============================== */
     gsap.fromTo(
       maskRef.current,
@@ -36,30 +39,31 @@ export default function ImageSec() {
         width: "100%",
         height: "100%",
         borderRadius: "0px",
-        ease: "power1.inOut",
+        ease: "none", // Changed from power1.inOut - 'none' is better for scrub
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top 90%",
           end: "bottom 50%",
-          scrub: 4,
-          anticipatePin: 1,
+          scrub: 1.5, // Reduced from 4 - more responsive
+          invalidateOnRefresh: true,
         },
       }
     );
 
     /* ===============================
-       ZOOM + PIN (SMOOTHER)
+       ZOOM + PIN (OPTIMIZED)
     =============================== */
     gsap.to(videoContainerRef.current, {
       scale: 1,
-      ease: "power1.inOut",
+      ease: "none", // Changed from power1.inOut
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
         end: "+=120%",
-        scrub: 4,
+        scrub: 1.5, // Reduced from 4 - more responsive
         pin: true,
         anticipatePin: 1,
+        invalidateOnRefresh: true,
       },
     });
 
@@ -73,10 +77,8 @@ export default function ImageSec() {
       onEnter: () => {
         if (iframeRef.current) {
           if (isMobile) {
-            // Show play button on mobile
             setShowPlayButton(true);
           } else {
-            // Auto-play on desktop
             iframeRef.current.contentWindow?.postMessage(
               '{"event":"command","func":"playVideo","args":""}',
               "*"

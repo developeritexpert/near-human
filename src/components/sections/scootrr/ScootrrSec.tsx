@@ -44,39 +44,35 @@ function ScootrrSec() {
         .timeline({
           scrollTrigger: {
             trigger: sectionRef.current,
-            start: startPoint, // Dynamic start point
+            start: startPoint,
           },
         })
-        .from(tagRef.current, {
-          y: 20,
-          opacity: 0,
-          duration: 0.6,
-          ease: "power3.out",
-        })
-        .from(
+        .fromTo(
+          tagRef.current,
+          { y: 20, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" }
+        )
+        .fromTo(
           lineRef.current,
+          { scaleX: 0 },
           {
-            scaleX: 0,
+            scaleX: 1,
             transformOrigin: "left center",
             duration: 0.6,
             ease: "power3.out",
           },
           "-=0.3"
         )
-        .from(
+        .fromTo(
           headingRef.current,
-          {
-            y: 40,
-            opacity: 0,
-            duration: 0.9,
-            ease: "power3.out",
-          },
+          { y: 40, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.9, ease: "power3.out" },
           "-=0.3"
         );
     }, sectionRef);
 
     return () => ctx.revert();
-  }, [startPoint]); // Re-run when startPoint changes
+  }, [startPoint]);
 
   return (
     <section

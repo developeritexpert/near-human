@@ -226,77 +226,45 @@ function SideVideo() {
         }
 
         const totalSections = statisticsData.length;
-        const scrollAmount = 400; // Scroll amount per transition
-        const pauseAmount = 500; // Pause/pin amount between slides
-        const finalLockAmount = 400; // Lock time after last slide
-        const textAnimationDelay = 0.3; // Delay before text starts animating (0-1, where 0.3 = 30% into transition)
-        const textAnimationDuration = 0.5; // How much of the scroll to use for text animation (0.5 = 50% of scroll)
+        const scrollAmount = 600; // Increased for smoother transitions
+        const textAnimationDelay = 0.5; // Text starts animating earlier
+        const textAnimationDuration = 0.5; // Longer animation duration
 
         const timeline = gsap.timeline({
           scrollTrigger: {
             trigger: pinRef.current,
             start: "top top",
-            end: `+=${totalSections * scrollAmount + (totalSections - 1) * pauseAmount + finalLockAmount}`,
+            end: `+=${(totalSections - 1) * scrollAmount}`,
             pin: true,
-            scrub: 2,
+            scrub: 1,
             invalidateOnRefresh: true,
             onUpdate: (self) => {
               const rawProgress = self.progress;
-              const totalScrollDistance =
-                totalSections * scrollAmount +
-                (totalSections - 1) * pauseAmount +
-                finalLockAmount;
+              const totalScrollDistance = totalSections * scrollAmount;
               const currentScrollPosition = rawProgress * totalScrollDistance;
 
               // Calculate which section is active
               statisticsData.forEach((_, index) => {
                 let slideProgress = 0;
 
-                if (index === 0) {
-                  // First slide: starts at 0, transition happens during first scrollAmount
-                  const slideStart = 0;
-                  const slideEnd = scrollAmount;
-                  const animStartPoint =
-                    slideStart + scrollAmount * textAnimationDelay;
-                  const animEndPoint =
-                    animStartPoint + scrollAmount * textAnimationDuration;
+                const slideStart = index * scrollAmount;
+                const slideEnd = slideStart + scrollAmount;
+                const animStartPoint =
+                  slideStart + scrollAmount * textAnimationDelay;
+                const animEndPoint =
+                  animStartPoint + scrollAmount * textAnimationDuration;
 
-                  if (currentScrollPosition <= animStartPoint) {
-                    slideProgress = 0;
-                  } else if (
-                    currentScrollPosition >= animStartPoint &&
-                    currentScrollPosition <= animEndPoint
-                  ) {
-                    slideProgress =
-                      (currentScrollPosition - animStartPoint) /
-                      (scrollAmount * textAnimationDuration);
-                  } else {
-                    slideProgress = 1;
-                  }
-                } else {
-                  // For slides 2+, use a progressive delay that increases with each slide
-                  // This compensates for the cumulative timing drift
-                  const progressiveDelay = textAnimationDelay + index * 0.5; // Increase delay by 15% per slide
-
-                  const slideStart = index * scrollAmount + index * pauseAmount;
-                  const slideEnd = slideStart + scrollAmount;
-                  const animStartPoint =
-                    slideStart + scrollAmount * progressiveDelay;
-                  const animEndPoint =
-                    animStartPoint + scrollAmount * textAnimationDuration;
-
-                  if (currentScrollPosition <= animStartPoint) {
-                    slideProgress = 0;
-                  } else if (
-                    currentScrollPosition >= animStartPoint &&
-                    currentScrollPosition <= animEndPoint
-                  ) {
-                    slideProgress =
-                      (currentScrollPosition - animStartPoint) /
-                      (scrollAmount * textAnimationDuration);
-                  } else if (currentScrollPosition > animEndPoint) {
-                    slideProgress = 1;
-                  }
+                if (currentScrollPosition <= animStartPoint) {
+                  slideProgress = 0;
+                } else if (
+                  currentScrollPosition >= animStartPoint &&
+                  currentScrollPosition <= animEndPoint
+                ) {
+                  slideProgress =
+                    (currentScrollPosition - animStartPoint) /
+                    (scrollAmount * textAnimationDuration);
+                } else if (currentScrollPosition > animEndPoint) {
+                  slideProgress = 1;
                 }
 
                 progressValues[index].set(slideProgress);
@@ -305,19 +273,11 @@ function SideVideo() {
           },
         });
 
-        // Build timeline with pauses between slides
-        let timelinePosition = 0;
-
+        // Build continuous timeline without pauses
         statisticsData.forEach((_, index) => {
-          if (index === 0) {
-            // First slide is visible from the start, just add scroll time
-            timelinePosition += scrollAmount;
-
-            // Add pause after first slide
-            timeline.to({}, { duration: pauseAmount }, timelinePosition);
-            timelinePosition += pauseAmount;
-          } else {
+          if (index > 0) {
             const positionValue = `-=${itemSize}`;
+            const timelinePosition = (index - 1) * scrollAmount;
 
             // Animate to next slide
             timeline.to(
@@ -326,7 +286,7 @@ function SideVideo() {
                 x: isMobile ? positionValue : 0,
                 y: isDesktop ? positionValue : 0,
                 duration: scrollAmount,
-                ease: "none",
+                ease: "power1.inOut", // Smooth easing
               },
               timelinePosition
             );
@@ -336,23 +296,12 @@ function SideVideo() {
               {
                 attr: { d: generateNotchPath(index, isMobile) },
                 duration: scrollAmount,
-                ease: "none",
+                ease: "power1.inOut", // Smooth easing
               },
               timelinePosition
             );
-
-            timelinePosition += scrollAmount;
-
-            // Add pause after slide (except last one)
-            if (index < totalSections - 1) {
-              timeline.to({}, { duration: pauseAmount }, timelinePosition);
-              timelinePosition += pauseAmount;
-            }
           }
         });
-
-        // Add final lock after last slide
-        timeline.to({}, { duration: finalLockAmount }, timelinePosition);
 
         return () => {
           ScrollTrigger.getAll().forEach((t) => t.kill());

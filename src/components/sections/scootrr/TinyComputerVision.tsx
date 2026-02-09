@@ -13,10 +13,10 @@ function TinyComputerVision() {
   const [isMobile, setIsMobile] = useState(false);
 
   const config = {
-    cameraFinalY: isMobile ? -60 : -120,
+    cameraFinalY: isMobile ? -60 : -100,
     cameraFinalX: 0,
     cameraFinalScale: 0.08,
-    carouselXOffset: 350,
+    carouselXOffset: 300,
   };
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -145,7 +145,7 @@ function TinyComputerVision() {
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top top",
-          end: `+=${2500}%`,
+          end: `+=${1500}%`,
           pin: true,
           scrub: 0.8,
           invalidateOnRefresh: true,
@@ -298,7 +298,7 @@ function TinyComputerVision() {
         slots,
         {
           autoAlpha: (i) => (i === 1 ? 1 : 0.4),
-          duration: 1.2,
+          duration: 0.5,
           stagger: 0.15,
           ease: "power2.out",
         },
@@ -310,13 +310,13 @@ function TinyComputerVision() {
       for (let step = 0; step < slides.length - 1; step++) {
         const stepLabel = `carousel-step-${step}`;
 
-        mainTl.addLabel(stepLabel, "+=1");
+        mainTl.addLabel(stepLabel, "+=0.3");
 
         mainTl.to(
           currentSlots[2],
           {
             ...positions.center,
-            duration: 1.8,
+            duration: 1,
             ease: "power2.inOut",
           },
           stepLabel
@@ -326,7 +326,7 @@ function TinyComputerVision() {
           currentSlots[1],
           {
             ...positions.left,
-            duration: 1.8,
+            duration: 1,
             ease: "power2.inOut",
           },
           stepLabel
@@ -336,7 +336,7 @@ function TinyComputerVision() {
           currentSlots[0],
           {
             ...positions.right,
-            duration: 1.8,
+            duration: 1,
             ease: "power2.inOut",
           },
           stepLabel
@@ -347,7 +347,7 @@ function TinyComputerVision() {
       }
 
       // Final hold
-      mainTl.to({}, { duration: 2 });
+      mainTl.to({}, { duration: 0.5 });
     }, containerRef);
 
     // Refresh after setup
@@ -461,7 +461,7 @@ function TinyComputerVision() {
                   alt={item.alt}
                   width={500}
                   height={500}
-                  className="h-auto w-auto max-w-[340px] object-contain lg:max-w-[500px]"
+                  className="h-auto w-[100px] w-auto object-contain lg:w-[200px]"
                   priority={i === 1}
                 />
               </div>
