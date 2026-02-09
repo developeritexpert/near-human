@@ -13,18 +13,49 @@ export default function ImageSec() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [showPlayButton, setShowPlayButton] = useState(false);
+  const [screenDimensions, setScreenDimensions] = useState({
+    width: 0,
+    height: 0,
+  });
 
   useEffect(() => {
     // Detect mobile device
     setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+
+    // Get screen dimensions
+    setScreenDimensions({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
+
+    // Update dimensions on resize
+    const handleResize = () => {
+      setScreenDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
     if (!sectionRef.current || !videoContainerRef.current || !maskRef.current)
       return;
 
+    if (screenDimensions.width === 0 || screenDimensions.height === 0) return;
+
     // Clear any existing ScrollTriggers
     ScrollTrigger.getAll().forEach((t) => t.kill());
+
+    // Calculate initial dimensions in px (50% or 70% of screen)
+    const initialWidth = isMobile
+      ? screenDimensions.width * 0.7
+      : screenDimensions.width * 0.5;
+    const initialHeight = isMobile
+      ? screenDimensions.height * 0.7
+      : screenDimensions.height * 0.7;
 
     /* ===============================
        MASK WINDOW EXPANSION (OPTIMIZED)
@@ -32,19 +63,19 @@ export default function ImageSec() {
     gsap.fromTo(
       maskRef.current,
       {
-        width: isMobile ? "70%" : "50%",
-        height: isMobile ? "70%" : "50%",
+        width: `${initialWidth}px`,
+        height: `${initialHeight}px`,
       },
       {
-        width: "100%",
-        height: "100%",
+        width: `${screenDimensions.width}px`,
+        height: `${screenDimensions.height}px`,
         borderRadius: "0px",
-        ease: "none", // Changed from power1.inOut - 'none' is better for scrub
+        ease: "none",
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: "top 90%",
+          start: "top 50%",
           end: "bottom 50%",
-          scrub: 1.5, // Reduced from 4 - more responsive
+          scrub: 1.5,
           invalidateOnRefresh: true,
         },
       }
@@ -55,12 +86,12 @@ export default function ImageSec() {
     =============================== */
     gsap.to(videoContainerRef.current, {
       scale: 1,
-      ease: "none", // Changed from power1.inOut
+      ease: "none",
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
         end: "+=120%",
-        scrub: 1.5, // Reduced from 4 - more responsive
+        scrub: 1.5,
         pin: true,
         anticipatePin: 1,
         invalidateOnRefresh: true,
@@ -121,7 +152,7 @@ export default function ImageSec() {
     return () => {
       ScrollTrigger.getAll().forEach((t) => t.kill());
     };
-  }, [isMobile]);
+  }, [isMobile, screenDimensions]);
 
   const handlePlayClick = () => {
     if (iframeRef.current) {
@@ -132,6 +163,14 @@ export default function ImageSec() {
       setShowPlayButton(false);
     }
   };
+
+  // Calculate initial dimensions for inline style
+  const initialWidth = isMobile
+    ? screenDimensions.width * 0.7
+    : screenDimensions.width * 0.5;
+  const initialHeight = isMobile
+    ? screenDimensions.height * 0.7
+    : screenDimensions.height * 0.5;
 
   return (
     <section ref={sectionRef} className="relative h-[100vh] bg-white">
@@ -174,8 +213,10 @@ export default function ImageSec() {
           {/* White overlay mask with expanding window */}
           <div
             ref={maskRef}
-            className="absolute top-1/2 left-1/2 h-3/4 w-3/4 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[32px] md:h-1/2 md:w-1/2"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[32px]"
             style={{
+              width: `${initialWidth}px`,
+              height: `${initialHeight}px`,
               boxShadow: "0 0 0 200vmax white",
               willChange: "width, height, border-radius",
             }}

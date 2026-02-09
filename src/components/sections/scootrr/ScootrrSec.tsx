@@ -1,11 +1,36 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 
 function ScootrrSec() {
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
+  const [topSpacing, setTopSpacing] = useState(0);
+
+  useEffect(() => {
+    // Calculate the mask top space
+    const calculateTopSpace = () => {
+      const screenHeight = window.innerHeight;
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      // Calculate initial mask height (same logic as ImageSec)
+      const initialMaskHeight = isMobile
+        ? screenHeight * 0.7
+        : screenHeight * 0.7;
+
+      // Calculate top space: (screen height - initial mask height) / 2
+      const topSpace = (screenHeight - initialMaskHeight) / 2;
+
+      setTopSpacing(topSpace);
+    };
+
+    calculateTopSpace();
+
+    // Recalculate on resize
+    window.addEventListener("resize", calculateTopSpace);
+    return () => window.removeEventListener("resize", calculateTopSpace);
+  }, []);
 
   useEffect(() => {
     if (!headingRef.current) return;
@@ -31,7 +56,10 @@ function ScootrrSec() {
   return (
     <section
       ref={sectionRef}
-      className="flex items-center justify-center px-[20px] pt-[140px] pb-[40px] md:px-[30px] md:pt-[170px] md:pb-[70px] lg:px-[50px] lg:pt-[349px] lg:pb-[44px] xl:pt-[369px] xl:pb-[24px]"
+      className="flex items-center justify-center px-[20px] pb-[50px] md:px-[30px] lg:px-[50px]"
+      style={{
+        paddingTop: topSpacing > 0 ? `${topSpacing + 158}px` : undefined,
+      }}
     >
       <div className="container mx-auto max-w-[1440px] text-center">
         {/* Main Heading */}
