@@ -20,7 +20,8 @@ export default function ImageSec() {
 
   useEffect(() => {
     // Detect mobile device
-    setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+    const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    setIsMobile(mobile);
 
     // Get screen dimensions
     setScreenDimensions({
@@ -28,16 +29,23 @@ export default function ImageSec() {
       height: window.innerHeight,
     });
 
-    // Update dimensions on resize
+    // Update dimensions on resize (debounced)
+    let resizeTimeout: NodeJS.Timeout;
     const handleResize = () => {
-      setScreenDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        setScreenDimensions({
+          width: window.innerWidth,
+          height: window.innerHeight,
+        });
+      }, 150);
     };
 
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(resizeTimeout);
+    };
   }, []);
 
   useEffect(() => {
@@ -57,6 +65,9 @@ export default function ImageSec() {
       ? screenDimensions.height * 0.7
       : screenDimensions.height * 0.7;
 
+    // Use simpler scrub values on mobile for better performance
+    const scrubValue = isMobile ? 0.5 : 1.5;
+
     /* ===============================
        MASK WINDOW EXPANSION (OPTIMIZED)
     =============================== */
@@ -75,8 +86,10 @@ export default function ImageSec() {
           trigger: sectionRef.current,
           start: "top 50%",
           end: "bottom 50%",
-          scrub: 1.5,
+          scrub: scrubValue,
           invalidateOnRefresh: true,
+          // Reduce calculations on mobile
+          fastScrollEnd: isMobile ? true : false,
         },
       }
     );
@@ -91,10 +104,11 @@ export default function ImageSec() {
         trigger: sectionRef.current,
         start: "top top",
         end: "+=120%",
-        scrub: 1.5,
+        scrub: scrubValue,
         pin: true,
         anticipatePin: 1,
         invalidateOnRefresh: true,
+        fastScrollEnd: isMobile ? true : false,
       },
     });
 
@@ -181,7 +195,8 @@ export default function ImageSec() {
           className="relative h-screen w-screen overflow-hidden"
           style={{
             transform: "scale(1)",
-            willChange: "transform",
+            // Remove willChange on mobile to reduce GPU memory pressure
+            ...(isMobile ? {} : { willChange: "transform" }),
           }}
         >
           {/* Video (always full size) */}
@@ -191,6 +206,11 @@ export default function ImageSec() {
             src="https://www.youtube.com/embed/6-AjSG7Zw_4?enablejsapi=1&mute=1&controls=0&rel=0&playsinline=1"
             allow="autoplay; encrypted-media"
             allowFullScreen
+            // Prevent touch events from interfering with scroll
+            style={{
+              pointerEvents: showPlayButton ? "auto" : "none",
+              touchAction: "none",
+            }}
           />
 
           {/* Play button for mobile */}
@@ -199,6 +219,7 @@ export default function ImageSec() {
               onClick={handlePlayClick}
               className="absolute top-1/2 left-1/2 z-10 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-lg transition-transform hover:scale-110 active:scale-95"
               aria-label="Play video"
+              style={{ pointerEvents: "auto" }}
             >
               <svg
                 className="ml-1 h-8 w-8 text-black"
@@ -210,15 +231,23 @@ export default function ImageSec() {
             </button>
           )}
 
-          {/* White overlay mask with expanding window */}
+          {/* White overlay mask with expanding window - OPTIMIZED */}
           <div
             ref={maskRef}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[32px]"
             style={{
               width: `${initialWidth}px`,
               height: `${initialHeight}px`,
-              boxShadow: "0 0 0 200vmax white",
-              willChange: "width, height, border-radius",
+              // Optimized box-shadow: smaller spread for better mobile performance
+              boxShadow: isMobile
+                ? "0 0 0 100vmax white"
+                : "0 0 0 200vmax white",
+              // Remove willChange on mobile
+              ...(isMobile
+                ? {}
+                : { willChange: "width, height, border-radius" }),
+              // Ensure it doesn't block touch events
+              pointerEvents: "none",
             }}
           />
         </div>
