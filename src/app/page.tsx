@@ -32,9 +32,7 @@ export default function ScootrPage() {
 
     const initTimeout = setTimeout(() => {
       if (!isMobile) {
-        // ── DESKTOP ONLY: original Lenis smooth scroll ──────────────────────
-        // Desktop is perfect as-is. Lenis + gsap.ticker is the correct
-        // integration for mouse wheel. No changes from your original.
+        // Desktop: original Lenis + gsap.ticker — unchanged, works perfectly
         const lenis = new Lenis({
           duration: 1.2,
           easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -56,51 +54,28 @@ export default function ScootrPage() {
         tickerFnRef.current = tickerFn;
         gsap.ticker.add(tickerFn);
         gsap.ticker.lagSmoothing(0);
-
-        const refreshTimeout = setTimeout(() => {
-          lenis.resize();
-          ScrollTrigger.refresh(true);
-        }, 600);
-
-        const handleResize = () => {
-          lenis.resize();
-          ScrollTrigger.refresh();
-        };
-
-        window.addEventListener("resize", handleResize);
-
-        return () => {
-          clearTimeout(refreshTimeout);
-          window.removeEventListener("resize", handleResize);
-        };
-      } else {
-        // ── MOBILE: no Lenis, native scroll only ────────────────────────────
-        // Mobile browsers have built-in momentum/inertia scroll — Lenis adds
-        // nothing useful on touch and actively breaks ScrollTrigger pins by
-        // creating a virtual scroll coordinate that diverges from the native
-        // window.scrollY that ScrollTrigger uses for pin spacer positions.
-        // Without Lenis, ScrollTrigger reads native scroll directly and pins
-        // fire at exactly the right position with no replay, no white space.
-        //
-        // ScrollTrigger.normalizeScroll fixes iOS Safari's "bouncy" overscroll
-        // and the address bar resize that shifts trigger positions mid-scroll.
-        ScrollTrigger.normalizeScroll(true);
-
-        const refreshTimeout = setTimeout(() => {
-          ScrollTrigger.refresh(true);
-        }, 600);
-
-        const handleResize = () => {
-          ScrollTrigger.refresh();
-        };
-
-        window.addEventListener("resize", handleResize);
-
-        return () => {
-          clearTimeout(refreshTimeout);
-          window.removeEventListener("resize", handleResize);
-        };
       }
+
+      // Single refresh after ALL children have registered their ScrollTriggers
+      // and inserted their pin spacers. 600ms > TinyComputerVision's 500ms timer.
+      // Both mobile and desktop use this same refresh — desktop also benefits
+      // from waiting for all pin spacers before calculating trigger offsets.
+      const refreshTimeout = setTimeout(() => {
+        if (lenisRef.current) lenisRef.current.resize();
+        ScrollTrigger.refresh(true);
+      }, 600);
+
+      const handleResize = () => {
+        if (lenisRef.current) lenisRef.current.resize();
+        ScrollTrigger.refresh();
+      };
+
+      window.addEventListener("resize", handleResize);
+
+      return () => {
+        clearTimeout(refreshTimeout);
+        window.removeEventListener("resize", handleResize);
+      };
     }, 100);
 
     return () => {
@@ -116,7 +91,6 @@ export default function ScootrPage() {
         lenisRef.current = null;
       }
 
-      ScrollTrigger.normalizeScroll(false);
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     };
   }, []);
