@@ -17,18 +17,17 @@ export default function ImageSec() {
     width: 0,
     height: 0,
   });
+  // Keep a ref to the scoped context for clean teardown
+  const ctxRef = useRef<gsap.Context | null>(null);
 
   useEffect(() => {
-    // Detect mobile device
     setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
 
-    // Get screen dimensions
     setScreenDimensions({
       width: window.innerWidth,
       height: window.innerHeight,
     });
 
-    // Update dimensions on resize
     const handleResize = () => {
       setScreenDimensions({
         width: window.innerWidth,
@@ -46,10 +45,12 @@ export default function ImageSec() {
 
     if (screenDimensions.width === 0 || screenDimensions.height === 0) return;
 
-    // Clear any existing ScrollTriggers
-    ScrollTrigger.getAll().forEach((t) => t.kill());
+    // Revert previous context instead of killing all global triggers
+    if (ctxRef.current) {
+      ctxRef.current.revert();
+      ctxRef.current = null;
+    }
 
-    // Calculate initial dimensions in px (50% or 70% of screen)
     const initialWidth = isMobile
       ? screenDimensions.width * 0.7
       : screenDimensions.width * 0.5;
@@ -57,102 +58,122 @@ export default function ImageSec() {
       ? screenDimensions.height * 0.7
       : screenDimensions.height * 0.7;
 
-    /* ===============================
-       MASK WINDOW EXPANSION (OPTIMIZED)
-    =============================== */
-    gsap.fromTo(
-      maskRef.current,
-      {
-        width: `${initialWidth}px`,
-        height: `${initialHeight}px`,
-      },
-      {
-        width: `${screenDimensions.width}px`,
-        height: `${screenDimensions.height}px`,
-        borderRadius: "0px",
+    // Scope the context to sectionRef so cleanup is isolated
+    const ctx = gsap.context(() => {
+      /* MASK WINDOW EXPANSION */
+      gsap.fromTo(
+        maskRef.current,
+        {
+          width: `${initialWidth}px`,
+          height: `${initialHeight}px`,
+        },
+        {
+          width: `${screenDimensions.width}px`,
+          height: `${screenDimensions.height}px`,
+          borderRadius: "0px",
+          ease: "none",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 50%",
+            end: "bottom 50%",
+            scrub: 1.5,
+            invalidateOnRefresh: true,
+          },
+        }
+      );
+
+      /* ZOOM + PIN */
+      gsap.to(videoContainerRef.current, {
+        scale: 1,
         ease: "none",
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: "top 50%",
-          end: "bottom 50%",
+          start: "top top",
+          end: "+=120%",
           scrub: 1.5,
+          pin: true,
+          anticipatePin: 1,
           invalidateOnRefresh: true,
         },
-      }
-    );
+      });
 
-    /* ===============================
-       ZOOM + PIN (OPTIMIZED)
-    =============================== */
-    gsap.to(videoContainerRef.current, {
-      scale: 1,
-      ease: "none",
-      scrollTrigger: {
+      /* VIDEO PLAY/PAUSE */
+      ScrollTrigger.create({
         trigger: sectionRef.current,
-        start: "top top",
-        end: "+=120%",
-        scrub: 1.5,
-        pin: true,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-      },
-    });
+        start: "top 50%",
+        end: "bottom -120%",
+        onEnter: () => {
+          if (iframeRef.current) {
+            if (isMobile) {
+              setShowPlayButton(true);
+            } else {
+              iframeRef.current.contentWindow?.postMessage(
+                '{"event":"command","func":"playVideo","args":""}',
+                "*"
+              );
+            }
+          }
+        },
+        onLeave: () => {
+          if (iframeRef.current) {
+            setShowPlayButton(false);
+            iframeRef.current.contentWindow?.postMessage(
+              '{"event":"command","func":"pauseVideo","args":""}',
+              "*"
+            );
+          }
+        },
+        onEnterBack: () => {
+          if (iframeRef.current) {
+            if (isMobile) {
+              setShowPlayButton(true);
+            } else {
+              iframeRef.current.contentWindow?.postMessage(
+                '{"event":"command","func":"playVideo","args":""}',
+                "*"
+              );
+            }
+          }
+        },
+        onLeaveBack: () => {
+          if (iframeRef.current) {
+            setShowPlayButton(false);
+            iframeRef.current.contentWindow?.postMessage(
+              '{"event":"command","func":"pauseVideo","args":""}',
+              "*"
+            );
+          }
+        },
+      });
+    }, sectionRef); // ← scoped to sectionRef
 
-    /* ===============================
-       VIDEO PLAY/PAUSE ON ENTER/LEAVE
-    =============================== */
-    ScrollTrigger.create({
-      trigger: sectionRef.current,
-      start: "top 50%",
-      end: "bottom -120%",
-      onEnter: () => {
-        if (iframeRef.current) {
-          if (isMobile) {
-            setShowPlayButton(true);
-          } else {
-            iframeRef.current.contentWindow?.postMessage(
-              '{"event":"command","func":"playVideo","args":""}',
-              "*"
-            );
-          }
-        }
-      },
-      onLeave: () => {
-        if (iframeRef.current) {
-          setShowPlayButton(false);
-          iframeRef.current.contentWindow?.postMessage(
-            '{"event":"command","func":"pauseVideo","args":""}',
-            "*"
-          );
-        }
-      },
-      onEnterBack: () => {
-        if (iframeRef.current) {
-          if (isMobile) {
-            setShowPlayButton(true);
-          } else {
-            iframeRef.current.contentWindow?.postMessage(
-              '{"event":"command","func":"playVideo","args":""}',
-              "*"
-            );
-          }
-        }
-      },
-      onLeaveBack: () => {
-        if (iframeRef.current) {
-          setShowPlayButton(false);
-          iframeRef.current.contentWindow?.postMessage(
-            '{"event":"command","func":"pauseVideo","args":""}',
-            "*"
-          );
-        }
-      },
-    });
+    ctxRef.current = ctx;
 
     return () => {
-      ScrollTrigger.getAll().forEach((t) => t.kill());
+      ctx.revert();
+      ctxRef.current = null;
+      // ↓ Do NOT call ScrollTrigger.getAll().forEach(t => t.kill()) here!
     };
   }, [isMobile, screenDimensions]);
+
+  // Refresh triggers when returning to tab on mobile
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        ScrollTrigger.refresh(true);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
+  const initialWidth = isMobile
+    ? screenDimensions.width * 0.7
+    : screenDimensions.width * 0.5;
+  const initialHeight = isMobile
+    ? screenDimensions.height * 0.7
+    : screenDimensions.height * 0.5;
 
   const handlePlayClick = () => {
     if (iframeRef.current) {
@@ -164,18 +185,9 @@ export default function ImageSec() {
     }
   };
 
-  // Calculate initial dimensions for inline style
-  const initialWidth = isMobile
-    ? screenDimensions.width * 0.7
-    : screenDimensions.width * 0.5;
-  const initialHeight = isMobile
-    ? screenDimensions.height * 0.7
-    : screenDimensions.height * 0.5;
-
   return (
     <section ref={sectionRef} className="relative h-[100vh] bg-white">
       <div className="flex h-screen items-center justify-center">
-        {/* Full-sized video container */}
         <div
           ref={videoContainerRef}
           className="relative h-screen w-screen overflow-hidden"
@@ -184,7 +196,6 @@ export default function ImageSec() {
             backfaceVisibility: "hidden",
           }}
         >
-          {/* Video (always full size) */}
           <iframe
             ref={iframeRef}
             className="absolute inset-0 h-full w-full object-cover"
@@ -199,7 +210,6 @@ export default function ImageSec() {
             }}
           />
 
-          {/* Play button for mobile */}
           {showPlayButton && (
             <button
               onClick={handlePlayClick}
@@ -217,7 +227,6 @@ export default function ImageSec() {
             </button>
           )}
 
-          {/* White overlay mask with expanding window */}
           <div
             ref={maskRef}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[32px]"
