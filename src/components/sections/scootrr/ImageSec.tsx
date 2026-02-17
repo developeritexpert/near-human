@@ -211,7 +211,7 @@ export default function ImageSec() {
       style={{ height: "100svh" }}
     >
       <div
-        className="flex items-center justify-center"
+        className="flex items-center justify-center px-[15px] md:px-0"
         style={{ height: "100svh" }}
       >
         <div
