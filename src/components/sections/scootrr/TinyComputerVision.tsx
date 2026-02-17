@@ -309,10 +309,7 @@ function TinyComputerVision() {
   }, []);
 
   return (
-    <section
-      ref={containerRef}
-      className="relative w-full overflow-hidden bg-[#0A1016]"
-    >
+    <section ref={containerRef} className="relative w-full bg-[#0A1016]">
       <div className="relative flex min-h-screen flex-col items-center justify-center">
         <div
           ref={headerRef}

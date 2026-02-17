@@ -320,10 +320,7 @@ function SideVideo() {
   }, []);
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative z-10 overflow-hidden bg-white py-[50px]"
-    >
+    <section ref={sectionRef} className="relative z-10 bg-white py-[50px]">
       <div
         ref={pinRef}
         className="flex !h-screen flex-col justify-center bg-white px-[20px] md:px-[30px] lg:px-[50px]"
