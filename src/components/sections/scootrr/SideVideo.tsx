@@ -16,7 +16,6 @@ const THEME = {
   mutedText: "#10171740",
 };
 
-// Animated text component that uses a motion value
 function ScrollAnimatedText({
   text,
   fromColor = "#10171730",
@@ -97,7 +96,6 @@ function SideVideo() {
   const ctxRef = useRef<gsap.Context | null>(null);
   const mmRef = useRef<gsap.MatchMedia | null>(null);
 
-  // Motion values for each slide's text animation progress
   const progress0 = useMotionValue(0);
   const progress1 = useMotionValue(0);
   const progress2 = useMotionValue(0);
@@ -123,7 +121,6 @@ function SideVideo() {
     },
   ];
 
-  // Single video
   const videoSrc = "/Videos/scootr/Vid1.mp4";
 
   const generateNotchPath = (progress: number, isMobile: boolean = false) => {
@@ -197,7 +194,6 @@ function SideVideo() {
   useEffect(() => {
     if (!isReady || !pinRef.current) return;
 
-    // CRITICAL: Clean up previous context completely
     if (ctxRef.current) {
       ctxRef.current.revert();
       ctxRef.current = null;
@@ -208,122 +204,130 @@ function SideVideo() {
       mmRef.current = null;
     }
 
-    const ctx = gsap.context(() => {
-      const mm = gsap.matchMedia();
-      mmRef.current = mm;
+    // CRITICAL FIX: Delay creation to ensure previous pinned section (ImageSec)
+    // has fully registered its pin spacer. This prevents ScrollTrigger from
+    // miscalculating positions and causing double-render on mobile.
+    const createTimeout = setTimeout(() => {
+      if (!pinRef.current) return;
 
-      mm.add(
-        {
-          isMobile: "(max-width: 767px)",
-          isDesktop: "(min-width: 768px)",
-        },
-        (context) => {
-          const { isMobile, isDesktop } = context.conditions as {
-            isMobile: boolean;
-            isDesktop: boolean;
-          };
+      const ctx = gsap.context(() => {
+        const mm = gsap.matchMedia();
+        mmRef.current = mm;
 
-          const texts = textItemsRef.current;
-          const itemSize = isMobile ? window.innerWidth : 400;
+        mm.add(
+          {
+            isMobile: "(max-width: 767px)",
+            isDesktop: "(min-width: 768px)",
+          },
+          (context) => {
+            const { isMobile, isDesktop } = context.conditions as {
+              isMobile: boolean;
+              isDesktop: boolean;
+            };
 
-          // Initial setup
-          gsap.set(texts, {
-            position: "absolute",
-            x: isMobile ? (i) => i * itemSize : 0,
-            y: isDesktop ? (i) => i * itemSize : 0,
-            opacity: 1,
-          });
+            const texts = textItemsRef.current;
+            const itemSize = isMobile ? window.innerWidth : 400;
 
-          if (svgPathRef.current) {
-            gsap.set(svgPathRef.current, {
-              attr: { d: generateNotchPath(0, isMobile) },
+            gsap.set(texts, {
+              position: "absolute",
+              x: isMobile ? (i: number) => i * itemSize : 0,
+              y: isDesktop ? (i: number) => i * itemSize : 0,
+              opacity: 1,
+            });
+
+            if (svgPathRef.current) {
+              gsap.set(svgPathRef.current, {
+                attr: { d: generateNotchPath(0, isMobile) },
+              });
+            }
+
+            const totalSections = statisticsData.length;
+            const scrollAmount = 600;
+            const textAnimationDelay = 0.5;
+            const textAnimationDuration = 0.5;
+
+            const timeline = gsap.timeline({
+              scrollTrigger: {
+                trigger: pinRef.current,
+                start: "top top",
+                end: `+=${(totalSections - 1) * scrollAmount}`,
+                pin: true,
+                scrub: 1,
+                invalidateOnRefresh: true,
+                id: "sidevideo-pin", // Unique ID to prevent conflicts
+                onUpdate: (self) => {
+                  const rawProgress = self.progress;
+                  const totalScrollDistance = totalSections * scrollAmount;
+                  const currentScrollPosition =
+                    rawProgress * totalScrollDistance;
+
+                  statisticsData.forEach((_, index) => {
+                    let slideProgress = 0;
+
+                    const slideStart = index * scrollAmount;
+                    const animStartPoint =
+                      slideStart + scrollAmount * textAnimationDelay;
+                    const animEndPoint =
+                      animStartPoint + scrollAmount * textAnimationDuration;
+
+                    if (currentScrollPosition <= animStartPoint) {
+                      slideProgress = 0;
+                    } else if (
+                      currentScrollPosition >= animStartPoint &&
+                      currentScrollPosition <= animEndPoint
+                    ) {
+                      slideProgress =
+                        (currentScrollPosition - animStartPoint) /
+                        (scrollAmount * textAnimationDuration);
+                    } else if (currentScrollPosition > animEndPoint) {
+                      slideProgress = 1;
+                    }
+
+                    progressValues[index].set(slideProgress);
+                  });
+                },
+              },
+            });
+
+            statisticsData.forEach((_, index) => {
+              if (index > 0) {
+                const positionValue = `-=${itemSize}`;
+                const timelinePosition = (index - 1) * scrollAmount;
+
+                timeline.to(
+                  texts,
+                  {
+                    x: isMobile ? positionValue : 0,
+                    y: isDesktop ? positionValue : 0,
+                    duration: scrollAmount,
+                    ease: "power1.inOut",
+                  },
+                  timelinePosition
+                );
+
+                timeline.to(
+                  svgPathRef.current,
+                  {
+                    attr: { d: generateNotchPath(index, isMobile) },
+                    duration: scrollAmount,
+                    ease: "power1.inOut",
+                  },
+                  timelinePosition
+                );
+              }
             });
           }
+        );
+      }, pinRef);
 
-          const totalSections = statisticsData.length;
-          const scrollAmount = 600;
-          const textAnimationDelay = 0.5;
-          const textAnimationDuration = 0.5;
+      ctxRef.current = ctx;
 
-          const timeline = gsap.timeline({
-            scrollTrigger: {
-              trigger: pinRef.current,
-              start: "top top",
-              end: `+=${(totalSections - 1) * scrollAmount}`,
-              pin: true,
-              scrub: 1,
-              invalidateOnRefresh: true,
-              preventOverlaps: true, // CRITICAL: Prevent overlapping triggers
-              onUpdate: (self) => {
-                const rawProgress = self.progress;
-                const totalScrollDistance = totalSections * scrollAmount;
-                const currentScrollPosition = rawProgress * totalScrollDistance;
-
-                // Calculate which section is active
-                statisticsData.forEach((_, index) => {
-                  let slideProgress = 0;
-
-                  const slideStart = index * scrollAmount;
-                  const animStartPoint =
-                    slideStart + scrollAmount * textAnimationDelay;
-                  const animEndPoint =
-                    animStartPoint + scrollAmount * textAnimationDuration;
-
-                  if (currentScrollPosition <= animStartPoint) {
-                    slideProgress = 0;
-                  } else if (
-                    currentScrollPosition >= animStartPoint &&
-                    currentScrollPosition <= animEndPoint
-                  ) {
-                    slideProgress =
-                      (currentScrollPosition - animStartPoint) /
-                      (scrollAmount * textAnimationDuration);
-                  } else if (currentScrollPosition > animEndPoint) {
-                    slideProgress = 1;
-                  }
-
-                  progressValues[index].set(slideProgress);
-                });
-              },
-            },
-          });
-
-          // Build continuous timeline without pauses
-          statisticsData.forEach((_, index) => {
-            if (index > 0) {
-              const positionValue = `-=${itemSize}`;
-              const timelinePosition = (index - 1) * scrollAmount;
-
-              // Animate to next slide
-              timeline.to(
-                texts,
-                {
-                  x: isMobile ? positionValue : 0,
-                  y: isDesktop ? positionValue : 0,
-                  duration: scrollAmount,
-                  ease: "power1.inOut",
-                },
-                timelinePosition
-              );
-
-              timeline.to(
-                svgPathRef.current,
-                {
-                  attr: { d: generateNotchPath(index, isMobile) },
-                  duration: scrollAmount,
-                  ease: "power1.inOut",
-                },
-                timelinePosition
-              );
-            }
-          });
-        }
-      );
-    }, pinRef);
-
-    ctxRef.current = ctx;
+      // Refresh after creation to recalculate all pin positions
+      ScrollTrigger.refresh(true);
+    }, 200);
 
     return () => {
+      clearTimeout(createTimeout);
       if (ctxRef.current) {
         ctxRef.current.revert();
         ctxRef.current = null;
@@ -395,7 +399,6 @@ function SideVideo() {
           {/* RIGHT: Single Video */}
           <div className="relative order-1 flex w-full items-center justify-center after:absolute after:top-1/2 after:right-full after:z-[999] after:h-full after:w-full after:bg-[repeating-linear-gradient(360deg,white,transparent)] after:content-[''] lg:order-2 lg:w-1/2">
             <div className="relative aspect-[900/700] w-full overflow-hidden rounded-xl lg:w-[90%] xl:w-full">
-              {/* Single Video */}
               <video
                 className="pointer-events-none h-full w-full object-cover"
                 src={videoSrc}
@@ -406,7 +409,6 @@ function SideVideo() {
                 preload="auto"
               />
 
-              {/* SVG OVERLAY */}
               <svg
                 className="pointer-events-none absolute inset-0 z-20 h-full w-full scale-[1.01]"
                 viewBox="0 0 900 700"
@@ -419,7 +421,6 @@ function SideVideo() {
                 />
               </svg>
 
-              {/* GLOW */}
               <div
                 className="pointer-events-none absolute z-0 rounded-full blur-3xl"
                 style={{

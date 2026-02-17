@@ -20,17 +20,14 @@ export default function ImageSec() {
   const ctxRef = useRef<gsap.Context | null>(null);
 
   useEffect(() => {
-    // Detect mobile device
     const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     setIsMobile(mobile);
 
-    // Get screen dimensions
     setScreenDimensions({
       width: window.innerWidth,
       height: window.innerHeight,
     });
 
-    // Update dimensions on resize (debounced)
     let resizeTimeout: NodeJS.Timeout;
     const handleResize = () => {
       clearTimeout(resizeTimeout);
@@ -55,13 +52,11 @@ export default function ImageSec() {
 
     if (screenDimensions.width === 0 || screenDimensions.height === 0) return;
 
-    // CRITICAL: Kill existing context completely
     if (ctxRef.current) {
       ctxRef.current.revert();
       ctxRef.current = null;
     }
 
-    // Calculate initial dimensions in px (50% or 70% of screen)
     const initialWidth = isMobile
       ? screenDimensions.width * 0.7
       : screenDimensions.width * 0.5;
@@ -69,43 +64,13 @@ export default function ImageSec() {
       ? screenDimensions.height * 0.7
       : screenDimensions.height * 0.7;
 
-    // Use simpler scrub values on mobile for better performance
     const scrubValue = isMobile ? 0.5 : 1.5;
 
-    // Create new GSAP context
     const ctx = gsap.context(() => {
-      /* ===============================
-         MASK WINDOW EXPANSION (OPTIMIZED)
-      =============================== */
-      gsap.fromTo(
-        maskRef.current,
-        {
-          width: `${initialWidth}px`,
-          height: `${initialHeight}px`,
-        },
-        {
-          width: `${screenDimensions.width}px`,
-          height: `${screenDimensions.height}px`,
-          borderRadius: "0px",
-          ease: "none",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 50%",
-            end: "bottom 50%",
-            scrub: scrubValue,
-            invalidateOnRefresh: true,
-            fastScrollEnd: isMobile ? true : false,
-            preventOverlaps: true, // CRITICAL: Prevent trigger conflicts
-          },
-        }
-      );
-
-      /* ===============================
-         ZOOM + PIN (OPTIMIZED)
-      =============================== */
-      gsap.to(videoContainerRef.current, {
-        scale: 1,
-        ease: "none",
+      // FIX: Combine mask expansion and pin into a SINGLE ScrollTrigger timeline
+      // This prevents the duplicate rendering caused by two competing ScrollTriggers
+      // with different start/end values on the same element
+      const pinTimeline = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
@@ -114,10 +79,39 @@ export default function ImageSec() {
           pin: true,
           anticipatePin: 1,
           invalidateOnRefresh: true,
-          fastScrollEnd: isMobile ? true : false,
-          preventOverlaps: true, // CRITICAL: Prevent trigger conflicts
+          fastScrollEnd: isMobile,
+          id: "imagesec-pin", // Unique ID to prevent conflicts
         },
       });
+
+      // Mask expansion happens within the pinned timeline
+      pinTimeline.fromTo(
+        maskRef.current,
+        {
+          width: `${initialWidth}px`,
+          height: `${initialHeight}px`,
+          borderRadius: "32px",
+        },
+        {
+          width: `${screenDimensions.width}px`,
+          height: `${screenDimensions.height}px`,
+          borderRadius: "0px",
+          ease: "none",
+          duration: 1,
+        },
+        0
+      );
+
+      // Video scale happens simultaneously in the same timeline
+      pinTimeline.to(
+        videoContainerRef.current,
+        {
+          scale: 1,
+          ease: "none",
+          duration: 1,
+        },
+        0
+      );
 
       /* ===============================
          VIDEO PLAY/PAUSE ON ENTER/LEAVE
@@ -126,6 +120,7 @@ export default function ImageSec() {
         trigger: sectionRef.current,
         start: "top 50%",
         end: "bottom -120%",
+        id: "imagesec-video",
         onEnter: () => {
           if (iframeRef.current) {
             if (isMobile) {
@@ -202,7 +197,6 @@ export default function ImageSec() {
     }
   };
 
-  // Calculate initial dimensions for inline style
   const initialWidth = isMobile
     ? screenDimensions.width * 0.7
     : screenDimensions.width * 0.5;
@@ -213,31 +207,26 @@ export default function ImageSec() {
   return (
     <section ref={sectionRef} className="relative h-[100vh] bg-white">
       <div className="flex h-screen items-center justify-center">
-        {/* Full-sized video container */}
         <div
           ref={videoContainerRef}
           className="relative h-screen w-screen overflow-hidden"
           style={{
             transform: "scale(1)",
-            // Remove willChange on mobile to reduce GPU memory pressure
             ...(isMobile ? {} : { willChange: "transform" }),
           }}
         >
-          {/* Video (always full size) */}
           <iframe
             ref={iframeRef}
             className="absolute inset-0 h-full w-full object-cover"
             src="https://www.youtube.com/embed/6-AjSG7Zw_4?enablejsapi=1&mute=1&controls=0&rel=0&playsinline=1"
             allow="autoplay; encrypted-media"
             allowFullScreen
-            // Prevent touch events from interfering with scroll
             style={{
               pointerEvents: showPlayButton ? "auto" : "none",
               touchAction: "none",
             }}
           />
 
-          {/* Play button for mobile */}
           {showPlayButton && (
             <button
               onClick={handlePlayClick}
@@ -255,22 +244,18 @@ export default function ImageSec() {
             </button>
           )}
 
-          {/* White overlay mask with expanding window - OPTIMIZED */}
           <div
             ref={maskRef}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[32px]"
             style={{
               width: `${initialWidth}px`,
               height: `${initialHeight}px`,
-              // Optimized box-shadow: smaller spread for better mobile performance
               boxShadow: isMobile
                 ? "0 0 0 100vmax white"
                 : "0 0 0 200vmax white",
-              // Remove willChange on mobile
               ...(isMobile
                 ? {}
                 : { willChange: "width, height, border-radius" }),
-              // Ensure it doesn't block touch events
               pointerEvents: "none",
             }}
           />

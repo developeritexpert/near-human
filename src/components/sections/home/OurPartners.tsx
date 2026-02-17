@@ -86,33 +86,91 @@ function OurPartners() {
             </div>
 
             <div className="relative z-10 flex grid grid-cols-[0.2fr_1fr_0.2fr] justify-center gap-[2px] md:grid-cols-[0.3fr_1fr_1fr_1fr_0.3fr]">
-              <div className=" h-[160px] sm:h-[200px] md:h-[250px]  bg-[#ffffff]"></div>
-              <div className="flex h-[160px] sm:h-[200px] md:h-[250px]   items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa]">
+              <div className="h-[160px] bg-[#ffffff] sm:h-[200px] md:h-[250px]"></div>
+              <div className="flex h-[160px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa] sm:h-[200px] md:h-[250px]">
                 <img
-                  src="/img/partner-logo1.png"
+                  src="/img/voi.png"
                   alt=""
-                  className="mix-blend-luminosity max-w-[130px] sm:max-w-full"
+                  className="max-w-[120px] mix-blend-luminosity sm:max-w-[170px]"
                 />
               </div>
-              <div className="block h-[160px] sm:h-[200px] md:h-[250px]  bg-[#ffffff] md:hidden"></div>
-              <div className="block h-[160px] sm:h-[200px] md:h-[250px]  bg-[#ffffff] md:hidden"></div>
-              <div className="flex h-[160px] sm:h-[200px] md:h-[250px]  items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa]">
+              <div className="block h-[160px] bg-[#ffffff] sm:h-[200px] md:hidden md:h-[250px]"></div>
+              <div className="block h-[160px] bg-[#ffffff] sm:h-[200px] md:hidden md:h-[250px]"></div>
+              <div className="flex h-[160px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa] sm:h-[200px] md:h-[250px]">
                 <img
-                  src="/img/partner-logo2.png"
+                  src="/img/dott.png"
                   alt=""
-                  className="mix-blend-luminosity max-w-[130px] sm:max-w-full"
+                  className="max-w-[120px] mix-blend-luminosity sm:max-w-[170px]"
                 />
               </div>
-              <div className="block h-[160px] sm:h-[200px] md:h-[250px]   bg-[#ffffff] md:hidden"></div>
-              <div className="block h-[160px] sm:h-[200px] md:h-[250px]  bg-[#ffffff] md:hidden"></div>
-              <div className="flex h-[160px] sm:h-[200px] md:h-[250px]   items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa]">
+              <div className="block h-[160px] bg-[#ffffff] sm:h-[200px] md:hidden md:h-[250px]"></div>
+              <div className="block h-[160px] bg-[#ffffff] sm:h-[200px] md:hidden md:h-[250px]"></div>
+              <div className="flex h-[160px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa] sm:h-[200px] md:h-[250px]">
                 <img
-                  src="/img/partner-logo3.png"
+                  src="/img/tier.png"
                   alt=""
-                  className="mix-blend-luminosity max-w-[130px] sm:max-w-full"
+                  className="max-w-[120px] mix-blend-luminosity sm:max-w-[170px]"
                 />
               </div>
-              <div className="h-[160px] sm:h-[200px] md:h-[250px]   bg-[#ffffff]"></div>
+              <div className="h-[160px] bg-[#ffffff] sm:h-[200px] md:h-[250px]"></div>
+            </div>
+            <div className="relative z-10 flex grid grid-cols-[0.2fr_1fr_0.2fr] justify-center gap-[2px] md:grid-cols-[0.3fr_1fr_1fr_1fr_0.3fr]">
+              <div className="h-[160px] bg-[#ffffff] sm:h-[200px] md:h-[250px]"></div>
+              <div className="flex h-[160px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa] sm:h-[200px] md:h-[250px]">
+                <img
+                  src="/img/pure-electric.png"
+                  alt=""
+                  className="max-w-[120px] mix-blend-luminosity sm:max-w-[170px]"
+                />
+              </div>
+              <div className="block h-[160px] bg-[#ffffff] sm:h-[200px] md:hidden md:h-[250px]"></div>
+              <div className="block h-[160px] bg-[#ffffff] sm:h-[200px] md:hidden md:h-[250px]"></div>
+              <div className="flex h-[160px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa] sm:h-[200px] md:h-[250px]">
+                <img
+                  src="/img/super-smith.png"
+                  alt=""
+                  className="max-w-[120px] mix-blend-luminosity sm:max-w-[170px]"
+                />
+              </div>
+              <div className="block h-[160px] bg-[#ffffff] sm:h-[200px] md:hidden md:h-[250px]"></div>
+              <div className="block h-[160px] bg-[#ffffff] sm:h-[200px] md:hidden md:h-[250px]"></div>
+              <div className="flex h-[160px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa] sm:h-[200px] md:h-[250px]">
+                <img
+                  src="/img/brl.png"
+                  alt=""
+                  className="max-w-[120px] mix-blend-luminosity sm:max-w-[170px]"
+                />
+              </div>
+              <div className="h-[160px] bg-[#ffffff] sm:h-[200px] md:h-[250px]"></div>
+            </div>
+            <div className="relative z-10 flex grid grid-cols-[0.2fr_1fr_0.2fr] justify-center gap-[2px] md:grid-cols-[0.3fr_1fr_1fr_1fr_0.3fr]">
+              <div className="h-[160px] bg-[#ffffff] sm:h-[200px] md:h-[250px]"></div>
+              <div className="flex h-[160px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa] sm:h-[200px] md:h-[250px]">
+                <img
+                  src="/img/eit-urban.png"
+                  alt=""
+                  className="max-w-[120px] mix-blend-luminosity sm:max-w-[170px]"
+                />
+              </div>
+              <div className="block h-[160px] bg-[#ffffff] sm:h-[200px] md:hidden md:h-[250px]"></div>
+              <div className="block h-[160px] bg-[#ffffff] sm:h-[200px] md:hidden md:h-[250px]"></div>
+              <div className="flex h-[160px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa] sm:h-[200px] md:h-[250px]">
+                <img
+                  src="/img/launch-space.png"
+                  alt=""
+                  className="max-w-[120px] mix-blend-luminosity sm:max-w-[170px]"
+                />
+              </div>
+              <div className="block h-[160px] bg-[#ffffff] sm:h-[200px] md:hidden md:h-[250px]"></div>
+              <div className="block h-[160px] bg-[#ffffff] sm:h-[200px] md:hidden md:h-[250px]"></div>
+              <div className="flex h-[160px] items-center justify-center bg-[#fff] duration-400 hover:bg-[#ffffffaa] sm:h-[200px] md:h-[250px]">
+                <img
+                  src="/img/innovate-uk.png"
+                  alt=""
+                  className="max-w-[120px] mix-blend-luminosity sm:max-w-[170px]"
+                />
+              </div>
+              <div className="h-[160px] bg-[#ffffff] sm:h-[200px] md:h-[250px]"></div>
             </div>
 
             <div className="relative z-10 flex grid grid-cols-[0.2fr_1fr_0.2fr] justify-center gap-[2px] md:grid-cols-[0.3fr_1fr_1fr_1fr_0.3fr]">

@@ -30,7 +30,6 @@ export default function ScootrPage() {
     // Reset scroll position
     window.scrollTo(0, 0);
 
-    // Small delay to ensure DOM is ready
     const initTimeout = setTimeout(() => {
       const lenis = new Lenis({
         duration: 1.2,
@@ -46,32 +45,29 @@ export default function ScootrPage() {
 
       lenisRef.current = lenis;
 
-      // Connect Lenis to ScrollTrigger
       lenis.on("scroll", ScrollTrigger.update);
 
-      // CRITICAL: Create ticker function and store reference for proper cleanup
       const tickerFn = (time: number) => {
         lenis.raf(time * 1000);
       };
       tickerFnRef.current = tickerFn;
 
-      // Add to GSAP ticker
       gsap.ticker.add(tickerFn);
       gsap.ticker.lagSmoothing(0);
 
-      // CRITICAL: Longer delay to ensure all child components have registered their ScrollTriggers
-      // This prevents race conditions where ScrollTrigger.refresh() runs before all triggers are created
+      // CRITICAL FIX: Increased delay to 1200ms to ensure ALL child components
+      // (ImageSec: 0ms, SideVideo: 200ms, TinyComputerVision: 400ms)
+      // have registered their ScrollTriggers before the final refresh
       const refreshTimeout = setTimeout(() => {
         if (lenisRef.current) lenisRef.current.resize();
         ScrollTrigger.refresh(true);
-      }, 800);
+      }, 1200);
 
       const handleResize = () => {
         if (lenisRef.current) lenisRef.current.resize();
-        // Add small delay before refresh to prevent race conditions
         setTimeout(() => {
           ScrollTrigger.refresh();
-        }, 100);
+        }, 150);
       };
 
       window.addEventListener("resize", handleResize);
@@ -85,19 +81,16 @@ export default function ScootrPage() {
     return () => {
       clearTimeout(initTimeout);
 
-      // CRITICAL: Remove ticker function using the stored reference
       if (tickerFnRef.current) {
         gsap.ticker.remove(tickerFnRef.current);
         tickerFnRef.current = null;
       }
 
-      // Destroy Lenis
       if (lenisRef.current) {
         lenisRef.current.destroy();
         lenisRef.current = null;
       }
 
-      // CRITICAL: Kill all ScrollTriggers on cleanup to prevent conflicts on remount
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     };
   }, []);

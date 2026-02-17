@@ -102,7 +102,6 @@ function TinyComputerVision() {
   useEffect(() => {
     if (!isReady || !containerRef.current || !canvasRef.current) return;
 
-    // CRITICAL: Clean up previous context completely
     if (ctxRef.current) {
       ctxRef.current.revert();
       ctxRef.current = null;
@@ -118,14 +117,13 @@ function TinyComputerVision() {
     const images: HTMLImageElement[] = [];
     const airship = { frame: 0 };
 
-    // Preload all images
     let loadedCount = 0;
     for (let i = 0; i < frameCount; i++) {
       const img = new window.Image() as HTMLImageElement;
       img.src = getImagePath(i);
       img.onload = () => {
         loadedCount++;
-        if (loadedCount === 1) render(); // Render first frame immediately
+        if (loadedCount === 1) render();
       };
       images.push(img);
     }
@@ -136,230 +134,233 @@ function TinyComputerVision() {
       context.drawImage(images[airship.frame], 0, 0);
     };
 
-    const ctx = gsap.context(() => {
-      // Set initial states
-      gsap.set(carouselContainerRef.current, { autoAlpha: 0 });
-      gsap.set(headerRef.current, { autoAlpha: 0, y: 30 });
-      gsap.set(finalCameraRef.current, { autoAlpha: 0, scale: 0.5 });
-      gsap.set(canvasWrapperRef.current, { scale: 1, x: 0, y: 0 });
+    // CRITICAL FIX: Delay creation to ensure previous pinned sections
+    // (ImageSec, SideVideo) have fully registered their pin spacers
+    const createTimeout = setTimeout(() => {
+      if (!containerRef.current) return;
 
-      textRefs.current.forEach((ref) => {
-        if (ref) gsap.set(ref, { autoAlpha: 0, y: 50 });
-      });
+      const ctx = gsap.context(() => {
+        gsap.set(carouselContainerRef.current, { autoAlpha: 0 });
+        gsap.set(headerRef.current, { autoAlpha: 0, y: 30 });
+        gsap.set(finalCameraRef.current, { autoAlpha: 0, scale: 0.5 });
+        gsap.set(canvasWrapperRef.current, { scale: 1, x: 0, y: 0 });
 
-      const mainTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top top",
-          end: `+=${1500}%`,
-          pin: true,
-          scrub: 0.8,
-          invalidateOnRefresh: true,
-          preventOverlaps: true, // CRITICAL: Prevent overlapping triggers
-          onUpdate: (self) => {
-            const progress = self.progress;
-            if (progress > 0.65) {
-              const carouselProgress = (progress - 0.65) / 0.35;
-              const index = Math.round(carouselProgress * (slides.length - 1));
-              setActiveIndex(Math.min(Math.max(index, 0), slides.length - 1));
-            }
+        textRefs.current.forEach((ref) => {
+          if (ref) gsap.set(ref, { autoAlpha: 0, y: 50 });
+        });
+
+        const mainTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: "top top",
+            end: `+=${1500}%`,
+            pin: true,
+            scrub: 0.8,
+            invalidateOnRefresh: true,
+            id: "tinycomputer-pin", // Unique ID to prevent conflicts
+            onUpdate: (self) => {
+              const progress = self.progress;
+              if (progress > 0.65) {
+                const carouselProgress = (progress - 0.65) / 0.35;
+                const index = Math.round(
+                  carouselProgress * (slides.length - 1)
+                );
+                setActiveIndex(Math.min(Math.max(index, 0), slides.length - 1));
+              }
+            },
           },
-        },
-      });
+        });
 
-      // 1. Image Sequence Animation
-      mainTl.to(airship, {
-        frame: frameCount - 1,
-        snap: "frame",
-        ease: "none",
-        onUpdate: render,
-        duration: 4,
-      });
+        // 1. Image Sequence Animation
+        mainTl.to(airship, {
+          frame: frameCount - 1,
+          snap: "frame",
+          ease: "none",
+          onUpdate: render,
+          duration: 4,
+        });
 
-      // 2. Feature Text Animations with proper fade in/out
-      features.forEach((feature, index) => {
-        const element = textRefs.current[index];
-        if (!element) return;
+        // 2. Feature Text Animations
+        features.forEach((feature, index) => {
+          const element = textRefs.current[index];
+          if (!element) return;
 
-        // Fade in
+          mainTl.to(
+            element,
+            {
+              autoAlpha: 1,
+              y: 0,
+              duration: 0.5,
+              ease: "power3.out",
+            },
+            `feature-${index}`
+          );
+
+          mainTl.to(element, { duration: 0.2 });
+
+          mainTl.to(element, {
+            autoAlpha: 0,
+            y: -50,
+            duration: 0.5,
+            ease: "power3.in",
+          });
+        });
+
+        // 3. TRANSITION
         mainTl.to(
-          element,
+          containerRef.current,
+          {
+            backgroundColor: "#ffffff",
+            duration: 2.5,
+            ease: "power2.inOut",
+          },
+          "transition"
+        );
+
+        // 4. Canvas zoom out and fade
+        mainTl.to(
+          canvasWrapperRef.current,
+          {
+            scale: config.cameraFinalScale,
+            y: config.cameraFinalY,
+            x: config.cameraFinalX,
+            duration: 2.5,
+            ease: "power2.inOut",
+          },
+          "transition"
+        );
+
+        mainTl.to(
+          canvasWrapperRef.current,
+          {
+            autoAlpha: 0,
+            duration: 1.5,
+            ease: "power2.out",
+          },
+          "transition+=1.5"
+        );
+
+        // 5. Final camera fade in
+        mainTl.to(
+          finalCameraRef.current,
+          {
+            autoAlpha: 1,
+            scale: 1,
+            duration: 2,
+            ease: "power2.out",
+          },
+          "transition+=1"
+        );
+
+        // 6. Header fade in
+        mainTl.to(
+          headerRef.current,
           {
             autoAlpha: 1,
             y: 0,
-            duration: 0.5,
+            duration: 1.5,
             ease: "power3.out",
           },
-          `feature-${index}`
+          "transition+=1.5"
         );
 
-        // Hold
-        mainTl.to(element, { duration: 0.2 });
+        // 7. Carousel container fade in
+        mainTl.to(
+          carouselContainerRef.current,
+          {
+            autoAlpha: 1,
+            duration: 1.5,
+            ease: "power2.out",
+          },
+          "transition+=1.5"
+        );
 
-        // Fade out
-        mainTl.to(element, {
-          autoAlpha: 0,
-          y: -50,
-          duration: 0.5,
-          ease: "power3.in",
-        });
-      });
+        // 8. Carousel Slides Animation
+        const slots = sliderImagesRef.current.filter(
+          (el): el is HTMLDivElement => el !== null
+        );
 
-      // 3. TRANSITION - Background color change
-      mainTl.to(
-        containerRef.current,
-        {
-          backgroundColor: "#ffffff",
-          duration: 2.5,
-          ease: "power2.inOut",
-        },
-        "transition"
-      );
+        const positions = {
+          left: {
+            x: -config.carouselXOffset,
+            scale: 0.7,
+            autoAlpha: 0.4,
+            zIndex: 1,
+          },
+          center: { x: 0, scale: 1, autoAlpha: 1, zIndex: 3 },
+          right: {
+            x: config.carouselXOffset,
+            scale: 0.7,
+            autoAlpha: 0.4,
+            zIndex: 1,
+          },
+        };
 
-      // 4. Canvas zoom out and fade
-      mainTl.to(
-        canvasWrapperRef.current,
-        {
-          scale: config.cameraFinalScale,
-          y: config.cameraFinalY,
-          x: config.cameraFinalX,
-          duration: 2.5,
-          ease: "power2.inOut",
-        },
-        "transition"
-      );
-
-      mainTl.to(
-        canvasWrapperRef.current,
-        {
-          autoAlpha: 0,
-          duration: 1.5,
-          ease: "power2.out",
-        },
-        "transition+=1.5"
-      );
-
-      // 5. Final camera fade in
-      mainTl.to(
-        finalCameraRef.current,
-        {
-          autoAlpha: 1,
-          scale: 1,
-          duration: 2,
-          ease: "power2.out",
-        },
-        "transition+=1"
-      );
-
-      // 6. Header fade in
-      mainTl.to(
-        headerRef.current,
-        {
-          autoAlpha: 1,
-          y: 0,
-          duration: 1.5,
-          ease: "power3.out",
-        },
-        "transition+=1.5"
-      );
-
-      // 7. Carousel container fade in
-      mainTl.to(
-        carouselContainerRef.current,
-        {
-          autoAlpha: 1,
-          duration: 1.5,
-          ease: "power2.out",
-        },
-        "transition+=1.5"
-      );
-
-      // 8. Carousel Slides Animation
-      const slots = sliderImagesRef.current.filter(
-        (el): el is HTMLDivElement => el !== null
-      );
-
-      const positions = {
-        left: {
-          x: -config.carouselXOffset,
-          scale: 0.7,
-          autoAlpha: 0.4,
-          zIndex: 1,
-        },
-        center: { x: 0, scale: 1, autoAlpha: 1, zIndex: 3 },
-        right: {
-          x: config.carouselXOffset,
-          scale: 0.7,
-          autoAlpha: 0.4,
-          zIndex: 1,
-        },
-      };
-
-      // Set initial positions for carousel items
-      if (slots[0]) gsap.set(slots[0], { ...positions.left, autoAlpha: 0 });
-      if (slots[1]) gsap.set(slots[1], { ...positions.center, autoAlpha: 0 });
-      if (slots[2]) gsap.set(slots[2], { ...positions.right, autoAlpha: 0 });
-
-      // Fade in carousel items with stagger
-      mainTl.to(
-        slots,
-        {
-          autoAlpha: (i) => (i === 1 ? 1 : 0.4),
-          duration: 0.5,
-          stagger: 0.15,
-          ease: "power2.out",
-        },
-        "carousel"
-      );
-
-      // Carousel rotation animation
-      let currentSlots = [...slots];
-      for (let step = 0; step < slides.length - 1; step++) {
-        const stepLabel = `carousel-step-${step}`;
-
-        mainTl.addLabel(stepLabel, "+=0.3");
+        if (slots[0]) gsap.set(slots[0], { ...positions.left, autoAlpha: 0 });
+        if (slots[1]) gsap.set(slots[1], { ...positions.center, autoAlpha: 0 });
+        if (slots[2]) gsap.set(slots[2], { ...positions.right, autoAlpha: 0 });
 
         mainTl.to(
-          currentSlots[2],
+          slots,
           {
-            ...positions.center,
-            duration: 1,
-            ease: "power2.inOut",
+            autoAlpha: (i: number) => (i === 1 ? 1 : 0.4),
+            duration: 0.5,
+            stagger: 0.15,
+            ease: "power2.out",
           },
-          stepLabel
+          "carousel"
         );
 
-        mainTl.to(
-          currentSlots[1],
-          {
-            ...positions.left,
-            duration: 1,
-            ease: "power2.inOut",
-          },
-          stepLabel
-        );
+        let currentSlots = [...slots];
+        for (let step = 0; step < slides.length - 1; step++) {
+          const stepLabel = `carousel-step-${step}`;
 
-        mainTl.to(
-          currentSlots[0],
-          {
-            ...positions.right,
-            duration: 1,
-            ease: "power2.inOut",
-          },
-          stepLabel
-        );
+          mainTl.addLabel(stepLabel, "+=0.3");
 
-        // Rotate array for next iteration
-        currentSlots = [currentSlots[1], currentSlots[2], currentSlots[0]];
-      }
+          mainTl.to(
+            currentSlots[2],
+            {
+              ...positions.center,
+              duration: 1,
+              ease: "power2.inOut",
+            },
+            stepLabel
+          );
 
-      // Final hold
-      mainTl.to({}, { duration: 0.5 });
-    }, containerRef);
+          mainTl.to(
+            currentSlots[1],
+            {
+              ...positions.left,
+              duration: 1,
+              ease: "power2.inOut",
+            },
+            stepLabel
+          );
 
-    ctxRef.current = ctx;
+          mainTl.to(
+            currentSlots[0],
+            {
+              ...positions.right,
+              duration: 1,
+              ease: "power2.inOut",
+            },
+            stepLabel
+          );
+
+          currentSlots = [currentSlots[1], currentSlots[2], currentSlots[0]];
+        }
+
+        mainTl.to({}, { duration: 0.5 });
+      }, containerRef);
+
+      ctxRef.current = ctx;
+
+      // Refresh after creation
+      ScrollTrigger.refresh(true);
+    }, 400); // Longer delay than SideVideo to ensure sequential creation
 
     return () => {
+      clearTimeout(createTimeout);
       if (ctxRef.current) {
         ctxRef.current.revert();
         ctxRef.current = null;
@@ -385,14 +386,12 @@ function TinyComputerVision() {
       className="relative w-full overflow-hidden bg-[#0A1016]"
     >
       <div className="relative flex min-h-screen flex-col items-center justify-center">
-        {/* Carousel Header */}
         <div
           ref={headerRef}
           className="pointer-events-none absolute top-[10%] z-[35] w-full px-6 text-center"
           style={{ opacity: 0, visibility: "hidden" }}
         />
 
-        {/* Animation Canvas */}
         <div
           ref={canvasWrapperRef}
           className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
@@ -405,7 +404,6 @@ function TinyComputerVision() {
           />
         </div>
 
-        {/* Static Camera */}
         <div
           ref={finalCameraRef}
           className="pointer-events-none absolute z-[40] flex items-center justify-center"
@@ -427,7 +425,6 @@ function TinyComputerVision() {
           />
         </div>
 
-        {/* Text Layers */}
         <div className="pointer-events-none relative z-30 mx-auto h-full w-full max-w-[1440px] px-10">
           {features.map((f, i) => (
             <div
@@ -452,7 +449,6 @@ function TinyComputerVision() {
           ))}
         </div>
 
-        {/* Carousel */}
         <div
           ref={carouselContainerRef}
           className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center"
