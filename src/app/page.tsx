@@ -21,6 +21,7 @@ gsap.registerPlugin(ScrollTrigger);
 export default function ScootrPage() {
   const lenisRef = useRef<Lenis | null>(null);
   const tickerFnRef = useRef<((time: number) => void) | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
@@ -30,61 +31,67 @@ export default function ScootrPage() {
 
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-    // ─── INIT ORDER EXPLANATION ─────────────────────────────────────────────────
-    // Child components (SideVideo, TinyComputerVision) set isReady at 50ms →
-    // their useEffect fires → ScrollTrigger.create(pin:true) inserts pin-spacer
-    // divs into the DOM, making the page significantly taller.
-    //
-    // THE BUG: If Lenis inits before pin spacers exist, it reads a short
-    // scrollHeight and caches a small scroll limit. Once pin spacers appear,
-    // the real page is much taller than Lenis knows. Lenis virtual scroll
-    // hits its cached limit and stops — but the user's finger keeps moving,
-    // so the browser's native scroll takes over. Result: the user scrolls
-    // through the pinned section once in Lenis's world, then the same section
-    // appears again as native scroll catches up. This is the "shows same
-    // section again" bug.
-    //
-    // THE FIX: Lenis inits at 200ms — after all child pin spacers are inserted.
-    // ScrollTrigger.normalizeScroll(true) then permanently suppresses native
-    // scroll so it can never take over, even if Lenis's limit is briefly stale.
-    // ────────────────────────────────────────────────────────────────────────────
     const initTimeout = setTimeout(() => {
       const lenis = new Lenis({
-        duration: isMobile ? 0.8 : 1.2,
+        duration: 1.2,
         easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         orientation: "vertical",
         gestureOrientation: "vertical",
         smoothWheel: true,
         wheelMultiplier: 1,
-        touchMultiplier: isMobile ? 1 : 2,
+        touchMultiplier: 2,
         infinite: false,
         autoResize: true,
       });
 
       lenisRef.current = lenis;
 
-      lenis.on("scroll", ScrollTrigger.update);
+      if (isMobile) {
+        // On mobile: use scrollerProxy so ScrollTrigger reads Lenis's virtual
+        // scroll position instead of window.scrollY. This fixes the pin
+        // coordinate mismatch that causes sections to replay after unpinning.
+        ScrollTrigger.scrollerProxy(document.body, {
+          scrollTop(value) {
+            if (arguments.length && value !== undefined) {
+              lenis.scrollTo(value, { immediate: true, force: true });
+            }
+            return lenis.scroll;
+          },
+          getBoundingClientRect() {
+            return {
+              top: 0,
+              left: 0,
+              width: window.innerWidth,
+              height: window.innerHeight,
+            };
+          },
+          pinType: "transform",
+        });
 
-      const tickerFn = (time: number) => {
-        lenis.raf(time * 1000);
-      };
-      tickerFnRef.current = tickerFn;
-      gsap.ticker.add(tickerFn);
-      gsap.ticker.lagSmoothing(0);
+        lenis.on("scroll", ScrollTrigger.update);
 
-      // Permanently suppress native scroll events so the browser can never
-      // "take over" from Lenis mid-scroll through a pinned section.
-      // This is the direct kill-switch for the double-scroll replay bug.
-      ScrollTrigger.normalizeScroll(true);
+        // Drive Lenis with rAF on mobile for reliable touch frame timing
+        function raf(time: number) {
+          lenis.raf(time);
+          rafRef.current = requestAnimationFrame(raf);
+        }
+        rafRef.current = requestAnimationFrame(raf);
+      } else {
+        // Desktop: original integration — gsap.ticker drives Lenis
+        lenis.on("scroll", ScrollTrigger.update);
 
-      // lenis.resize() forces a fresh read of the real (post-pin-spacer)
-      // scrollHeight so Lenis's virtual scroll limit is accurate.
-      // ScrollTrigger.refresh(true) recalculates all trigger start/end
-      // positions with Lenis now active.
+        const tickerFn = (time: number) => {
+          lenis.raf(time * 1000);
+        };
+        tickerFnRef.current = tickerFn;
+        gsap.ticker.add(tickerFn);
+        gsap.ticker.lagSmoothing(0);
+      }
+
       const refreshTimeout = setTimeout(() => {
         lenis.resize();
         ScrollTrigger.refresh(true);
-      }, 100);
+      }, 300);
 
       const handleResize = () => {
         lenis.resize();
@@ -97,10 +104,15 @@ export default function ScootrPage() {
         clearTimeout(refreshTimeout);
         window.removeEventListener("resize", handleResize);
       };
-    }, 200); // ← must be > child isReady timers (50ms) + one render cycle (~16ms)
+    }, 100);
 
     return () => {
       clearTimeout(initTimeout);
+
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
 
       if (tickerFnRef.current) {
         gsap.ticker.remove(tickerFnRef.current);
@@ -112,7 +124,10 @@ export default function ScootrPage() {
         lenisRef.current = null;
       }
 
-      ScrollTrigger.normalizeScroll(false);
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        ScrollTrigger.scrollerProxy(document.body, undefined as any);
+      }
+
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     };
   }, []);

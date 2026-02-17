@@ -21,7 +21,6 @@ export default function ImageSec() {
 
   useEffect(() => {
     setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
-
     setScreenDimensions({
       width: window.innerWidth,
       height: window.innerHeight,
@@ -41,7 +40,6 @@ export default function ImageSec() {
   useEffect(() => {
     if (!sectionRef.current || !videoContainerRef.current || !maskRef.current)
       return;
-
     if (screenDimensions.width === 0 || screenDimensions.height === 0) return;
 
     if (ctxRef.current) {
@@ -73,9 +71,6 @@ export default function ImageSec() {
             trigger: sectionRef.current,
             start: "top 50%",
             end: "bottom 50%",
-            // FIX: lower scrub on mobile — Lenis touch scroll emits fast virtual
-            // deltas; scrub 1.5 chases them and produces visible lag/flutter.
-            // 0.5 tracks the finger tightly without losing the smooth feel.
             scrub: isMobile ? 0.5 : 1.5,
             invalidateOnRefresh: true,
           },
@@ -92,18 +87,12 @@ export default function ImageSec() {
           end: "+=120%",
           scrub: isMobile ? 0.5 : 1.5,
           pin: true,
-          // FIX: anticipatePin removed on mobile only.
-          // It samples native window.scrollY one frame early, but Lenis feeds a
-          // virtual position to ScrollTrigger via gsap.ticker. On mobile these
-          // two values diverge on every touch event, causing the section to
-          // snap/teleport before the pin should engage. Desktop mouse wheel
-          // has a small enough delta that anticipatePin is safe to keep.
           ...(isMobile ? {} : { anticipatePin: 1 }),
           invalidateOnRefresh: true,
         },
       });
 
-      /* VIDEO PLAY/PAUSE — unchanged */
+      /* VIDEO PLAY/PAUSE */
       ScrollTrigger.create({
         trigger: sectionRef.current,
         start: "top 50%",
@@ -172,7 +161,6 @@ export default function ImageSec() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
 
-  // Identical to original — used only for initial mask inline style
   const initialWidth = isMobile
     ? screenDimensions.width * 0.7
     : screenDimensions.width * 0.5;
@@ -190,7 +178,6 @@ export default function ImageSec() {
     }
   };
 
-  // JSX is identical to the original — zero layout or style changes
   return (
     <section ref={sectionRef} className="relative h-[100vh] bg-white">
       <div className="flex h-screen items-center justify-center">
