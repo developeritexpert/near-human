@@ -29,6 +29,7 @@ function TinyComputerVision() {
   const sliderImagesRef = useRef<(HTMLDivElement | null)[]>([]);
   const [activeIndex, setActiveIndex] = useState(1);
   const [isReady, setIsReady] = useState(false);
+  const ctxRef = useRef<gsap.Context | null>(null);
 
   const frameCount = 35;
   const startFrame = 66;
@@ -94,13 +95,18 @@ function TinyComputerVision() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsReady(true);
-      ScrollTrigger.refresh();
     }, 500);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (!isReady || !containerRef.current || !canvasRef.current) return;
+
+    // CRITICAL: Clean up previous context completely
+    if (ctxRef.current) {
+      ctxRef.current.revert();
+      ctxRef.current = null;
+    }
 
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
@@ -149,6 +155,7 @@ function TinyComputerVision() {
           pin: true,
           scrub: 0.8,
           invalidateOnRefresh: true,
+          preventOverlaps: true, // CRITICAL: Prevent overlapping triggers
           onUpdate: (self) => {
             const progress = self.progress;
             if (progress > 0.65) {
@@ -209,7 +216,7 @@ function TinyComputerVision() {
         "transition"
       );
 
-      // 4. Canvas zoom out and fade - FIXED CENTERING
+      // 4. Canvas zoom out and fade
       mainTl.to(
         canvasWrapperRef.current,
         {
@@ -232,7 +239,7 @@ function TinyComputerVision() {
         "transition+=1.5"
       );
 
-      // 5. Final camera fade in - perfectly aligned
+      // 5. Final camera fade in
       mainTl.to(
         finalCameraRef.current,
         {
@@ -244,7 +251,7 @@ function TinyComputerVision() {
         "transition+=1"
       );
 
-      // 6. Header fade in with smooth animation
+      // 6. Header fade in
       mainTl.to(
         headerRef.current,
         {
@@ -350,17 +357,27 @@ function TinyComputerVision() {
       mainTl.to({}, { duration: 0.5 });
     }, containerRef);
 
-    // Refresh after setup
-    const refreshTimer = setTimeout(() => {
-      ScrollTrigger.refresh();
-    }, 200);
+    ctxRef.current = ctx;
 
     return () => {
-      clearTimeout(refreshTimer);
-      ctx.revert();
-      ScrollTrigger.getAll().forEach((t) => t.kill());
+      if (ctxRef.current) {
+        ctxRef.current.revert();
+        ctxRef.current = null;
+      }
     };
-  }, [isReady]);
+  }, [isReady, isMobile]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        ScrollTrigger.refresh(true);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
 
   return (
     <section
@@ -373,14 +390,9 @@ function TinyComputerVision() {
           ref={headerRef}
           className="pointer-events-none absolute top-[10%] z-[35] w-full px-6 text-center"
           style={{ opacity: 0, visibility: "hidden" }}
-        >
-          {/* <h2 className="text-[32px] md:text-[52px] leading-tight font-medium text-[#101717]">
-            Seamless Retrofitting with your vehicle{" "}
-            <span className="text-[#00B0B2]">tech stack.</span>
-          </h2> */}
-        </div>
+        />
 
-        {/* Animation Canvas - Wrapped for proper centering during scale */}
+        {/* Animation Canvas */}
         <div
           ref={canvasWrapperRef}
           className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
@@ -393,7 +405,7 @@ function TinyComputerVision() {
           />
         </div>
 
-        {/* Static Camera - Properly centered */}
+        {/* Static Camera */}
         <div
           ref={finalCameraRef}
           className="pointer-events-none absolute z-[40] flex items-center justify-center"

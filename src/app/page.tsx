@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import Lenis from "@studio-freight/lenis";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -20,10 +20,10 @@ gsap.registerPlugin(ScrollTrigger);
 
 export default function ScootrPage() {
   const lenisRef = useRef<Lenis | null>(null);
-  const rafIdRef = useRef<number | null>(null);
+  const tickerFnRef = useRef<((time: number) => void) | null>(null);
 
   useEffect(() => {
-    // Kill all existing ScrollTriggers first
+    // CRITICAL: Kill ALL ScrollTriggers first to prevent conflicts
     ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     ScrollTrigger.clearMatchMedia();
 
@@ -49,21 +49,29 @@ export default function ScootrPage() {
       // Connect Lenis to ScrollTrigger
       lenis.on("scroll", ScrollTrigger.update);
 
-      // Add Lenis to GSAP ticker
-      gsap.ticker.add((time) => {
+      // CRITICAL: Create ticker function and store reference for proper cleanup
+      const tickerFn = (time: number) => {
         lenis.raf(time * 1000);
-      });
+      };
+      tickerFnRef.current = tickerFn;
 
+      // Add to GSAP ticker
+      gsap.ticker.add(tickerFn);
       gsap.ticker.lagSmoothing(0);
 
-      // Refresh ScrollTrigger after Lenis is ready
+      // CRITICAL: Longer delay to ensure all child components have registered their ScrollTriggers
+      // This prevents race conditions where ScrollTrigger.refresh() runs before all triggers are created
       const refreshTimeout = setTimeout(() => {
+        if (lenisRef.current) lenisRef.current.resize();
         ScrollTrigger.refresh(true);
-      }, 300);
+      }, 800);
 
       const handleResize = () => {
-        lenis.resize();
-        ScrollTrigger.refresh();
+        if (lenisRef.current) lenisRef.current.resize();
+        // Add small delay before refresh to prevent race conditions
+        setTimeout(() => {
+          ScrollTrigger.refresh();
+        }, 100);
       };
 
       window.addEventListener("resize", handleResize);
@@ -77,18 +85,20 @@ export default function ScootrPage() {
     return () => {
       clearTimeout(initTimeout);
 
-      if (rafIdRef.current) {
-        cancelAnimationFrame(rafIdRef.current);
+      // CRITICAL: Remove ticker function using the stored reference
+      if (tickerFnRef.current) {
+        gsap.ticker.remove(tickerFnRef.current);
+        tickerFnRef.current = null;
       }
 
+      // Destroy Lenis
       if (lenisRef.current) {
         lenisRef.current.destroy();
         lenisRef.current = null;
       }
 
-      // Clean up all ScrollTriggers on unmount
+      // CRITICAL: Kill all ScrollTriggers on cleanup to prevent conflicts on remount
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
-      gsap.ticker.remove(() => {});
     };
   }, []);
 
@@ -100,7 +110,6 @@ export default function ScootrPage() {
         <ImageSec />
         <SideVideo />
         <TinyComputerVision />
-
         <OurPartners />
         <DropMessage />
       </main>
