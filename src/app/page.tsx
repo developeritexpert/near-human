@@ -21,7 +21,6 @@ gsap.registerPlugin(ScrollTrigger);
 export default function ScootrPage() {
   const lenisRef = useRef<Lenis | null>(null);
   const tickerFnRef = useRef<((time: number) => void) | null>(null);
-  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
@@ -32,52 +31,23 @@ export default function ScootrPage() {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     const initTimeout = setTimeout(() => {
-      const lenis = new Lenis({
-        duration: 1.2,
-        easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        orientation: "vertical",
-        gestureOrientation: "vertical",
-        smoothWheel: true,
-        wheelMultiplier: 1,
-        touchMultiplier: 2,
-        infinite: false,
-        autoResize: true,
-      });
-
-      lenisRef.current = lenis;
-
-      if (isMobile) {
-        // On mobile: use scrollerProxy so ScrollTrigger reads Lenis's virtual
-        // scroll position instead of window.scrollY. This fixes the pin
-        // coordinate mismatch that causes sections to replay after unpinning.
-        ScrollTrigger.scrollerProxy(document.body, {
-          scrollTop(value) {
-            if (arguments.length && value !== undefined) {
-              lenis.scrollTo(value, { immediate: true, force: true });
-            }
-            return lenis.scroll;
-          },
-          getBoundingClientRect() {
-            return {
-              top: 0,
-              left: 0,
-              width: window.innerWidth,
-              height: window.innerHeight,
-            };
-          },
-          pinType: "transform",
+      if (!isMobile) {
+        // ── DESKTOP ONLY: original Lenis smooth scroll ──────────────────────
+        // Desktop is perfect as-is. Lenis + gsap.ticker is the correct
+        // integration for mouse wheel. No changes from your original.
+        const lenis = new Lenis({
+          duration: 1.2,
+          easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          orientation: "vertical",
+          gestureOrientation: "vertical",
+          smoothWheel: true,
+          wheelMultiplier: 1,
+          touchMultiplier: 2,
+          infinite: false,
+          autoResize: true,
         });
 
-        lenis.on("scroll", ScrollTrigger.update);
-
-        // Drive Lenis with rAF on mobile for reliable touch frame timing
-        function raf(time: number) {
-          lenis.raf(time);
-          rafRef.current = requestAnimationFrame(raf);
-        }
-        rafRef.current = requestAnimationFrame(raf);
-      } else {
-        // Desktop: original integration — gsap.ticker drives Lenis
+        lenisRef.current = lenis;
         lenis.on("scroll", ScrollTrigger.update);
 
         const tickerFn = (time: number) => {
@@ -86,33 +56,55 @@ export default function ScootrPage() {
         tickerFnRef.current = tickerFn;
         gsap.ticker.add(tickerFn);
         gsap.ticker.lagSmoothing(0);
+
+        const refreshTimeout = setTimeout(() => {
+          lenis.resize();
+          ScrollTrigger.refresh(true);
+        }, 300);
+
+        const handleResize = () => {
+          lenis.resize();
+          ScrollTrigger.refresh();
+        };
+
+        window.addEventListener("resize", handleResize);
+
+        return () => {
+          clearTimeout(refreshTimeout);
+          window.removeEventListener("resize", handleResize);
+        };
+      } else {
+        // ── MOBILE: no Lenis, native scroll only ────────────────────────────
+        // Mobile browsers have built-in momentum/inertia scroll — Lenis adds
+        // nothing useful on touch and actively breaks ScrollTrigger pins by
+        // creating a virtual scroll coordinate that diverges from the native
+        // window.scrollY that ScrollTrigger uses for pin spacer positions.
+        // Without Lenis, ScrollTrigger reads native scroll directly and pins
+        // fire at exactly the right position with no replay, no white space.
+        //
+        // ScrollTrigger.normalizeScroll fixes iOS Safari's "bouncy" overscroll
+        // and the address bar resize that shifts trigger positions mid-scroll.
+        ScrollTrigger.normalizeScroll(true);
+
+        const refreshTimeout = setTimeout(() => {
+          ScrollTrigger.refresh(true);
+        }, 300);
+
+        const handleResize = () => {
+          ScrollTrigger.refresh();
+        };
+
+        window.addEventListener("resize", handleResize);
+
+        return () => {
+          clearTimeout(refreshTimeout);
+          window.removeEventListener("resize", handleResize);
+        };
       }
-
-      const refreshTimeout = setTimeout(() => {
-        lenis.resize();
-        ScrollTrigger.refresh(true);
-      }, 300);
-
-      const handleResize = () => {
-        lenis.resize();
-        ScrollTrigger.refresh();
-      };
-
-      window.addEventListener("resize", handleResize);
-
-      return () => {
-        clearTimeout(refreshTimeout);
-        window.removeEventListener("resize", handleResize);
-      };
     }, 100);
 
     return () => {
       clearTimeout(initTimeout);
-
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
 
       if (tickerFnRef.current) {
         gsap.ticker.remove(tickerFnRef.current);
@@ -124,10 +116,7 @@ export default function ScootrPage() {
         lenisRef.current = null;
       }
 
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        ScrollTrigger.scrollerProxy(document.body, undefined as any);
-      }
-
+      ScrollTrigger.normalizeScroll(false);
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     };
   }, []);
