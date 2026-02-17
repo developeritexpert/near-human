@@ -94,6 +94,8 @@ function SideVideo() {
   const textItemsRef = useRef<(HTMLDivElement | null)[]>([]);
   const svgPathRef = useRef<SVGPathElement>(null);
   const [isReady, setIsReady] = useState(false);
+  const ctxRef = useRef<gsap.Context | null>(null);
+  const mmRef = useRef<gsap.MatchMedia | null>(null);
 
   // Motion values for each slide's text animation progress
   const progress0 = useMotionValue(0);
@@ -195,122 +197,155 @@ function SideVideo() {
   useEffect(() => {
     if (!isReady || !pinRef.current) return;
 
-    const mm = gsap.matchMedia();
+    // CRITICAL: Clean up previous context completely
+    if (ctxRef.current) {
+      ctxRef.current.revert();
+      ctxRef.current = null;
+    }
 
-    mm.add(
-      {
-        isMobile: "(max-width: 767px)",
-        isDesktop: "(min-width: 768px)",
-      },
-      (context) => {
-        const { isMobile, isDesktop } = context.conditions as {
-          isMobile: boolean;
-          isDesktop: boolean;
-        };
+    if (mmRef.current) {
+      mmRef.current.revert();
+      mmRef.current = null;
+    }
 
-        const texts = textItemsRef.current;
-        const itemSize = isMobile ? window.innerWidth : 400;
+    const ctx = gsap.context(() => {
+      const mm = gsap.matchMedia();
+      mmRef.current = mm;
 
-        // Initial setup
-        gsap.set(texts, {
-          position: "absolute",
-          x: isMobile ? (i) => i * itemSize : 0,
-          y: isDesktop ? (i) => i * itemSize : 0,
-          opacity: 1,
-        });
+      mm.add(
+        {
+          isMobile: "(max-width: 767px)",
+          isDesktop: "(min-width: 768px)",
+        },
+        (context) => {
+          const { isMobile, isDesktop } = context.conditions as {
+            isMobile: boolean;
+            isDesktop: boolean;
+          };
 
-        if (svgPathRef.current) {
-          gsap.set(svgPathRef.current, {
-            attr: { d: generateNotchPath(0, isMobile) },
+          const texts = textItemsRef.current;
+          const itemSize = isMobile ? window.innerWidth : 400;
+
+          // Initial setup
+          gsap.set(texts, {
+            position: "absolute",
+            x: isMobile ? (i) => i * itemSize : 0,
+            y: isDesktop ? (i) => i * itemSize : 0,
+            opacity: 1,
+          });
+
+          if (svgPathRef.current) {
+            gsap.set(svgPathRef.current, {
+              attr: { d: generateNotchPath(0, isMobile) },
+            });
+          }
+
+          const totalSections = statisticsData.length;
+          const scrollAmount = 600;
+          const textAnimationDelay = 0.5;
+          const textAnimationDuration = 0.5;
+
+          const timeline = gsap.timeline({
+            scrollTrigger: {
+              trigger: pinRef.current,
+              start: "top top",
+              end: `+=${(totalSections - 1) * scrollAmount}`,
+              pin: true,
+              scrub: 1,
+              invalidateOnRefresh: true,
+              preventOverlaps: true, // CRITICAL: Prevent overlapping triggers
+              onUpdate: (self) => {
+                const rawProgress = self.progress;
+                const totalScrollDistance = totalSections * scrollAmount;
+                const currentScrollPosition = rawProgress * totalScrollDistance;
+
+                // Calculate which section is active
+                statisticsData.forEach((_, index) => {
+                  let slideProgress = 0;
+
+                  const slideStart = index * scrollAmount;
+                  const animStartPoint =
+                    slideStart + scrollAmount * textAnimationDelay;
+                  const animEndPoint =
+                    animStartPoint + scrollAmount * textAnimationDuration;
+
+                  if (currentScrollPosition <= animStartPoint) {
+                    slideProgress = 0;
+                  } else if (
+                    currentScrollPosition >= animStartPoint &&
+                    currentScrollPosition <= animEndPoint
+                  ) {
+                    slideProgress =
+                      (currentScrollPosition - animStartPoint) /
+                      (scrollAmount * textAnimationDuration);
+                  } else if (currentScrollPosition > animEndPoint) {
+                    slideProgress = 1;
+                  }
+
+                  progressValues[index].set(slideProgress);
+                });
+              },
+            },
+          });
+
+          // Build continuous timeline without pauses
+          statisticsData.forEach((_, index) => {
+            if (index > 0) {
+              const positionValue = `-=${itemSize}`;
+              const timelinePosition = (index - 1) * scrollAmount;
+
+              // Animate to next slide
+              timeline.to(
+                texts,
+                {
+                  x: isMobile ? positionValue : 0,
+                  y: isDesktop ? positionValue : 0,
+                  duration: scrollAmount,
+                  ease: "power1.inOut",
+                },
+                timelinePosition
+              );
+
+              timeline.to(
+                svgPathRef.current,
+                {
+                  attr: { d: generateNotchPath(index, isMobile) },
+                  duration: scrollAmount,
+                  ease: "power1.inOut",
+                },
+                timelinePosition
+              );
+            }
           });
         }
+      );
+    }, pinRef);
 
-        const totalSections = statisticsData.length;
-        const scrollAmount = 600; // Increased for smoother transitions
-        const textAnimationDelay = 0.5; // Text starts animating earlier
-        const textAnimationDuration = 0.5; // Longer animation duration
+    ctxRef.current = ctx;
 
-        const timeline = gsap.timeline({
-          scrollTrigger: {
-            trigger: pinRef.current,
-            start: "top top",
-            end: `+=${(totalSections - 1) * scrollAmount}`,
-            pin: true,
-            scrub: 1,
-            invalidateOnRefresh: true,
-            onUpdate: (self) => {
-              const rawProgress = self.progress;
-              const totalScrollDistance = totalSections * scrollAmount;
-              const currentScrollPosition = rawProgress * totalScrollDistance;
-
-              // Calculate which section is active
-              statisticsData.forEach((_, index) => {
-                let slideProgress = 0;
-
-                const slideStart = index * scrollAmount;
-                const slideEnd = slideStart + scrollAmount;
-                const animStartPoint =
-                  slideStart + scrollAmount * textAnimationDelay;
-                const animEndPoint =
-                  animStartPoint + scrollAmount * textAnimationDuration;
-
-                if (currentScrollPosition <= animStartPoint) {
-                  slideProgress = 0;
-                } else if (
-                  currentScrollPosition >= animStartPoint &&
-                  currentScrollPosition <= animEndPoint
-                ) {
-                  slideProgress =
-                    (currentScrollPosition - animStartPoint) /
-                    (scrollAmount * textAnimationDuration);
-                } else if (currentScrollPosition > animEndPoint) {
-                  slideProgress = 1;
-                }
-
-                progressValues[index].set(slideProgress);
-              });
-            },
-          },
-        });
-
-        // Build continuous timeline without pauses
-        statisticsData.forEach((_, index) => {
-          if (index > 0) {
-            const positionValue = `-=${itemSize}`;
-            const timelinePosition = (index - 1) * scrollAmount;
-
-            // Animate to next slide
-            timeline.to(
-              texts,
-              {
-                x: isMobile ? positionValue : 0,
-                y: isDesktop ? positionValue : 0,
-                duration: scrollAmount,
-                ease: "power1.inOut", // Smooth easing
-              },
-              timelinePosition
-            );
-
-            timeline.to(
-              svgPathRef.current,
-              {
-                attr: { d: generateNotchPath(index, isMobile) },
-                duration: scrollAmount,
-                ease: "power1.inOut", // Smooth easing
-              },
-              timelinePosition
-            );
-          }
-        });
-
-        return () => {
-          ScrollTrigger.getAll().forEach((t) => t.kill());
-        };
+    return () => {
+      if (ctxRef.current) {
+        ctxRef.current.revert();
+        ctxRef.current = null;
       }
-    );
-
-    return () => mm.revert();
+      if (mmRef.current) {
+        mmRef.current.revert();
+        mmRef.current = null;
+      }
+    };
   }, [isReady]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        ScrollTrigger.refresh(true);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
 
   return (
     <section
