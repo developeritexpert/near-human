@@ -55,9 +55,11 @@ export default function ScootrPage() {
         gsap.ticker.add(tickerFn);
         gsap.ticker.lagSmoothing(0);
       }
-      // On mobile: NO LENIS, but GSAP and ScrollTrigger still work with native scroll
 
       // Single refresh after ALL children have registered their ScrollTriggers
+      // and inserted their pin spacers. 600ms > TinyComputerVision's 500ms timer.
+      // Both mobile and desktop use this same refresh — desktop also benefits
+      // from waiting for all pin spacers before calculating trigger offsets.
       const refreshTimeout = setTimeout(() => {
         if (lenisRef.current) lenisRef.current.resize();
         ScrollTrigger.refresh(true);

@@ -13,7 +13,7 @@ function TinyComputerVision() {
   const [isMobile, setIsMobile] = useState(false);
 
   const config = {
-    cameraFinalY: -100,
+    cameraFinalY: isMobile ? -60 : -100,
     cameraFinalX: 0,
     cameraFinalScale: 0.08,
     carouselXOffset: 300,
@@ -130,324 +130,162 @@ function TinyComputerVision() {
     };
 
     const ctx = gsap.context(() => {
-      const mm = gsap.matchMedia();
+      gsap.set(carouselContainerRef.current, { autoAlpha: 0 });
+      gsap.set(headerRef.current, { autoAlpha: 0, y: 30 });
+      gsap.set(finalCameraRef.current, { autoAlpha: 0, scale: 0.5 });
+      gsap.set(canvasWrapperRef.current, { scale: 1, x: 0, y: 0 });
 
-      mm.add(
-        {
-          isMobile: "(max-width: 1023px)",
-          isDesktop: "(min-width: 1024px)",
-        },
-        (context) => {
-          const { isMobile, isDesktop } = context.conditions as {
-            isMobile: boolean;
-            isDesktop: boolean;
-          };
+      textRefs.current.forEach((ref) => {
+        if (ref) gsap.set(ref, { autoAlpha: 0, y: 50 });
+      });
 
-          // Initial setup
-          gsap.set(carouselContainerRef.current, { autoAlpha: 0 });
-          gsap.set(headerRef.current, { autoAlpha: 0, y: 30 });
-          gsap.set(finalCameraRef.current, { autoAlpha: 0, scale: 0.5 });
-          gsap.set(canvasWrapperRef.current, { scale: 1, x: 0, y: 0 });
-
-          textRefs.current.forEach((ref) => {
-            if (ref) gsap.set(ref, { autoAlpha: 0, y: 50 });
-          });
-
-          if (isDesktop) {
-            // DESKTOP: Full pin timeline
-            const mainTl = gsap.timeline({
-              scrollTrigger: {
-                trigger: containerRef.current,
-                start: "top top",
-                end: `+=${1500}%`,
-                pin: true,
-                scrub: 0.8,
-                invalidateOnRefresh: true,
-                onUpdate: (self) => {
-                  const progress = self.progress;
-                  if (progress > 0.65) {
-                    const carouselProgress = (progress - 0.65) / 0.35;
-                    const index = Math.round(
-                      carouselProgress * (slides.length - 1)
-                    );
-                    setActiveIndex(
-                      Math.min(Math.max(index, 0), slides.length - 1)
-                    );
-                  }
-                },
-              },
-            });
-
-            mainTl.to(airship, {
-              frame: frameCount - 1,
-              snap: "frame",
-              ease: "none",
-              onUpdate: render,
-              duration: 4,
-            });
-
-            features.forEach((feature, index) => {
-              const element = textRefs.current[index];
-              if (!element) return;
-
-              mainTl.to(
-                element,
-                { autoAlpha: 1, y: 0, duration: 0.5, ease: "power3.out" },
-                `feature-${index}`
-              );
-              mainTl.to(element, { duration: 0.2 });
-              mainTl.to(element, {
-                autoAlpha: 0,
-                y: -50,
-                duration: 0.5,
-                ease: "power3.in",
-              });
-            });
-
-            mainTl.to(
-              containerRef.current,
-              {
-                backgroundColor: "#ffffff",
-                duration: 2.5,
-                ease: "power2.inOut",
-              },
-              "transition"
-            );
-
-            mainTl.to(
-              canvasWrapperRef.current,
-              {
-                scale: config.cameraFinalScale,
-                y: config.cameraFinalY,
-                x: config.cameraFinalX,
-                duration: 2.5,
-                ease: "power2.inOut",
-              },
-              "transition"
-            );
-
-            mainTl.to(
-              canvasWrapperRef.current,
-              { autoAlpha: 0, duration: 1.5, ease: "power2.out" },
-              "transition+=1.5"
-            );
-
-            mainTl.to(
-              finalCameraRef.current,
-              { autoAlpha: 1, scale: 1, duration: 2, ease: "power2.out" },
-              "transition+=1"
-            );
-
-            mainTl.to(
-              headerRef.current,
-              { autoAlpha: 1, y: 0, duration: 1.5, ease: "power3.out" },
-              "transition+=1.5"
-            );
-
-            mainTl.to(
-              carouselContainerRef.current,
-              { autoAlpha: 1, duration: 1.5, ease: "power2.out" },
-              "transition+=1.5"
-            );
-
-            const slots = sliderImagesRef.current.filter(
-              (el): el is HTMLDivElement => el !== null
-            );
-
-            const positions = {
-              left: {
-                x: -config.carouselXOffset,
-                scale: 0.7,
-                autoAlpha: 0.4,
-                zIndex: 1,
-              },
-              center: { x: 0, scale: 1, autoAlpha: 1, zIndex: 3 },
-              right: {
-                x: config.carouselXOffset,
-                scale: 0.7,
-                autoAlpha: 0.4,
-                zIndex: 1,
-              },
-            };
-
-            if (slots[0])
-              gsap.set(slots[0], { ...positions.left, autoAlpha: 0 });
-            if (slots[1])
-              gsap.set(slots[1], { ...positions.center, autoAlpha: 0 });
-            if (slots[2])
-              gsap.set(slots[2], { ...positions.right, autoAlpha: 0 });
-
-            mainTl.to(
-              slots,
-              {
-                autoAlpha: (i) => (i === 1 ? 1 : 0.4),
-                duration: 0.5,
-                stagger: 0.15,
-                ease: "power2.out",
-              },
-              "carousel"
-            );
-
-            let currentSlots = [...slots];
-            for (let step = 0; step < slides.length - 1; step++) {
-              const stepLabel = `carousel-step-${step}`;
-              mainTl.addLabel(stepLabel, "+=0.3");
-
-              mainTl.to(
-                currentSlots[2],
-                { ...positions.center, duration: 1, ease: "power2.inOut" },
-                stepLabel
-              );
-              mainTl.to(
-                currentSlots[1],
-                { ...positions.left, duration: 1, ease: "power2.inOut" },
-                stepLabel
-              );
-              mainTl.to(
-                currentSlots[0],
-                { ...positions.right, duration: 1, ease: "power2.inOut" },
-                stepLabel
-              );
-
-              currentSlots = [
-                currentSlots[1],
-                currentSlots[2],
-                currentSlots[0],
-              ];
+      const mainTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: "top top",
+          end: `+=${1500}%`,
+          pin: !isMobile, // Disable pinning on mobile
+          scrub: 0.8,
+          invalidateOnRefresh: true,
+          onUpdate: (self) => {
+            const progress = self.progress;
+            if (progress > 0.65) {
+              const carouselProgress = (progress - 0.65) / 0.35;
+              const index = Math.round(carouselProgress * (slides.length - 1));
+              setActiveIndex(Math.min(Math.max(index, 0), slides.length - 1));
             }
+          },
+        },
+      });
 
-            mainTl.to({}, { duration: 0.5 });
-          } else {
-            // MOBILE: No pin, use ScrollTriggers that don't scrub heavily
+      mainTl.to(airship, {
+        frame: frameCount - 1,
+        snap: "frame",
+        ease: "none",
+        onUpdate: render,
+        duration: 4,
+      });
 
-            // Animate the 3D camera sequence based on scroll
-            ScrollTrigger.create({
-              trigger: containerRef.current,
-              start: "top top",
-              end: "bottom bottom",
-              scrub: 0.5,
-              onUpdate: (self) => {
-                const progress = self.progress;
-                const frame = Math.round(progress * (frameCount - 1));
-                airship.frame = frame;
-                render();
-              },
-            });
+      features.forEach((feature, index) => {
+        const element = textRefs.current[index];
+        if (!element) return;
 
-            // Reveal features on scroll
-            textRefs.current.forEach((ref, index) => {
-              if (!ref) return;
+        mainTl.to(
+          element,
+          { autoAlpha: 1, y: 0, duration: 0.5, ease: "power3.out" },
+          `feature-${index}`
+        );
+        mainTl.to(element, { duration: 0.2 });
+        mainTl.to(element, {
+          autoAlpha: 0,
+          y: -50,
+          duration: 0.5,
+          ease: "power3.in",
+        });
+      });
 
-              // Initial state
-              gsap.set(ref, { autoAlpha: 0, y: 30 });
-
-              // Create scroll trigger for each feature
-              ScrollTrigger.create({
-                trigger: ref,
-                start: "top 80%",
-                end: "bottom 20%",
-                onEnter: () => {
-                  gsap.to(ref, {
-                    autoAlpha: 1,
-                    y: 0,
-                    duration: 0.5,
-                    ease: "power2.out",
-                  });
-                },
-                onLeave: () => {
-                  gsap.to(ref, {
-                    autoAlpha: 0,
-                    y: -20,
-                    duration: 0.3,
-                    ease: "power2.in",
-                  });
-                },
-                onEnterBack: () => {
-                  gsap.to(ref, {
-                    autoAlpha: 1,
-                    y: 0,
-                    duration: 0.5,
-                    ease: "power2.out",
-                  });
-                },
-                onLeaveBack: () => {
-                  gsap.to(ref, {
-                    autoAlpha: 0,
-                    y: 20,
-                    duration: 0.3,
-                    ease: "power2.in",
-                  });
-                },
-              });
-            });
-
-            // Camera transition
-            ScrollTrigger.create({
-              trigger: containerRef.current,
-              start: "center center",
-              end: "bottom bottom",
-              scrub: 0.5,
-              onUpdate: (self) => {
-                const progress = self.progress;
-                if (progress > 0.7) {
-                  const cameraProgress = (progress - 0.7) / 0.3;
-                  gsap.set(canvasWrapperRef.current, {
-                    scale: 1 - cameraProgress * 0.5,
-                    autoAlpha: 1 - cameraProgress,
-                  });
-
-                  if (cameraProgress > 0.8) {
-                    gsap.set(finalCameraRef.current, {
-                      autoAlpha: (cameraProgress - 0.8) * 5,
-                      scale: 0.5 + (cameraProgress - 0.8) * 2.5,
-                    });
-                  }
-                }
-              },
-            });
-
-            // Reveal carousel at the end
-            ScrollTrigger.create({
-              trigger: containerRef.current,
-              start: "bottom 80%",
-              onEnter: () => {
-                gsap.to(carouselContainerRef.current, {
-                  autoAlpha: 1,
-                  duration: 0.5,
-                });
-
-                // Set initial carousel state
-                const slots = sliderImagesRef.current.filter(Boolean);
-                slots.forEach((slot, i) => {
-                  if (!slot) return;
-                  if (i === 1) {
-                    gsap.set(slot, { scale: 1, autoAlpha: 1, x: 0 });
-                  } else {
-                    gsap.set(slot, {
-                      scale: 0.7,
-                      autoAlpha: 0.4,
-                      x: i === 0 ? -300 : 300,
-                    });
-                  }
-                });
-              },
-            });
-
-            // Update active index for mobile
-            ScrollTrigger.create({
-              trigger: carouselContainerRef.current,
-              start: "top bottom",
-              end: "bottom top",
-              scrub: 0.5,
-              onUpdate: (self) => {
-                const progress = self.progress;
-                const index = Math.round(progress * (slides.length - 1));
-                setActiveIndex(Math.min(Math.max(index, 0), slides.length - 1));
-              },
-            });
-          }
-        }
+      mainTl.to(
+        containerRef.current,
+        { backgroundColor: "#ffffff", duration: 2.5, ease: "power2.inOut" },
+        "transition"
       );
+
+      mainTl.to(
+        canvasWrapperRef.current,
+        {
+          scale: config.cameraFinalScale,
+          y: config.cameraFinalY,
+          x: config.cameraFinalX,
+          duration: 2.5,
+          ease: "power2.inOut",
+        },
+        "transition"
+      );
+
+      mainTl.to(
+        canvasWrapperRef.current,
+        { autoAlpha: 0, duration: 1.5, ease: "power2.out" },
+        "transition+=1.5"
+      );
+
+      mainTl.to(
+        finalCameraRef.current,
+        { autoAlpha: 1, scale: 1, duration: 2, ease: "power2.out" },
+        "transition+=1"
+      );
+
+      mainTl.to(
+        headerRef.current,
+        { autoAlpha: 1, y: 0, duration: 1.5, ease: "power3.out" },
+        "transition+=1.5"
+      );
+
+      mainTl.to(
+        carouselContainerRef.current,
+        { autoAlpha: 1, duration: 1.5, ease: "power2.out" },
+        "transition+=1.5"
+      );
+
+      const slots = sliderImagesRef.current.filter(
+        (el): el is HTMLDivElement => el !== null
+      );
+
+      const positions = {
+        left: {
+          x: -config.carouselXOffset,
+          scale: 0.7,
+          autoAlpha: 0.4,
+          zIndex: 1,
+        },
+        center: { x: 0, scale: 1, autoAlpha: 1, zIndex: 3 },
+        right: {
+          x: config.carouselXOffset,
+          scale: 0.7,
+          autoAlpha: 0.4,
+          zIndex: 1,
+        },
+      };
+
+      if (slots[0]) gsap.set(slots[0], { ...positions.left, autoAlpha: 0 });
+      if (slots[1]) gsap.set(slots[1], { ...positions.center, autoAlpha: 0 });
+      if (slots[2]) gsap.set(slots[2], { ...positions.right, autoAlpha: 0 });
+
+      mainTl.to(
+        slots,
+        {
+          autoAlpha: (i) => (i === 1 ? 1 : 0.4),
+          duration: 0.5,
+          stagger: 0.15,
+          ease: "power2.out",
+        },
+        "carousel"
+      );
+
+      let currentSlots = [...slots];
+      for (let step = 0; step < slides.length - 1; step++) {
+        const stepLabel = `carousel-step-${step}`;
+        mainTl.addLabel(stepLabel, "+=0.3");
+
+        mainTl.to(
+          currentSlots[2],
+          { ...positions.center, duration: 1, ease: "power2.inOut" },
+          stepLabel
+        );
+        mainTl.to(
+          currentSlots[1],
+          { ...positions.left, duration: 1, ease: "power2.inOut" },
+          stepLabel
+        );
+        mainTl.to(
+          currentSlots[0],
+          { ...positions.right, duration: 1, ease: "power2.inOut" },
+          stepLabel
+        );
+
+        currentSlots = [currentSlots[1], currentSlots[2], currentSlots[0]];
+      }
+
+      mainTl.to({}, { duration: 0.5 });
     }, containerRef);
 
     ctxRef.current = ctx;
@@ -456,7 +294,7 @@ function TinyComputerVision() {
       ctx.revert();
       ctxRef.current = null;
     };
-  }, [isReady]);
+  }, [isReady, isMobile]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -510,7 +348,7 @@ function TinyComputerVision() {
             alt="Camera"
             width={100}
             height={100}
-            className="h-auto w-[100px] lg:w-auto"
+            className="h-auto w-[100] lg:w-auto"
             priority
           />
         </div>
@@ -529,7 +367,7 @@ function TinyComputerVision() {
               }`}
               style={{ opacity: 0, visibility: "hidden" }}
             >
-              <h2 className="3xl:text-xl mb-3 text-sm font-bold tracking-widest text-[#00B0B2] uppercase xl:text-lg">
+              <h2 className="3xl:text-xl text-md mb-3 font-bold tracking-widest text-[#00B0B2] uppercase xl:text-lg">
                 {f.title}
               </h2>
               <p className="3xl:text-5xl text-lg leading-tight font-semibold text-white mix-blend-difference xl:text-3xl">
@@ -559,7 +397,7 @@ function TinyComputerVision() {
                   alt={item.alt}
                   width={500}
                   height={500}
-                  className="h-auto w-[100px] object-contain lg:w-[200px]"
+                  className="h-auto w-[100px] w-auto object-contain lg:w-[200px]"
                   priority={i === 1}
                 />
               </div>
