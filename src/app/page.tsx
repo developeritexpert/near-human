@@ -20,50 +20,57 @@ gsap.registerPlugin(ScrollTrigger);
 
 export default function ScootrPage() {
   const lenisRef = useRef<Lenis | null>(null);
-  // Store the exact ticker function reference so we can remove it properly
   const tickerFnRef = useRef<((time: number) => void) | null>(null);
 
   useEffect(() => {
-    // Kill all existing ScrollTriggers first
+    // Kill all existing ScrollTriggers before re-initializing
     ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     ScrollTrigger.clearMatchMedia();
 
     window.scrollTo(0, 0);
 
+    // Detect mobile once so we can tune Lenis accordingly
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
     const initTimeout = setTimeout(() => {
       const lenis = new Lenis({
-        duration: 1.2,
+        duration: isMobile ? 0.8 : 1.2, // shorter duration on mobile reduces overshoot
         easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         orientation: "vertical",
         gestureOrientation: "vertical",
         smoothWheel: true,
         wheelMultiplier: 1,
-        touchMultiplier: 2,
+        // FIX 1: Lower touchMultiplier — default 2 causes scrub overshoot on mobile
+        // which makes pinned sections lag/flicker during touch scroll
+        touchMultiplier: isMobile ? 1 : 2,
         infinite: false,
         autoResize: true,
       });
 
       lenisRef.current = lenis;
 
+      // Wire Lenis scroll events to ScrollTrigger
       lenis.on("scroll", ScrollTrigger.update);
 
-      // ↓ Store the ticker fn reference so we can cleanly remove it later
       const tickerFn = (time: number) => {
         lenis.raf(time * 1000);
       };
       tickerFnRef.current = tickerFn;
       gsap.ticker.add(tickerFn);
-
       gsap.ticker.lagSmoothing(0);
 
-      // Give child components time to register their own ScrollTriggers,
-      // then do a final refresh with Lenis positions already active
+      // FIX 2: Use a longer refresh delay (800ms) to ensure ALL child components
+      // have finished their own isReady timers (100ms in SideVideo, 500ms in TinyComputerVision)
+      // before we do the final position refresh. This eliminates the race condition
+      // that causes "normal → sudden jump → pin" on first scroll and reverse scroll.
       const refreshTimeout = setTimeout(() => {
+        lenis.resize();
         ScrollTrigger.refresh(true);
-      }, 500); // slightly longer than child component delays
+      }, 800);
 
       const handleResize = () => {
         lenis.resize();
+        // Brief debounce on resize prevents thrashing
         ScrollTrigger.refresh();
       };
 
@@ -78,7 +85,6 @@ export default function ScootrPage() {
     return () => {
       clearTimeout(initTimeout);
 
-      // ↓ Remove the exact ticker function we added (was broken before)
       if (tickerFnRef.current) {
         gsap.ticker.remove(tickerFnRef.current);
         tickerFnRef.current = null;

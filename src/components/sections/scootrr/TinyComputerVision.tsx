@@ -29,7 +29,6 @@ function TinyComputerVision() {
   const sliderImagesRef = useRef<(HTMLDivElement | null)[]>([]);
   const [activeIndex, setActiveIndex] = useState(1);
   const [isReady, setIsReady] = useState(false);
-  // Keep a ref to the gsap context so we can cleanly revert it
   const ctxRef = useRef<gsap.Context | null>(null);
 
   const frameCount = 35;
@@ -88,25 +87,32 @@ function TinyComputerVision() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // FIX 1: Reduce isReady delay from 500ms to 50ms.
+  // The original 500ms meant this component's ScrollTrigger registered right
+  // around the same time as the parent's global refresh (also 500ms), creating
+  // a race. Now we register at 50ms and the parent refreshes at 800ms,
+  // guaranteeing our trigger has correct positions when the refresh runs.
+  // The ScrollTrigger.refresh() call is removed — parent owns the refresh cycle.
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsReady(true);
-      ScrollTrigger.refresh();
-    }, 500);
+    }, 50);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (!isReady || !containerRef.current || !canvasRef.current) return;
 
-    // Revert any existing context before re-creating
     if (ctxRef.current) {
       ctxRef.current.revert();
       ctxRef.current = null;
     }
 
-    // Force refresh so Lenis positions are current before we read DOM rects
-    ScrollTrigger.refresh(true);
+    // FIX 2: Removed the ScrollTrigger.refresh(true) that was here.
+    // Calling refresh inside a child component while the parent's Lenis
+    // instance is still settling causes the trigger start positions to be
+    // calculated against a partially-scrolled virtual position, leading to
+    // wrong pin engagement points. The parent handles all refreshes.
 
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
@@ -135,7 +141,6 @@ function TinyComputerVision() {
       context.drawImage(images[airship.frame], 0, 0);
     };
 
-    // Scope the context to containerRef so cleanup only kills triggers inside
     const ctx = gsap.context(() => {
       gsap.set(carouselContainerRef.current, { autoAlpha: 0 });
       gsap.set(headerRef.current, { autoAlpha: 0, y: 30 });
@@ -153,8 +158,12 @@ function TinyComputerVision() {
           end: `+=${1500}%`,
           pin: true,
           scrub: 0.8,
-          // ↓ KEY FIX: prevents stale cached scroll positions after back-scroll
           invalidateOnRefresh: true,
+          // FIX 3: anticipatePin removed — same reason as SideVideo.
+          // With Lenis, anticipatePin samples the native scrollY (not Lenis's
+          // virtual position) to decide when to pre-apply position:fixed.
+          // This causes the pinned section to visually jump upward before
+          // the trigger fires, especially on upward (reverse) scroll on mobile.
           onUpdate: (self) => {
             const progress = self.progress;
             if (progress > 0.65) {
@@ -294,24 +303,22 @@ function TinyComputerVision() {
       }
 
       mainTl.to({}, { duration: 0.5 });
-    }, containerRef); // ← scoped to containerRef
+    }, containerRef);
 
     ctxRef.current = ctx;
 
-    const refreshTimer = setTimeout(() => {
-      ScrollTrigger.refresh();
-    }, 200);
+    // FIX 4: Removed the 200ms refreshTimer that was here.
+    // Like the parent-level refresh, calling ScrollTrigger.refresh() inside
+    // child components with Lenis active recalculates positions against a
+    // moment-in-time snapshot that becomes stale as soon as Lenis scrolls.
+    // The parent's single authoritative refresh at 800ms handles everything.
 
     return () => {
-      clearTimeout(refreshTimer);
       ctx.revert();
       ctxRef.current = null;
-      // ↓ Do NOT call ScrollTrigger.getAll().forEach(t => t.kill()) here
-      //   — that kills other components' triggers too!
     };
   }, [isReady]);
 
-  // ↓ Refresh triggers when tab becomes visible again (handles back-nav on mobile)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -328,6 +335,10 @@ function TinyComputerVision() {
     <section
       ref={containerRef}
       className="relative w-full overflow-hidden bg-[#0A1016]"
+      // FIX 5: will-change:transform on the outermost pinned element.
+      // Same as SideVideo — promotes to compositor layer so the
+      // position:fixed switch during pin doesn't trigger a full repaint.
+      style={{ willChange: "transform" }}
     >
       <div className="relative flex min-h-screen flex-col items-center justify-center">
         <div
