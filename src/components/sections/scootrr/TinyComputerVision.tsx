@@ -87,16 +87,11 @@ function TinyComputerVision() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // FIX 1: Reduce isReady delay from 500ms to 50ms.
-  // The original 500ms meant this component's ScrollTrigger registered right
-  // around the same time as the parent's global refresh (also 500ms), creating
-  // a race. Now we register at 50ms and the parent refreshes at 800ms,
-  // guaranteeing our trigger has correct positions when the refresh runs.
-  // The ScrollTrigger.refresh() call is removed — parent owns the refresh cycle.
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsReady(true);
-    }, 50);
+      ScrollTrigger.refresh();
+    }, 500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -108,11 +103,7 @@ function TinyComputerVision() {
       ctxRef.current = null;
     }
 
-    // FIX 2: Removed the ScrollTrigger.refresh(true) that was here.
-    // Calling refresh inside a child component while the parent's Lenis
-    // instance is still settling causes the trigger start positions to be
-    // calculated against a partially-scrolled virtual position, leading to
-    // wrong pin engagement points. The parent handles all refreshes.
+    ScrollTrigger.refresh(true);
 
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
@@ -159,11 +150,6 @@ function TinyComputerVision() {
           pin: true,
           scrub: 0.8,
           invalidateOnRefresh: true,
-          // FIX 3: anticipatePin removed — same reason as SideVideo.
-          // With Lenis, anticipatePin samples the native scrollY (not Lenis's
-          // virtual position) to decide when to pre-apply position:fixed.
-          // This causes the pinned section to visually jump upward before
-          // the trigger fires, especially on upward (reverse) scroll on mobile.
           onUpdate: (self) => {
             const progress = self.progress;
             if (progress > 0.65) {
@@ -307,13 +293,12 @@ function TinyComputerVision() {
 
     ctxRef.current = ctx;
 
-    // FIX 4: Removed the 200ms refreshTimer that was here.
-    // Like the parent-level refresh, calling ScrollTrigger.refresh() inside
-    // child components with Lenis active recalculates positions against a
-    // moment-in-time snapshot that becomes stale as soon as Lenis scrolls.
-    // The parent's single authoritative refresh at 800ms handles everything.
+    const refreshTimer = setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 200);
 
     return () => {
+      clearTimeout(refreshTimer);
       ctx.revert();
       ctxRef.current = null;
     };
@@ -335,10 +320,6 @@ function TinyComputerVision() {
     <section
       ref={containerRef}
       className="relative w-full overflow-hidden bg-[#0A1016]"
-      // FIX 5: will-change:transform on the outermost pinned element.
-      // Same as SideVideo — promotes to compositor layer so the
-      // position:fixed switch during pin doesn't trigger a full repaint.
-      style={{ willChange: "transform" }}
     >
       <div className="relative flex min-h-screen flex-col items-center justify-center">
         <div
