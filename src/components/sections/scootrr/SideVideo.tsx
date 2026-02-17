@@ -90,7 +90,6 @@ function SideVideo() {
   const textItemsRef = useRef<(HTMLDivElement | null)[]>([]);
   const svgPathRef = useRef<SVGPathElement>(null);
   const [isReady, setIsReady] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const ctxRef = useRef<gsap.Context | null>(null);
 
   const progress0 = useMotionValue(0);
@@ -174,10 +173,6 @@ function SideVideo() {
   };
 
   useEffect(() => {
-    setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
-  }, []);
-
-  useEffect(() => {
     const timer = setTimeout(() => {
       setIsReady(true);
     }, 100);
@@ -232,7 +227,8 @@ function SideVideo() {
               trigger: pinRef.current,
               start: "top top",
               end: `+=${(totalSections - 1) * scrollAmount}`,
-              pin: !isMobile, // Disable pinning on mobile
+              pin: true,
+              pinType: "transform", // Use transform for both mobile and desktop
               scrub: 1,
               invalidateOnRefresh: true,
               onUpdate: (self) => {
@@ -304,7 +300,7 @@ function SideVideo() {
       ctx.revert();
       ctxRef.current = null;
     };
-  }, [isReady, isMobile]);
+  }, [isReady]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -326,6 +322,7 @@ function SideVideo() {
       <div
         ref={pinRef}
         className="flex !h-screen flex-col justify-center bg-white px-[20px] md:px-[30px] lg:px-[50px]"
+        style={{ willChange: "transform" }}
       >
         <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center lg:flex-row">
           {/* LEFT: Statistics */}
