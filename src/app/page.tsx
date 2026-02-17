@@ -60,7 +60,7 @@ export default function ScootrPage() {
         const refreshTimeout = setTimeout(() => {
           lenis.resize();
           ScrollTrigger.refresh(true);
-        }, 300);
+        }, 600);
 
         const handleResize = () => {
           lenis.resize();
@@ -88,7 +88,7 @@ export default function ScootrPage() {
 
         const refreshTimeout = setTimeout(() => {
           ScrollTrigger.refresh(true);
-        }, 300);
+        }, 600);
 
         const handleResize = () => {
           ScrollTrigger.refresh();
