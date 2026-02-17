@@ -29,6 +29,8 @@ function TinyComputerVision() {
   const sliderImagesRef = useRef<(HTMLDivElement | null)[]>([]);
   const [activeIndex, setActiveIndex] = useState(1);
   const [isReady, setIsReady] = useState(false);
+  // Keep a ref to the gsap context so we can cleanly revert it
+  const ctxRef = useRef<gsap.Context | null>(null);
 
   const frameCount = 35;
   const startFrame = 66;
@@ -81,14 +83,9 @@ function TinyComputerVision() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024);
     };
-
     checkMobile();
-
     window.addEventListener("resize", checkMobile);
-
-    return () => {
-      window.removeEventListener("resize", checkMobile);
-    };
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   useEffect(() => {
@@ -102,6 +99,15 @@ function TinyComputerVision() {
   useEffect(() => {
     if (!isReady || !containerRef.current || !canvasRef.current) return;
 
+    // Revert any existing context before re-creating
+    if (ctxRef.current) {
+      ctxRef.current.revert();
+      ctxRef.current = null;
+    }
+
+    // Force refresh so Lenis positions are current before we read DOM rects
+    ScrollTrigger.refresh(true);
+
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     if (!context) return;
@@ -112,14 +118,13 @@ function TinyComputerVision() {
     const images: HTMLImageElement[] = [];
     const airship = { frame: 0 };
 
-    // Preload all images
     let loadedCount = 0;
     for (let i = 0; i < frameCount; i++) {
       const img = new window.Image() as HTMLImageElement;
       img.src = getImagePath(i);
       img.onload = () => {
         loadedCount++;
-        if (loadedCount === 1) render(); // Render first frame immediately
+        if (loadedCount === 1) render();
       };
       images.push(img);
     }
@@ -130,8 +135,8 @@ function TinyComputerVision() {
       context.drawImage(images[airship.frame], 0, 0);
     };
 
+    // Scope the context to containerRef so cleanup only kills triggers inside
     const ctx = gsap.context(() => {
-      // Set initial states
       gsap.set(carouselContainerRef.current, { autoAlpha: 0 });
       gsap.set(headerRef.current, { autoAlpha: 0, y: 30 });
       gsap.set(finalCameraRef.current, { autoAlpha: 0, scale: 0.5 });
@@ -148,6 +153,7 @@ function TinyComputerVision() {
           end: `+=${1500}%`,
           pin: true,
           scrub: 0.8,
+          // ↓ KEY FIX: prevents stale cached scroll positions after back-scroll
           invalidateOnRefresh: true,
           onUpdate: (self) => {
             const progress = self.progress;
@@ -160,7 +166,6 @@ function TinyComputerVision() {
         },
       });
 
-      // 1. Image Sequence Animation
       mainTl.to(airship, {
         frame: frameCount - 1,
         snap: "frame",
@@ -169,27 +174,16 @@ function TinyComputerVision() {
         duration: 4,
       });
 
-      // 2. Feature Text Animations with proper fade in/out
       features.forEach((feature, index) => {
         const element = textRefs.current[index];
         if (!element) return;
 
-        // Fade in
         mainTl.to(
           element,
-          {
-            autoAlpha: 1,
-            y: 0,
-            duration: 0.5,
-            ease: "power3.out",
-          },
+          { autoAlpha: 1, y: 0, duration: 0.5, ease: "power3.out" },
           `feature-${index}`
         );
-
-        // Hold
         mainTl.to(element, { duration: 0.2 });
-
-        // Fade out
         mainTl.to(element, {
           autoAlpha: 0,
           y: -50,
@@ -198,18 +192,12 @@ function TinyComputerVision() {
         });
       });
 
-      // 3. TRANSITION - Background color change
       mainTl.to(
         containerRef.current,
-        {
-          backgroundColor: "#ffffff",
-          duration: 2.5,
-          ease: "power2.inOut",
-        },
+        { backgroundColor: "#ffffff", duration: 2.5, ease: "power2.inOut" },
         "transition"
       );
 
-      // 4. Canvas zoom out and fade - FIXED CENTERING
       mainTl.to(
         canvasWrapperRef.current,
         {
@@ -224,50 +212,28 @@ function TinyComputerVision() {
 
       mainTl.to(
         canvasWrapperRef.current,
-        {
-          autoAlpha: 0,
-          duration: 1.5,
-          ease: "power2.out",
-        },
+        { autoAlpha: 0, duration: 1.5, ease: "power2.out" },
         "transition+=1.5"
       );
 
-      // 5. Final camera fade in - perfectly aligned
       mainTl.to(
         finalCameraRef.current,
-        {
-          autoAlpha: 1,
-          scale: 1,
-          duration: 2,
-          ease: "power2.out",
-        },
+        { autoAlpha: 1, scale: 1, duration: 2, ease: "power2.out" },
         "transition+=1"
       );
 
-      // 6. Header fade in with smooth animation
       mainTl.to(
         headerRef.current,
-        {
-          autoAlpha: 1,
-          y: 0,
-          duration: 1.5,
-          ease: "power3.out",
-        },
+        { autoAlpha: 1, y: 0, duration: 1.5, ease: "power3.out" },
         "transition+=1.5"
       );
 
-      // 7. Carousel container fade in
       mainTl.to(
         carouselContainerRef.current,
-        {
-          autoAlpha: 1,
-          duration: 1.5,
-          ease: "power2.out",
-        },
+        { autoAlpha: 1, duration: 1.5, ease: "power2.out" },
         "transition+=1.5"
       );
 
-      // 8. Carousel Slides Animation
       const slots = sliderImagesRef.current.filter(
         (el): el is HTMLDivElement => el !== null
       );
@@ -288,12 +254,10 @@ function TinyComputerVision() {
         },
       };
 
-      // Set initial positions for carousel items
       if (slots[0]) gsap.set(slots[0], { ...positions.left, autoAlpha: 0 });
       if (slots[1]) gsap.set(slots[1], { ...positions.center, autoAlpha: 0 });
       if (slots[2]) gsap.set(slots[2], { ...positions.right, autoAlpha: 0 });
 
-      // Fade in carousel items with stagger
       mainTl.to(
         slots,
         {
@@ -305,52 +269,35 @@ function TinyComputerVision() {
         "carousel"
       );
 
-      // Carousel rotation animation
       let currentSlots = [...slots];
       for (let step = 0; step < slides.length - 1; step++) {
         const stepLabel = `carousel-step-${step}`;
-
         mainTl.addLabel(stepLabel, "+=0.3");
 
         mainTl.to(
           currentSlots[2],
-          {
-            ...positions.center,
-            duration: 1,
-            ease: "power2.inOut",
-          },
+          { ...positions.center, duration: 1, ease: "power2.inOut" },
           stepLabel
         );
-
         mainTl.to(
           currentSlots[1],
-          {
-            ...positions.left,
-            duration: 1,
-            ease: "power2.inOut",
-          },
+          { ...positions.left, duration: 1, ease: "power2.inOut" },
           stepLabel
         );
-
         mainTl.to(
           currentSlots[0],
-          {
-            ...positions.right,
-            duration: 1,
-            ease: "power2.inOut",
-          },
+          { ...positions.right, duration: 1, ease: "power2.inOut" },
           stepLabel
         );
 
-        // Rotate array for next iteration
         currentSlots = [currentSlots[1], currentSlots[2], currentSlots[0]];
       }
 
-      // Final hold
       mainTl.to({}, { duration: 0.5 });
-    }, containerRef);
+    }, containerRef); // ← scoped to containerRef
 
-    // Refresh after setup
+    ctxRef.current = ctx;
+
     const refreshTimer = setTimeout(() => {
       ScrollTrigger.refresh();
     }, 200);
@@ -358,9 +305,24 @@ function TinyComputerVision() {
     return () => {
       clearTimeout(refreshTimer);
       ctx.revert();
-      ScrollTrigger.getAll().forEach((t) => t.kill());
+      ctxRef.current = null;
+      // ↓ Do NOT call ScrollTrigger.getAll().forEach(t => t.kill()) here
+      //   — that kills other components' triggers too!
     };
   }, [isReady]);
+
+  // ↓ Refresh triggers when tab becomes visible again (handles back-nav on mobile)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        ScrollTrigger.refresh(true);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
 
   return (
     <section
@@ -368,19 +330,12 @@ function TinyComputerVision() {
       className="relative w-full overflow-hidden bg-[#0A1016]"
     >
       <div className="relative flex min-h-screen flex-col items-center justify-center">
-        {/* Carousel Header */}
         <div
           ref={headerRef}
           className="pointer-events-none absolute top-[10%] z-[35] w-full px-6 text-center"
           style={{ opacity: 0, visibility: "hidden" }}
-        >
-          {/* <h2 className="text-[32px] md:text-[52px] leading-tight font-medium text-[#101717]">
-            Seamless Retrofitting with your vehicle{" "}
-            <span className="text-[#00B0B2]">tech stack.</span>
-          </h2> */}
-        </div>
+        />
 
-        {/* Animation Canvas - Wrapped for proper centering during scale */}
         <div
           ref={canvasWrapperRef}
           className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
@@ -393,7 +348,6 @@ function TinyComputerVision() {
           />
         </div>
 
-        {/* Static Camera - Properly centered */}
         <div
           ref={finalCameraRef}
           className="pointer-events-none absolute z-[40] flex items-center justify-center"
@@ -415,7 +369,6 @@ function TinyComputerVision() {
           />
         </div>
 
-        {/* Text Layers */}
         <div className="pointer-events-none relative z-30 mx-auto h-full w-full max-w-[1440px] px-10">
           {features.map((f, i) => (
             <div
@@ -440,7 +393,6 @@ function TinyComputerVision() {
           ))}
         </div>
 
-        {/* Carousel */}
         <div
           ref={carouselContainerRef}
           className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center"
