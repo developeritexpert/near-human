@@ -23,25 +23,39 @@ export default function ScootrPage() {
   const tickerFnRef = useRef<((time: number) => void) | null>(null);
 
   useEffect(() => {
-    // Kill all existing ScrollTriggers before re-initializing
     ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     ScrollTrigger.clearMatchMedia();
 
     window.scrollTo(0, 0);
 
-    // Detect mobile once so we can tune Lenis accordingly
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+    // ─── INIT ORDER EXPLANATION ─────────────────────────────────────────────────
+    // Child components (SideVideo, TinyComputerVision) set isReady at 50ms →
+    // their useEffect fires → ScrollTrigger.create(pin:true) inserts pin-spacer
+    // divs into the DOM, making the page significantly taller.
+    //
+    // THE BUG: If Lenis inits before pin spacers exist, it reads a short
+    // scrollHeight and caches a small scroll limit. Once pin spacers appear,
+    // the real page is much taller than Lenis knows. Lenis virtual scroll
+    // hits its cached limit and stops — but the user's finger keeps moving,
+    // so the browser's native scroll takes over. Result: the user scrolls
+    // through the pinned section once in Lenis's world, then the same section
+    // appears again as native scroll catches up. This is the "shows same
+    // section again" bug.
+    //
+    // THE FIX: Lenis inits at 200ms — after all child pin spacers are inserted.
+    // ScrollTrigger.normalizeScroll(true) then permanently suppresses native
+    // scroll so it can never take over, even if Lenis's limit is briefly stale.
+    // ────────────────────────────────────────────────────────────────────────────
     const initTimeout = setTimeout(() => {
       const lenis = new Lenis({
-        duration: isMobile ? 0.8 : 1.2, // shorter duration on mobile reduces overshoot
+        duration: isMobile ? 0.8 : 1.2,
         easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         orientation: "vertical",
         gestureOrientation: "vertical",
         smoothWheel: true,
         wheelMultiplier: 1,
-        // FIX 1: Lower touchMultiplier — default 2 causes scrub overshoot on mobile
-        // which makes pinned sections lag/flicker during touch scroll
         touchMultiplier: isMobile ? 1 : 2,
         infinite: false,
         autoResize: true,
@@ -49,7 +63,6 @@ export default function ScootrPage() {
 
       lenisRef.current = lenis;
 
-      // Wire Lenis scroll events to ScrollTrigger
       lenis.on("scroll", ScrollTrigger.update);
 
       const tickerFn = (time: number) => {
@@ -59,18 +72,22 @@ export default function ScootrPage() {
       gsap.ticker.add(tickerFn);
       gsap.ticker.lagSmoothing(0);
 
-      // FIX 2: Use a longer refresh delay (800ms) to ensure ALL child components
-      // have finished their own isReady timers (100ms in SideVideo, 500ms in TinyComputerVision)
-      // before we do the final position refresh. This eliminates the race condition
-      // that causes "normal → sudden jump → pin" on first scroll and reverse scroll.
+      // Permanently suppress native scroll events so the browser can never
+      // "take over" from Lenis mid-scroll through a pinned section.
+      // This is the direct kill-switch for the double-scroll replay bug.
+      ScrollTrigger.normalizeScroll(true);
+
+      // lenis.resize() forces a fresh read of the real (post-pin-spacer)
+      // scrollHeight so Lenis's virtual scroll limit is accurate.
+      // ScrollTrigger.refresh(true) recalculates all trigger start/end
+      // positions with Lenis now active.
       const refreshTimeout = setTimeout(() => {
         lenis.resize();
         ScrollTrigger.refresh(true);
-      }, 800);
+      }, 100);
 
       const handleResize = () => {
         lenis.resize();
-        // Brief debounce on resize prevents thrashing
         ScrollTrigger.refresh();
       };
 
@@ -80,7 +97,7 @@ export default function ScootrPage() {
         clearTimeout(refreshTimeout);
         window.removeEventListener("resize", handleResize);
       };
-    }, 100);
+    }, 200); // ← must be > child isReady timers (50ms) + one render cycle (~16ms)
 
     return () => {
       clearTimeout(initTimeout);
@@ -95,6 +112,7 @@ export default function ScootrPage() {
         lenisRef.current = null;
       }
 
+      ScrollTrigger.normalizeScroll(false);
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     };
   }, []);
