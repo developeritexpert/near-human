@@ -18,33 +18,25 @@ export default function ImageSec() {
     height: 0,
   });
   const ctxRef = useRef<gsap.Context | null>(null);
-  const playTriggerRef = useRef<ScrollTrigger | null>(null);
 
-  // Detect mobile on mount and resize
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
-    };
-    checkMobile();
+    setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+    setScreenDimensions({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
 
     const handleResize = () => {
-      checkMobile();
       setScreenDimensions({
         width: window.innerWidth,
         height: window.innerHeight,
       });
     };
 
-    setScreenDimensions({
-      width: window.innerWidth,
-      height: window.innerHeight,
-    });
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Main animation effect
   useEffect(() => {
     if (!sectionRef.current || !videoContainerRef.current || !maskRef.current)
       return;
@@ -55,60 +47,99 @@ export default function ImageSec() {
       ctxRef.current = null;
     }
 
-    // Kill previous playTrigger if exists
-    if (playTriggerRef.current) {
-      playTriggerRef.current.kill();
-      playTriggerRef.current = null;
-    }
-
-    // Calculate sizes based on current screen and device
     const initialWidth = isMobile
-      ? screenDimensions.width * 0.9
+      ? screenDimensions.width * 0.7
       : screenDimensions.width * 0.5;
     const initialHeight = isMobile
-      ? screenDimensions.height * 0.5
+      ? screenDimensions.height * 0.7
       : screenDimensions.height * 0.7;
 
     const ctx = gsap.context(() => {
-      // --- PLAY/PAUSE LOGIC (Works on both) ---
-      function handleVideoPlay(shouldPlay: boolean) {
-        if (!iframeRef.current) return;
-        if (isMobile) {
-          setShowPlayButton(shouldPlay);
-        } else {
-          const command = shouldPlay ? "playVideo" : "pauseVideo";
-          iframeRef.current.contentWindow?.postMessage(
-            `{"event":"command","func":"${command}","args":""}`,
-            "*"
-          );
-        }
-      }
-
-      // Create and store the play trigger
-      playTriggerRef.current = ScrollTrigger.create({
-        trigger: sectionRef.current,
-        start: "top 50%",
-        end: "bottom -120%",
-        onEnter: () => handleVideoPlay(true),
-        onLeave: () => handleVideoPlay(false),
-        onEnterBack: () => handleVideoPlay(true),
-        onLeaveBack: () => handleVideoPlay(false),
-      });
-
-      // --- DESKTOP-ONLY SCROLL ANIMATIONS ---
-      if (!isMobile) {
-        // Mask expansion
+      if (isMobile) {
+        // MOBILE: No pinning, simple fade animations
         gsap.fromTo(
           maskRef.current,
           {
-            width: initialWidth,
-            height: initialHeight,
-            borderRadius: "32px",
+            width: `${initialWidth}px`,
+            height: `${initialHeight}px`,
           },
           {
-            width: screenDimensions.width,
-            height: screenDimensions.height,
-            borderRadius: 0,
+            width: `${screenDimensions.width}px`,
+            height: `${screenDimensions.height}px`,
+            borderRadius: "0px",
+            ease: "none",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top center",
+              end: "bottom center",
+              scrub: 0.5,
+              invalidateOnRefresh: true,
+            },
+          }
+        );
+
+        gsap.fromTo(
+          videoContainerRef.current,
+          { scale: 1 },
+          {
+            scale: 1,
+            ease: "none",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top center",
+              end: "bottom center",
+              scrub: 0.5,
+              invalidateOnRefresh: true,
+            },
+          }
+        );
+
+        // Video play/pause for mobile
+        ScrollTrigger.create({
+          trigger: sectionRef.current,
+          start: "top center",
+          end: "bottom center",
+          onEnter: () => {
+            if (iframeRef.current) {
+              setShowPlayButton(true);
+            }
+          },
+          onLeave: () => {
+            if (iframeRef.current) {
+              setShowPlayButton(false);
+              iframeRef.current.contentWindow?.postMessage(
+                '{"event":"command","func":"pauseVideo","args":""}',
+                "*"
+              );
+            }
+          },
+          onEnterBack: () => {
+            if (iframeRef.current) {
+              setShowPlayButton(true);
+            }
+          },
+          onLeaveBack: () => {
+            if (iframeRef.current) {
+              setShowPlayButton(false);
+              iframeRef.current.contentWindow?.postMessage(
+                '{"event":"command","func":"pauseVideo","args":""}',
+                "*"
+              );
+            }
+          },
+        });
+      } else {
+        // DESKTOP: Original pinning behavior
+        gsap.fromTo(
+          maskRef.current,
+          {
+            width: `${initialWidth}px`,
+            height: `${initialHeight}px`,
+          },
+          {
+            width: `${screenDimensions.width}px`,
+            height: `${screenDimensions.height}px`,
+            borderRadius: "0px",
             ease: "none",
             scrollTrigger: {
               trigger: sectionRef.current,
@@ -120,7 +151,6 @@ export default function ImageSec() {
           }
         );
 
-        // Pin and scale animation
         gsap.to(videoContainerRef.current, {
           scale: 1,
           ease: "none",
@@ -130,36 +160,78 @@ export default function ImageSec() {
             end: "+=120%",
             scrub: 1.5,
             pin: true,
+            pinType: "fixed",
             anticipatePin: 1,
             invalidateOnRefresh: true,
           },
         });
-      } else {
-        // --- MOBILE: NO PIN, just set initial state ---
-        gsap.set(maskRef.current, {
-          width: initialWidth,
-          height: initialHeight,
-          borderRadius: "32px",
+
+        ScrollTrigger.create({
+          trigger: sectionRef.current,
+          start: "top 50%",
+          end: "bottom -120%",
+          onEnter: () => {
+            if (iframeRef.current) {
+              iframeRef.current.contentWindow?.postMessage(
+                '{"event":"command","func":"playVideo","args":""}',
+                "*"
+              );
+            }
+          },
+          onLeave: () => {
+            if (iframeRef.current) {
+              iframeRef.current.contentWindow?.postMessage(
+                '{"event":"command","func":"pauseVideo","args":""}',
+                "*"
+              );
+            }
+          },
+          onEnterBack: () => {
+            if (iframeRef.current) {
+              iframeRef.current.contentWindow?.postMessage(
+                '{"event":"command","func":"playVideo","args":""}',
+                "*"
+              );
+            }
+          },
+          onLeaveBack: () => {
+            if (iframeRef.current) {
+              iframeRef.current.contentWindow?.postMessage(
+                '{"event":"command","func":"pauseVideo","args":""}',
+                "*"
+              );
+            }
+          },
         });
-        gsap.set(videoContainerRef.current, { scale: 1 });
       }
     }, sectionRef);
 
     ctxRef.current = ctx;
 
     return () => {
-      if (playTriggerRef.current) {
-        playTriggerRef.current.kill();
-        playTriggerRef.current = null;
-      }
-      if (ctxRef.current) {
-        ctxRef.current.revert();
-        ctxRef.current = null;
-      }
+      ctx.revert();
+      ctxRef.current = null;
     };
   }, [isMobile, screenDimensions]);
 
-  // Handle play button click for mobile
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        ScrollTrigger.refresh(true);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
+  const initialWidth = isMobile
+    ? screenDimensions.width * 0.7
+    : screenDimensions.width * 0.5;
+  const initialHeight = isMobile
+    ? screenDimensions.height * 0.7
+    : screenDimensions.height * 0.5;
+
   const handlePlayClick = () => {
     if (iframeRef.current) {
       iframeRef.current.contentWindow?.postMessage(
@@ -170,17 +242,9 @@ export default function ImageSec() {
     }
   };
 
-  // Calculate initial style for mask
-  const initialWidth = isMobile
-    ? screenDimensions.width * 0.9
-    : screenDimensions.width * 0.5;
-  const initialHeight = isMobile
-    ? screenDimensions.height * 0.5
-    : screenDimensions.height * 0.7;
-
   return (
-    <section ref={sectionRef} className="relative h-screen bg-white">
-      <div className="flex h-full items-center justify-center">
+    <section ref={sectionRef} className="relative h-[100vh] bg-white">
+      <div className="flex h-screen items-center justify-center">
         <div
           ref={videoContainerRef}
           className="relative h-screen w-screen overflow-hidden"
@@ -220,13 +284,12 @@ export default function ImageSec() {
             </button>
           )}
 
-          {/* Mask Div */}
           <div
             ref={maskRef}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[32px]"
             style={{
-              width: initialWidth,
-              height: initialHeight,
+              width: `${initialWidth}px`,
+              height: `${initialHeight}px`,
               boxShadow: "0 0 0 200vmax white",
               transform: "translate3d(0,0,0)",
               backfaceVisibility: "hidden",
