@@ -87,6 +87,7 @@ export default function ImageSec() {
           end: "+=120%",
           scrub: isMobile ? 0.5 : 1.5,
           pin: true,
+          pinType: isMobile ? "transform" : "fixed",
           ...(isMobile ? {} : { anticipatePin: 1 }),
           invalidateOnRefresh: true,
         },
