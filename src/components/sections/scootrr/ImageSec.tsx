@@ -13,6 +13,7 @@ export default function ImageSec() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [showPlayButton, setShowPlayButton] = useState(false);
   const ctxRef = useRef<gsap.Context | null>(null);
+  const isMobileRef = useRef(false);
 
   const getIsMobile = useCallback(() => {
     if (typeof window === "undefined") return false;
@@ -20,10 +21,13 @@ export default function ImageSec() {
   }, []);
 
   useEffect(() => {
+    isMobileRef.current = getIsMobile();
+  }, [getIsMobile]);
+
+  useEffect(() => {
     if (!sectionRef.current || !videoContainerRef.current || !maskRef.current)
       return;
 
-    // Clean up previous
     if (ctxRef.current) {
       ctxRef.current.revert();
       ctxRef.current = null;
@@ -33,102 +37,100 @@ export default function ImageSec() {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
 
-    // Calculate the scale factor from initial size to full screen
-    // Initial mask is a percentage of viewport, then scales to full viewport
-    const initialWidthRatio = isMobile ? 0.7 : 0.5;
-    const initialHeightRatio = isMobile ? 0.7 : 0.7;
-
-    // The mask starts at this scale and goes to 1
-    const initialScaleX = initialWidthRatio;
-    const initialScaleY = initialHeightRatio;
-    // Use the smaller scale so the mask fits within both dimensions initially
-    const initialScale = Math.min(initialScaleX, initialScaleY);
-
-    // Calculate initial border radius - scaled up because the element is scaled down
-    // When element is at scale 0.7, a visual 32px radius needs to be 32/0.7 ≈ 46px
-    const initialBorderRadius = Math.round(32 / initialScale);
-
-    const scrubValue = isMobile ? 0.3 : 1.5;
-
     const ctx = gsap.context(() => {
-      // CRITICAL FIX: Set mask to FULL SCREEN size, use scale to make it small
-      // This way we never animate width/height (which causes layout recalc)
-      // We only animate scale + border-radius (compositor-only, no layout shift)
-      gsap.set(maskRef.current, {
-        width: vw,
-        height: vh,
-        scale: initialScale,
-        borderRadius: `${initialBorderRadius}px`,
-        xPercent: -50,
-        yPercent: -50,
-        left: "50%",
-        top: "50%",
-        position: "absolute",
-      });
+      if (isMobile) {
+        // MOBILE: No mask animation at all — just show video full screen
+        // This completely eliminates the fluctuation/double-render issue
+        gsap.set(maskRef.current, {
+          width: vw,
+          height: vh,
+          borderRadius: "0px",
+          xPercent: -50,
+          yPercent: -50,
+          left: "50%",
+          top: "50%",
+          position: "absolute",
+        });
 
-      gsap.set(videoContainerRef.current, {
-        scale: 1,
-      });
-
-      // SINGLE ScrollTrigger — one pin, one timeline, no conflicts
-      const tl = gsap.timeline({
-        scrollTrigger: {
+        // Simple pin only — no animation, no scale, no mask transition
+        ScrollTrigger.create({
           trigger: sectionRef.current,
           start: "top top",
-          end: isMobile ? "+=80%" : "+=120%",
-          scrub: scrubValue,
+          end: "+=50%",
           pin: true,
           pinSpacing: true,
-          // CRITICAL: anticipatePin 0 on mobile prevents height miscalc
-          anticipatePin: isMobile ? 0 : 1,
+          anticipatePin: 0,
           invalidateOnRefresh: true,
           id: "imagesec-pin",
-          // CRITICAL: onRefresh recalculates pixel values if viewport changes
-          onRefresh: (self) => {
-            const newVw = window.innerWidth;
-            const newVh = window.innerHeight;
-            const newScale = Math.min(
-              isMobile ? 0.7 : 0.5,
-              isMobile ? 0.7 : 0.7
-            );
-            const newRadius = Math.round(32 / newScale);
+        });
+      } else {
+        // DESKTOP: Full mask scale animation
+        const initialScale = 0.5;
+        const initialBorderRadius = Math.round(32 / initialScale);
 
-            if (maskRef.current) {
-              // Update the full-size dimensions
-              gsap.set(maskRef.current, {
-                width: newVw,
-                height: newVh,
-              });
-            }
+        gsap.set(maskRef.current, {
+          width: vw,
+          height: vh,
+          scale: initialScale,
+          borderRadius: `${initialBorderRadius}px`,
+          xPercent: -50,
+          yPercent: -50,
+          left: "50%",
+          top: "50%",
+          position: "absolute",
+        });
+
+        gsap.set(videoContainerRef.current, {
+          scale: 1,
+        });
+
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top top",
+            end: "+=120%",
+            scrub: 1.5,
+            pin: true,
+            pinSpacing: true,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
+            id: "imagesec-pin",
+            onRefresh: () => {
+              const newVw = window.innerWidth;
+              const newVh = window.innerHeight;
+              if (maskRef.current) {
+                gsap.set(maskRef.current, {
+                  width: newVw,
+                  height: newVh,
+                });
+              }
+            },
           },
-        },
-      });
+        });
 
-      // MASK: animate scale from initial ratio to 1 (full screen)
-      // This is a compositor-only property — NO layout recalculation
-      tl.to(
-        maskRef.current,
-        {
-          scale: 1,
-          borderRadius: "0px",
-          ease: "none",
-          duration: 1,
-        },
-        0
-      );
+        tl.to(
+          maskRef.current,
+          {
+            scale: 1,
+            borderRadius: "0px",
+            ease: "none",
+            duration: 1,
+          },
+          0
+        );
 
-      // VIDEO CONTAINER: keep scale animation if needed
-      tl.to(
-        videoContainerRef.current,
-        {
-          scale: 1,
-          ease: "none",
-          duration: 1,
-        },
-        0
-      );
+        tl.to(
+          videoContainerRef.current,
+          {
+            scale: 1,
+            ease: "none",
+            duration: 1,
+          },
+          0
+        );
+      }
 
-      // VIDEO PLAY/PAUSE — separate trigger, no pin
+      // Video play/pause — works on both mobile and desktop
       ScrollTrigger.create({
         trigger: sectionRef.current,
         start: "top 80%",
@@ -189,7 +191,6 @@ export default function ImageSec() {
     };
   }, [getIsMobile]);
 
-  // Handle resize — revert and let useEffect re-create
   useEffect(() => {
     let resizeTimeout: NodeJS.Timeout;
     const handleResize = () => {
@@ -199,7 +200,6 @@ export default function ImageSec() {
           ctxRef.current.revert();
           ctxRef.current = null;
         }
-        // Force re-run
         ScrollTrigger.refresh(true);
       }, 250);
     };
@@ -236,9 +236,6 @@ export default function ImageSec() {
     <section
       ref={sectionRef}
       className="relative bg-white"
-      // CRITICAL: Use fixed height, not h-[100vh] class
-      // CSS vh on mobile changes when address bar shows/hides
-      // Fixed pixel height prevents ScrollTrigger recalculation
       style={{ height: "100svh" }}
     >
       <div
@@ -248,8 +245,6 @@ export default function ImageSec() {
         <div
           ref={videoContainerRef}
           className="relative overflow-hidden"
-          // CRITICAL: Use svh units to match the section height exactly
-          // This prevents the mismatch between section height and content height
           style={{
             width: "100vw",
             height: "100svh",
@@ -284,16 +279,10 @@ export default function ImageSec() {
             </button>
           )}
 
-          {/* CRITICAL FIX: Mask is now full-screen sized, scaled down initially
-              - No width/height animation (causes layout recalc on mobile)
-              - Only scale + borderRadius animation (compositor-only)
-              - box-shadow creates the white overlay effect
-              - transform-origin center for symmetrical scaling */}
           <div
             ref={maskRef}
             className="overflow-hidden"
             style={{
-              // These are set by GSAP in useEffect, but provide fallback
               position: "absolute",
               top: "50%",
               left: "50%",
