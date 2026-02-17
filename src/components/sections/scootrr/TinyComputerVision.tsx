@@ -102,8 +102,6 @@ function TinyComputerVision() {
       ctxRef.current = null;
     }
 
-    const isTouchDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     if (!context) return;
@@ -134,31 +132,6 @@ function TinyComputerVision() {
     const ctx = gsap.context(() => {
       // On touch devices: no pin, no scroll animation.
       // Just make everything visible so the section renders correctly.
-      if (isTouchDevice) {
-        gsap.set(carouselContainerRef.current, { autoAlpha: 1 });
-        gsap.set(headerRef.current, { autoAlpha: 1, y: 0 });
-        gsap.set(finalCameraRef.current, { autoAlpha: 1, scale: 1 });
-        gsap.set(canvasWrapperRef.current, {
-          scale: 1,
-          x: 0,
-          y: 0,
-          autoAlpha: 1,
-        });
-        textRefs.current.forEach((ref) => {
-          if (ref) gsap.set(ref, { autoAlpha: 1, y: 0 });
-        });
-        // Show the centre slide and make the carousel items visible
-        const slots = sliderImagesRef.current.filter(Boolean);
-        slots.forEach((el, i) => {
-          gsap.set(el, {
-            autoAlpha: i === 1 ? 1 : 0.4,
-            x: (i - 1) * 160,
-            scale: i === 1 ? 1 : 0.7,
-          });
-        });
-        return; // skip all scroll animation setup on mobile
-      }
-
       gsap.set(carouselContainerRef.current, { autoAlpha: 0 });
       gsap.set(headerRef.current, { autoAlpha: 0, y: 30 });
       gsap.set(finalCameraRef.current, { autoAlpha: 0, scale: 0.5 });
@@ -173,7 +146,7 @@ function TinyComputerVision() {
           trigger: containerRef.current,
           start: "top top",
           end: `+=${1500}%`,
-          pin: !isTouchDevice,
+          pin: true,
           scrub: 0.8,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
@@ -340,7 +313,7 @@ function TinyComputerVision() {
   return (
     <section
       ref={containerRef}
-      className="relative w-full overflow-hidden bg-[#0A1016]"
+      className="relative w-full bg-[#0A1016] md:overflow-hidden"
     >
       <div className="relative flex min-h-screen flex-col items-center justify-center">
         <div
