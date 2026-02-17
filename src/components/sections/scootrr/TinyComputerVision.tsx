@@ -102,8 +102,6 @@ function TinyComputerVision() {
       ctxRef.current = null;
     }
 
-    // On mobile, position:fixed (default pin) is clipped by overflow-x:hidden
-    // on ancestor elements. pinType:"transform" uses CSS transforms instead.
     const isTouchDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     const canvas = canvasRef.current;
@@ -134,6 +132,33 @@ function TinyComputerVision() {
     };
 
     const ctx = gsap.context(() => {
+      // On touch devices: no pin, no scroll animation.
+      // Just make everything visible so the section renders correctly.
+      if (isTouchDevice) {
+        gsap.set(carouselContainerRef.current, { autoAlpha: 1 });
+        gsap.set(headerRef.current, { autoAlpha: 1, y: 0 });
+        gsap.set(finalCameraRef.current, { autoAlpha: 1, scale: 1 });
+        gsap.set(canvasWrapperRef.current, {
+          scale: 1,
+          x: 0,
+          y: 0,
+          autoAlpha: 1,
+        });
+        textRefs.current.forEach((ref) => {
+          if (ref) gsap.set(ref, { autoAlpha: 1, y: 0 });
+        });
+        // Show the centre slide and make the carousel items visible
+        const slots = sliderImagesRef.current.filter(Boolean);
+        slots.forEach((el, i) => {
+          gsap.set(el, {
+            autoAlpha: i === 1 ? 1 : 0.4,
+            x: (i - 1) * 160,
+            scale: i === 1 ? 1 : 0.7,
+          });
+        });
+        return; // skip all scroll animation setup on mobile
+      }
+
       gsap.set(carouselContainerRef.current, { autoAlpha: 0 });
       gsap.set(headerRef.current, { autoAlpha: 0, y: 30 });
       gsap.set(finalCameraRef.current, { autoAlpha: 0, scale: 0.5 });
@@ -148,8 +173,7 @@ function TinyComputerVision() {
           trigger: containerRef.current,
           start: "top top",
           end: `+=${1500}%`,
-          pin: true,
-          pinType: isTouchDevice ? "transform" : "fixed",
+          pin: !isTouchDevice,
           scrub: 0.8,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
