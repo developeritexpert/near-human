@@ -98,7 +98,7 @@ export default function ScootrPage() {
   return (
     <RouteLoaderWrapper>
       <Navbar />
-      <main className="overflow-x-hidden">
+      <main className="md:overflow-x-hidden">
         <ScootrrSec />
         <ImageSec />
         <SideVideo />

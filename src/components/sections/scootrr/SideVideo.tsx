@@ -188,8 +188,6 @@ function SideVideo() {
       ctxRef.current = null;
     }
 
-    const isTouchDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
     const ctx = gsap.context(() => {
       const mm = gsap.matchMedia();
 
@@ -207,17 +205,12 @@ function SideVideo() {
           const texts = textItemsRef.current;
           const itemSize = isMobile ? window.innerWidth : 400;
 
-          // On touch devices there is no pin, so we skip the absolute
-          // positioning that stacks all items on top of each other.
-          // Items flow naturally in the DOM instead (CSS handles layout).
-          if (!isTouchDevice) {
-            gsap.set(texts, {
-              position: "absolute",
-              x: isMobile ? (i) => i * itemSize : 0,
-              y: isDesktop ? (i) => i * itemSize : 0,
-              opacity: 1,
-            });
-          }
+          gsap.set(texts, {
+            position: "absolute",
+            x: isMobile ? (i) => i * itemSize : 0,
+            y: isDesktop ? (i) => i * itemSize : 0,
+            opacity: 1,
+          });
 
           if (svgPathRef.current) {
             gsap.set(svgPathRef.current, {
@@ -235,7 +228,7 @@ function SideVideo() {
               trigger: pinRef.current,
               start: "top top",
               end: `+=${(totalSections - 1) * scrollAmount}`,
-              pin: !isTouchDevice,
+              pin: true,
               scrub: 1,
               invalidateOnRefresh: true,
               onUpdate: (self) => {
@@ -329,7 +322,7 @@ function SideVideo() {
   return (
     <section
       ref={sectionRef}
-      className="relative z-10 overflow-hidden bg-white py-[50px]"
+      className="relative z-10 bg-white py-[50px] md:overflow-hidden"
     >
       <div
         ref={pinRef}
@@ -341,7 +334,7 @@ function SideVideo() {
             <div className="flex w-full flex-row lg:pl-[50px] xl:pl-[100px] 2xl:pl-[200px]">
               <div
                 ref={textContainerRef}
-                className="relative mb-0 w-full md:mb-[200px]"
+                className="relative mb-[200px] w-full"
               >
                 {statisticsData.map((item, index) => (
                   <div
@@ -349,7 +342,7 @@ function SideVideo() {
                     ref={(el) => {
                       textItemsRef.current[index] = el;
                     }}
-                    className="relative mb-10 w-full md:absolute md:top-0 md:left-0 lg:max-w-[450px]"
+                    className="absolute top-0 left-0 w-full lg:max-w-[450px]"
                   >
                     <h2 className="mb-[8px] text-[36px] leading-tight font-[450] text-[#101717] md:text-[50px] lg:text-[60px] xl:text-[77px]">
                       <ScrollAnimatedText
