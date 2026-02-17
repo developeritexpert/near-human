@@ -11,18 +11,19 @@ export default function ImageSec() {
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const maskRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [showPlayButton, setShowPlayButton] = useState(false);
   const ctxRef = useRef<gsap.Context | null>(null);
-  const isMobileRef = useRef(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [videoStarted, setVideoStarted] = useState(false);
 
-  const getIsMobile = useCallback(() => {
-    if (typeof window === "undefined") return false;
-    return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  }, []);
+  // YouTube video ID
+  const videoId = "6-AjSG7Zw_4";
 
   useEffect(() => {
-    isMobileRef.current = getIsMobile();
-  }, [getIsMobile]);
+    const mobile =
+      /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+      window.innerWidth < 768;
+    setIsMobile(mobile);
+  }, []);
 
   useEffect(() => {
     if (!sectionRef.current || !videoContainerRef.current || !maskRef.current)
@@ -33,175 +34,148 @@ export default function ImageSec() {
       ctxRef.current = null;
     }
 
-    const isMobile = getIsMobile();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    // Wait one frame for layout to settle
+    const rafId = requestAnimationFrame(() => {
+      if (!sectionRef.current || !videoContainerRef.current || !maskRef.current)
+        return;
 
-    const ctx = gsap.context(() => {
-      if (isMobile) {
-        // MOBILE: No mask animation at all — just show video full screen
-        // This completely eliminates the fluctuation/double-render issue
-        gsap.set(maskRef.current, {
-          width: vw,
-          height: vh,
-          borderRadius: "0px",
-          xPercent: -50,
-          yPercent: -50,
-          left: "50%",
-          top: "50%",
-          position: "absolute",
-        });
+      const mobile =
+        /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+        window.innerWidth < 768;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
 
-        // Simple pin only — no animation, no scale, no mask transition
-        ScrollTrigger.create({
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "+=50%",
-          pin: true,
-          pinSpacing: true,
-          anticipatePin: 0,
-          invalidateOnRefresh: true,
-          id: "imagesec-pin",
-        });
-      } else {
-        // DESKTOP: Full mask scale animation
-        const initialScale = 0.5;
-        const initialBorderRadius = Math.round(32 / initialScale);
+      const ctx = gsap.context(() => {
+        if (mobile) {
+          // ========================
+          // MOBILE: No mask animation, no iframe on load
+          // Just a clean pinned section with thumbnail
+          // ========================
+          gsap.set(maskRef.current, { display: "none" });
 
-        gsap.set(maskRef.current, {
-          width: vw,
-          height: vh,
-          scale: initialScale,
-          borderRadius: `${initialBorderRadius}px`,
-          xPercent: -50,
-          yPercent: -50,
-          left: "50%",
-          top: "50%",
-          position: "absolute",
-        });
-
-        gsap.set(videoContainerRef.current, {
-          scale: 1,
-        });
-
-        const tl = gsap.timeline({
-          scrollTrigger: {
+          ScrollTrigger.create({
             trigger: sectionRef.current,
             start: "top top",
-            end: "+=120%",
-            scrub: 1.5,
+            end: "+=10",
             pin: true,
             pinSpacing: true,
-            anticipatePin: 1,
+            anticipatePin: 0,
             invalidateOnRefresh: true,
-            id: "imagesec-pin",
-            onRefresh: () => {
-              const newVw = window.innerWidth;
-              const newVh = window.innerHeight;
-              if (maskRef.current) {
-                gsap.set(maskRef.current, {
-                  width: newVw,
-                  height: newVh,
-                });
-              }
+            id: "imagesec-pin-mobile",
+          });
+        } else {
+          // ========================
+          // DESKTOP: Full mask scale animation with iframe
+          // ========================
+          const initialScale = 0.5;
+          const initialBorderRadius = Math.round(32 / initialScale);
+
+          gsap.set(maskRef.current, {
+            display: "block",
+            width: vw,
+            height: vh,
+            scale: initialScale,
+            borderRadius: `${initialBorderRadius}px`,
+            xPercent: -50,
+            yPercent: -50,
+            left: "50%",
+            top: "50%",
+            position: "absolute",
+          });
+
+          const tl = gsap.timeline({
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top top",
+              end: "+=120%",
+              scrub: 1.5,
+              pin: true,
+              pinSpacing: true,
+              anticipatePin: 1,
+              invalidateOnRefresh: true,
+              id: "imagesec-pin-desktop",
+              onRefresh: () => {
+                const newVw = window.innerWidth;
+                const newVh = window.innerHeight;
+                if (maskRef.current) {
+                  gsap.set(maskRef.current, {
+                    width: newVw,
+                    height: newVh,
+                  });
+                }
+              },
             },
-          },
-        });
+          });
 
-        tl.to(
-          maskRef.current,
-          {
-            scale: 1,
-            borderRadius: "0px",
-            ease: "none",
-            duration: 1,
-          },
-          0
-        );
+          tl.to(
+            maskRef.current,
+            {
+              scale: 1,
+              borderRadius: "0px",
+              ease: "none",
+              duration: 1,
+            },
+            0
+          );
 
-        tl.to(
-          videoContainerRef.current,
-          {
-            scale: 1,
-            ease: "none",
-            duration: 1,
-          },
-          0
-        );
-      }
-
-      // Video play/pause — works on both mobile and desktop
-      ScrollTrigger.create({
-        trigger: sectionRef.current,
-        start: "top 80%",
-        end: "bottom top",
-        id: "imagesec-video",
-        onEnter: () => {
-          if (iframeRef.current) {
-            if (isMobile) {
-              setShowPlayButton(true);
-            } else {
-              iframeRef.current.contentWindow?.postMessage(
+          // Desktop: auto-play iframe when section enters
+          ScrollTrigger.create({
+            trigger: sectionRef.current,
+            start: "top 80%",
+            end: "bottom top",
+            id: "imagesec-video-desktop",
+            onEnter: () => {
+              iframeRef.current?.contentWindow?.postMessage(
                 '{"event":"command","func":"playVideo","args":""}',
                 "*"
               );
-            }
-          }
-        },
-        onLeave: () => {
-          setShowPlayButton(false);
-          if (iframeRef.current) {
-            iframeRef.current.contentWindow?.postMessage(
-              '{"event":"command","func":"pauseVideo","args":""}',
-              "*"
-            );
-          }
-        },
-        onEnterBack: () => {
-          if (iframeRef.current) {
-            if (isMobile) {
-              setShowPlayButton(true);
-            } else {
-              iframeRef.current.contentWindow?.postMessage(
+            },
+            onLeave: () => {
+              iframeRef.current?.contentWindow?.postMessage(
+                '{"event":"command","func":"pauseVideo","args":""}',
+                "*"
+              );
+            },
+            onEnterBack: () => {
+              iframeRef.current?.contentWindow?.postMessage(
                 '{"event":"command","func":"playVideo","args":""}',
                 "*"
               );
-            }
-          }
-        },
-        onLeaveBack: () => {
-          setShowPlayButton(false);
-          if (iframeRef.current) {
-            iframeRef.current.contentWindow?.postMessage(
-              '{"event":"command","func":"pauseVideo","args":""}',
-              "*"
-            );
-          }
-        },
-      });
-    }, sectionRef);
+            },
+            onLeaveBack: () => {
+              iframeRef.current?.contentWindow?.postMessage(
+                '{"event":"command","func":"pauseVideo","args":""}',
+                "*"
+              );
+            },
+          });
+        }
+      }, sectionRef);
 
-    ctxRef.current = ctx;
+      ctxRef.current = ctx;
+    });
 
     return () => {
+      cancelAnimationFrame(rafId);
       if (ctxRef.current) {
         ctxRef.current.revert();
         ctxRef.current = null;
       }
     };
-  }, [getIsMobile]);
+  }, [isMobile]);
 
+  // Handle resize
   useEffect(() => {
     let resizeTimeout: NodeJS.Timeout;
     const handleResize = () => {
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
-        if (ctxRef.current) {
-          ctxRef.current.revert();
-          ctxRef.current = null;
-        }
+        const mobile =
+          /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+          window.innerWidth < 768;
+        setIsMobile(mobile);
         ScrollTrigger.refresh(true);
-      }, 250);
+      }, 300);
     };
 
     window.addEventListener("resize", handleResize);
@@ -222,14 +196,12 @@ export default function ImageSec() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
 
-  const handlePlayClick = () => {
-    if (iframeRef.current) {
-      iframeRef.current.contentWindow?.postMessage(
-        '{"event":"command","func":"playVideo","args":""}',
-        "*"
-      );
-      setShowPlayButton(false);
-    }
+  const handleMobilePlay = () => {
+    setVideoStarted(true);
+  };
+
+  const handleCloseVideo = () => {
+    setVideoStarted(false);
   };
 
   return (
@@ -250,35 +222,91 @@ export default function ImageSec() {
             height: "100svh",
           }}
         >
-          <iframe
-            ref={iframeRef}
-            className="absolute inset-0 h-full w-full object-cover"
-            src="https://www.youtube.com/embed/6-AjSG7Zw_4?enablejsapi=1&mute=1&controls=0&rel=0&playsinline=1"
-            allow="autoplay; encrypted-media"
-            allowFullScreen
-            style={{
-              pointerEvents: showPlayButton ? "auto" : "none",
-              touchAction: "none",
-            }}
-          />
+          {isMobile ? (
+            <>
+              {/* MOBILE: Static thumbnail — no iframe until user taps play */}
+              {!videoStarted && (
+                <div className="absolute inset-0 z-[1]">
+                  {/* YouTube max-res thumbnail */}
+                  <img
+                    src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+                    alt="Video thumbnail"
+                    className="h-full w-full object-cover"
+                    loading="eager"
+                  />
 
-          {showPlayButton && (
-            <button
-              onClick={handlePlayClick}
-              className="absolute top-1/2 left-1/2 z-10 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-lg transition-transform hover:scale-110 active:scale-95"
-              aria-label="Play video"
-              style={{ pointerEvents: "auto" }}
-            >
-              <svg
-                className="ml-1 h-8 w-8 text-black"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </button>
+                  {/* Dark overlay */}
+                  <div className="absolute inset-0 bg-black/30" />
+
+                  {/* Play button */}
+                  <button
+                    onClick={handleMobilePlay}
+                    className="absolute top-1/2 left-1/2 z-10 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-2xl transition-transform active:scale-90"
+                    aria-label="Play video"
+                  >
+                    <svg
+                      className="ml-1.5 h-9 w-9 text-black"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+
+              {/* MOBILE: Iframe loads ONLY after user taps play */}
+              {videoStarted && (
+                <div className="absolute inset-0 z-[2]">
+                  <iframe
+                    className="h-full w-full"
+                    src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&rel=0&playsinline=1`}
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                    style={{ border: "none" }}
+                  />
+
+                  {/* Close / back to thumbnail button */}
+                  <button
+                    onClick={handleCloseVideo}
+                    className="absolute top-4 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white transition-transform active:scale-90"
+                    aria-label="Close video"
+                  >
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {/* DESKTOP: Iframe loads immediately with autoplay muted */}
+              <iframe
+                ref={iframeRef}
+                className="absolute inset-0 h-full w-full object-cover"
+                src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1&mute=1&controls=0&rel=0&playsinline=1`}
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+                style={{
+                  pointerEvents: "none",
+                  touchAction: "none",
+                }}
+              />
+            </>
           )}
 
+          {/* Mask — desktop only, hidden on mobile */}
           <div
             ref={maskRef}
             className="overflow-hidden"
@@ -290,6 +318,7 @@ export default function ImageSec() {
               boxShadow: "0 0 0 200vmax white",
               pointerEvents: "none",
               transformOrigin: "center center",
+              display: "none",
             }}
           />
         </div>
