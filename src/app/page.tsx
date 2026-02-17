@@ -100,7 +100,7 @@ export default function ScootrPage() {
       <Navbar />
       <main className="overflow-x-hidden">
         <ScootrrSec />
-        <ImageSec />
+        {/* <ImageSec /> */}
         <SideVideo />
         <TinyComputerVision />
         <OurPartners />
