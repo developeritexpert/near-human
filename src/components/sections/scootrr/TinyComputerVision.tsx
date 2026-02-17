@@ -144,7 +144,8 @@ function TinyComputerVision() {
           trigger: containerRef.current,
           start: "top top",
           end: `+=${1500}%`,
-          pin: !isMobile, // Disable pinning on mobile
+          pin: true,
+          pinType: "transform", // Use transform for both mobile and desktop
           scrub: 0.8,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
@@ -312,6 +313,7 @@ function TinyComputerVision() {
     <section
       ref={containerRef}
       className="relative w-full bg-[#0A1016] md:overflow-hidden"
+      style={{ willChange: "transform" }}
     >
       <div className="relative flex min-h-screen flex-col items-center justify-center">
         <div
@@ -323,7 +325,7 @@ function TinyComputerVision() {
         <div
           ref={canvasWrapperRef}
           className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
-          style={{ transformOrigin: "center center" }}
+          style={{ transformOrigin: "center center", willChange: "transform" }}
         >
           <canvas
             ref={canvasRef}

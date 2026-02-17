@@ -55,155 +55,92 @@ export default function ImageSec() {
       : screenDimensions.height * 0.7;
 
     const ctx = gsap.context(() => {
-      if (isMobile) {
-        // MOBILE: No pinning, simple fade animations
-        gsap.fromTo(
-          maskRef.current,
-          {
-            width: `${initialWidth}px`,
-            height: `${initialHeight}px`,
-          },
-          {
-            width: `${screenDimensions.width}px`,
-            height: `${screenDimensions.height}px`,
-            borderRadius: "0px",
-            ease: "none",
-            scrollTrigger: {
-              trigger: sectionRef.current,
-              start: "top center",
-              end: "bottom center",
-              scrub: 0.5,
-              invalidateOnRefresh: true,
-            },
-          }
-        );
-
-        gsap.fromTo(
-          videoContainerRef.current,
-          { scale: 1 },
-          {
-            scale: 1,
-            ease: "none",
-            scrollTrigger: {
-              trigger: sectionRef.current,
-              start: "top center",
-              end: "bottom center",
-              scrub: 0.5,
-              invalidateOnRefresh: true,
-            },
-          }
-        );
-
-        // Video play/pause for mobile
-        ScrollTrigger.create({
-          trigger: sectionRef.current,
-          start: "top center",
-          end: "bottom center",
-          onEnter: () => {
-            if (iframeRef.current) {
-              setShowPlayButton(true);
-            }
-          },
-          onLeave: () => {
-            if (iframeRef.current) {
-              setShowPlayButton(false);
-              iframeRef.current.contentWindow?.postMessage(
-                '{"event":"command","func":"pauseVideo","args":""}',
-                "*"
-              );
-            }
-          },
-          onEnterBack: () => {
-            if (iframeRef.current) {
-              setShowPlayButton(true);
-            }
-          },
-          onLeaveBack: () => {
-            if (iframeRef.current) {
-              setShowPlayButton(false);
-              iframeRef.current.contentWindow?.postMessage(
-                '{"event":"command","func":"pauseVideo","args":""}',
-                "*"
-              );
-            }
-          },
-        });
-      } else {
-        // DESKTOP: Original pinning behavior
-        gsap.fromTo(
-          maskRef.current,
-          {
-            width: `${initialWidth}px`,
-            height: `${initialHeight}px`,
-          },
-          {
-            width: `${screenDimensions.width}px`,
-            height: `${screenDimensions.height}px`,
-            borderRadius: "0px",
-            ease: "none",
-            scrollTrigger: {
-              trigger: sectionRef.current,
-              start: "top 50%",
-              end: "bottom 50%",
-              scrub: 1.5,
-              invalidateOnRefresh: true,
-            },
-          }
-        );
-
-        gsap.to(videoContainerRef.current, {
-          scale: 1,
+      /* MASK WINDOW EXPANSION */
+      gsap.fromTo(
+        maskRef.current,
+        {
+          width: `${initialWidth}px`,
+          height: `${initialHeight}px`,
+        },
+        {
+          width: `${screenDimensions.width}px`,
+          height: `${screenDimensions.height}px`,
+          borderRadius: "0px",
           ease: "none",
           scrollTrigger: {
             trigger: sectionRef.current,
-            start: "top top",
-            end: "+=120%",
-            scrub: 1.5,
-            pin: true,
-            pinType: "fixed",
-            anticipatePin: 1,
+            start: "top 50%",
+            end: "bottom 50%",
+            scrub: isMobile ? 0.5 : 1.5,
             invalidateOnRefresh: true,
           },
-        });
+        }
+      );
 
-        ScrollTrigger.create({
+      /* ZOOM + PIN */
+      gsap.to(videoContainerRef.current, {
+        scale: 1,
+        ease: "none",
+        scrollTrigger: {
           trigger: sectionRef.current,
-          start: "top 50%",
-          end: "bottom -120%",
-          onEnter: () => {
-            if (iframeRef.current) {
+          start: "top top",
+          end: "+=120%",
+          scrub: isMobile ? 0.5 : 1.5,
+          pin: true,
+          pinType: "transform", // Always use transform for better mobile compatibility
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+        },
+      });
+
+      /* VIDEO PLAY/PAUSE */
+      ScrollTrigger.create({
+        trigger: sectionRef.current,
+        start: "top 50%",
+        end: "bottom -120%",
+        onEnter: () => {
+          if (iframeRef.current) {
+            if (isMobile) {
+              setShowPlayButton(true);
+            } else {
               iframeRef.current.contentWindow?.postMessage(
                 '{"event":"command","func":"playVideo","args":""}',
                 "*"
               );
             }
-          },
-          onLeave: () => {
-            if (iframeRef.current) {
-              iframeRef.current.contentWindow?.postMessage(
-                '{"event":"command","func":"pauseVideo","args":""}',
-                "*"
-              );
-            }
-          },
-          onEnterBack: () => {
-            if (iframeRef.current) {
+          }
+        },
+        onLeave: () => {
+          if (iframeRef.current) {
+            setShowPlayButton(false);
+            iframeRef.current.contentWindow?.postMessage(
+              '{"event":"command","func":"pauseVideo","args":""}',
+              "*"
+            );
+          }
+        },
+        onEnterBack: () => {
+          if (iframeRef.current) {
+            if (isMobile) {
+              setShowPlayButton(true);
+            } else {
               iframeRef.current.contentWindow?.postMessage(
                 '{"event":"command","func":"playVideo","args":""}',
                 "*"
               );
             }
-          },
-          onLeaveBack: () => {
-            if (iframeRef.current) {
-              iframeRef.current.contentWindow?.postMessage(
-                '{"event":"command","func":"pauseVideo","args":""}',
-                "*"
-              );
-            }
-          },
-        });
-      }
+          }
+        },
+        onLeaveBack: () => {
+          if (iframeRef.current) {
+            setShowPlayButton(false);
+            iframeRef.current.contentWindow?.postMessage(
+              '{"event":"command","func":"pauseVideo","args":""}',
+              "*"
+            );
+          }
+        },
+      });
     }, sectionRef);
 
     ctxRef.current = ctx;
@@ -251,6 +188,7 @@ export default function ImageSec() {
           style={{
             transform: "scale(1) translate3d(0,0,0)",
             backfaceVisibility: "hidden",
+            willChange: "transform",
           }}
         >
           <iframe
@@ -291,9 +229,10 @@ export default function ImageSec() {
               width: `${initialWidth}px`,
               height: `${initialHeight}px`,
               boxShadow: "0 0 0 200vmax white",
-              transform: "translate3d(0,0,0)",
+              transform: "translate3d(-50%, -50%, 0)",
               backfaceVisibility: "hidden",
               pointerEvents: "none",
+              willChange: "width, height, border-radius",
             }}
           />
         </div>
