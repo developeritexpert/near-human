@@ -17,36 +17,47 @@ export default function ImageSec() {
     width: 0,
     height: 0,
   });
-  const ctxRef = useRef<gsap.Context | null>(null);
 
   useEffect(() => {
-    setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+    // Detect mobile device
+    const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    setIsMobile(mobile);
+
+    // Get screen dimensions
     setScreenDimensions({
       width: window.innerWidth,
       height: window.innerHeight,
     });
 
+    // Update dimensions on resize (debounced)
+    let resizeTimeout: NodeJS.Timeout;
     const handleResize = () => {
-      setScreenDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        setScreenDimensions({
+          width: window.innerWidth,
+          height: window.innerHeight,
+        });
+      }, 150);
     };
 
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(resizeTimeout);
+    };
   }, []);
 
   useEffect(() => {
     if (!sectionRef.current || !videoContainerRef.current || !maskRef.current)
       return;
+
     if (screenDimensions.width === 0 || screenDimensions.height === 0) return;
 
-    if (ctxRef.current) {
-      ctxRef.current.revert();
-      ctxRef.current = null;
-    }
+    // Clear any existing ScrollTriggers
+    ScrollTrigger.getAll().forEach((t) => t.kill());
 
+    // Calculate initial dimensions in px (50% or 70% of screen)
     const initialWidth = isMobile
       ? screenDimensions.width * 0.7
       : screenDimensions.width * 0.5;
@@ -54,120 +65,108 @@ export default function ImageSec() {
       ? screenDimensions.height * 0.7
       : screenDimensions.height * 0.7;
 
-    const ctx = gsap.context(() => {
-      /* MASK WINDOW EXPANSION */
-      gsap.fromTo(
-        maskRef.current,
-        {
-          width: `${initialWidth}px`,
-          height: `${initialHeight}px`,
-        },
-        {
-          width: `${screenDimensions.width}px`,
-          height: `${screenDimensions.height}px`,
-          borderRadius: "0px",
-          ease: "none",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 50%",
-            end: "bottom 50%",
-            scrub: isMobile ? 0.5 : 1.5,
-            invalidateOnRefresh: true,
-          },
-        }
-      );
+    // Use simpler scrub values on mobile for better performance
+    const scrubValue = isMobile ? 0.5 : 1.5;
 
-      /* ZOOM + PIN */
-      gsap.to(videoContainerRef.current, {
-        scale: 1,
+    /* ===============================
+       MASK WINDOW EXPANSION (OPTIMIZED)
+    =============================== */
+    gsap.fromTo(
+      maskRef.current,
+      {
+        width: `${initialWidth}px`,
+        height: `${initialHeight}px`,
+      },
+      {
+        width: `${screenDimensions.width}px`,
+        height: `${screenDimensions.height}px`,
+        borderRadius: "0px",
         ease: "none",
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: "top top",
-          end: "+=120%",
-          scrub: isMobile ? 0.5 : 1.5,
-          pin: true,
-          pinType: "transform", // Always use transform for better mobile compatibility
-          anticipatePin: 1,
+          start: "top 50%",
+          end: "bottom 50%",
+          scrub: scrubValue,
           invalidateOnRefresh: true,
+          // Reduce calculations on mobile
+          fastScrollEnd: isMobile ? true : false,
         },
-      });
+      }
+    );
 
-      /* VIDEO PLAY/PAUSE */
-      ScrollTrigger.create({
+    /* ===============================
+       ZOOM + PIN (OPTIMIZED)
+    =============================== */
+    gsap.to(videoContainerRef.current, {
+      scale: 1,
+      ease: "none",
+      scrollTrigger: {
         trigger: sectionRef.current,
-        start: "top 50%",
-        end: "bottom -120%",
-        onEnter: () => {
-          if (iframeRef.current) {
-            if (isMobile) {
-              setShowPlayButton(true);
-            } else {
-              iframeRef.current.contentWindow?.postMessage(
-                '{"event":"command","func":"playVideo","args":""}',
-                "*"
-              );
-            }
-          }
-        },
-        onLeave: () => {
-          if (iframeRef.current) {
-            setShowPlayButton(false);
-            iframeRef.current.contentWindow?.postMessage(
-              '{"event":"command","func":"pauseVideo","args":""}',
-              "*"
-            );
-          }
-        },
-        onEnterBack: () => {
-          if (iframeRef.current) {
-            if (isMobile) {
-              setShowPlayButton(true);
-            } else {
-              iframeRef.current.contentWindow?.postMessage(
-                '{"event":"command","func":"playVideo","args":""}',
-                "*"
-              );
-            }
-          }
-        },
-        onLeaveBack: () => {
-          if (iframeRef.current) {
-            setShowPlayButton(false);
-            iframeRef.current.contentWindow?.postMessage(
-              '{"event":"command","func":"pauseVideo","args":""}',
-              "*"
-            );
-          }
-        },
-      });
-    }, sectionRef);
+        start: "top top",
+        end: "+=120%",
+        scrub: scrubValue,
+        pin: true,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        fastScrollEnd: isMobile ? true : false,
+      },
+    });
 
-    ctxRef.current = ctx;
+    /* ===============================
+       VIDEO PLAY/PAUSE ON ENTER/LEAVE
+    =============================== */
+    ScrollTrigger.create({
+      trigger: sectionRef.current,
+      start: "top 50%",
+      end: "bottom -120%",
+      onEnter: () => {
+        if (iframeRef.current) {
+          if (isMobile) {
+            setShowPlayButton(true);
+          } else {
+            iframeRef.current.contentWindow?.postMessage(
+              '{"event":"command","func":"playVideo","args":""}',
+              "*"
+            );
+          }
+        }
+      },
+      onLeave: () => {
+        if (iframeRef.current) {
+          setShowPlayButton(false);
+          iframeRef.current.contentWindow?.postMessage(
+            '{"event":"command","func":"pauseVideo","args":""}',
+            "*"
+          );
+        }
+      },
+      onEnterBack: () => {
+        if (iframeRef.current) {
+          if (isMobile) {
+            setShowPlayButton(true);
+          } else {
+            iframeRef.current.contentWindow?.postMessage(
+              '{"event":"command","func":"playVideo","args":""}',
+              "*"
+            );
+          }
+        }
+      },
+      onLeaveBack: () => {
+        if (iframeRef.current) {
+          setShowPlayButton(false);
+          iframeRef.current.contentWindow?.postMessage(
+            '{"event":"command","func":"pauseVideo","args":""}',
+            "*"
+          );
+        }
+      },
+    });
 
     return () => {
-      ctx.revert();
-      ctxRef.current = null;
+      ScrollTrigger.getAll().forEach((t) => t.kill());
     };
   }, [isMobile, screenDimensions]);
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        ScrollTrigger.refresh(true);
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () =>
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
-
-  const initialWidth = isMobile
-    ? screenDimensions.width * 0.7
-    : screenDimensions.width * 0.5;
-  const initialHeight = isMobile
-    ? screenDimensions.height * 0.7
-    : screenDimensions.height * 0.5;
 
   const handlePlayClick = () => {
     if (iframeRef.current) {
@@ -179,32 +178,42 @@ export default function ImageSec() {
     }
   };
 
+  // Calculate initial dimensions for inline style
+  const initialWidth = isMobile
+    ? screenDimensions.width * 0.7
+    : screenDimensions.width * 0.5;
+  const initialHeight = isMobile
+    ? screenDimensions.height * 0.7
+    : screenDimensions.height * 0.5;
+
   return (
     <section ref={sectionRef} className="relative h-[100vh] bg-white">
       <div className="flex h-screen items-center justify-center">
+        {/* Full-sized video container */}
         <div
           ref={videoContainerRef}
           className="relative h-screen w-screen overflow-hidden"
           style={{
-            transform: "scale(1) translate3d(0,0,0)",
-            backfaceVisibility: "hidden",
-            willChange: "transform",
+            transform: "scale(1)",
+            // Remove willChange on mobile to reduce GPU memory pressure
+            ...(isMobile ? {} : { willChange: "transform" }),
           }}
         >
+          {/* Video (always full size) */}
           <iframe
             ref={iframeRef}
             className="absolute inset-0 h-full w-full object-cover"
             src="https://www.youtube.com/embed/6-AjSG7Zw_4?enablejsapi=1&mute=1&controls=0&rel=0&playsinline=1"
             allow="autoplay; encrypted-media"
             allowFullScreen
+            // Prevent touch events from interfering with scroll
             style={{
               pointerEvents: showPlayButton ? "auto" : "none",
               touchAction: "none",
-              transform: "translate3d(0,0,0)",
-              backfaceVisibility: "hidden",
             }}
           />
 
+          {/* Play button for mobile */}
           {showPlayButton && (
             <button
               onClick={handlePlayClick}
@@ -222,17 +231,23 @@ export default function ImageSec() {
             </button>
           )}
 
+          {/* White overlay mask with expanding window - OPTIMIZED */}
           <div
             ref={maskRef}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[32px]"
             style={{
               width: `${initialWidth}px`,
               height: `${initialHeight}px`,
-              boxShadow: "0 0 0 200vmax white",
-              transform: "translate3d(-50%, -50%, 0)",
-              backfaceVisibility: "hidden",
+              // Optimized box-shadow: smaller spread for better mobile performance
+              boxShadow: isMobile
+                ? "0 0 0 100vmax white"
+                : "0 0 0 200vmax white",
+              // Remove willChange on mobile
+              ...(isMobile
+                ? {}
+                : { willChange: "width, height, border-radius" }),
+              // Ensure it doesn't block touch events
               pointerEvents: "none",
-              willChange: "width, height, border-radius",
             }}
           />
         </div>
