@@ -102,6 +102,10 @@ function TinyComputerVision() {
       ctxRef.current = null;
     }
 
+    // On mobile, position:fixed (default pin) is clipped by overflow-x:hidden
+    // on ancestor elements. pinType:"transform" uses CSS transforms instead.
+    const isTouchDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     if (!context) return;
@@ -145,6 +149,7 @@ function TinyComputerVision() {
           start: "top top",
           end: `+=${1500}%`,
           pin: true,
+          pinType: isTouchDevice ? "transform" : "fixed",
           scrub: 0.8,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
@@ -309,7 +314,10 @@ function TinyComputerVision() {
   }, []);
 
   return (
-    <section ref={containerRef} className="relative w-full bg-[#0A1016]">
+    <section
+      ref={containerRef}
+      className="relative w-full overflow-hidden bg-[#0A1016]"
+    >
       <div className="relative flex min-h-screen flex-col items-center justify-center">
         <div
           ref={headerRef}

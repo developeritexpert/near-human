@@ -188,6 +188,13 @@ function SideVideo() {
       ctxRef.current = null;
     }
 
+    // On mobile, position:fixed (default pin behaviour) is clipped by
+    // overflow-x:hidden on ancestor elements and jumps when the browser
+    // address bar appears. pinType:"transform" uses CSS transforms instead,
+    // which are unaffected by ancestor overflow and viewport resize.
+    // Desktop keeps the default (position:fixed) which works perfectly.
+    const isTouchDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
     const ctx = gsap.context(() => {
       const mm = gsap.matchMedia();
 
@@ -229,6 +236,7 @@ function SideVideo() {
               start: "top top",
               end: `+=${(totalSections - 1) * scrollAmount}`,
               pin: true,
+              pinType: isTouchDevice ? "transform" : "fixed",
               scrub: 1,
               invalidateOnRefresh: true,
               onUpdate: (self) => {
@@ -320,7 +328,10 @@ function SideVideo() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative z-10 bg-white py-[50px]">
+    <section
+      ref={sectionRef}
+      className="relative z-10 overflow-hidden bg-white py-[50px]"
+    >
       <div
         ref={pinRef}
         className="flex !h-screen flex-col justify-center bg-white px-[20px] md:px-[30px] lg:px-[50px]"
