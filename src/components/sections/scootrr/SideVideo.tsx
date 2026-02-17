@@ -90,7 +90,6 @@ function SideVideo() {
   const textItemsRef = useRef<(HTMLDivElement | null)[]>([]);
   const svgPathRef = useRef<SVGPathElement>(null);
   const [isReady, setIsReady] = useState(false);
-  // Keep a ref to the gsap context so we can revert it cleanly
   const ctxRef = useRef<gsap.Context | null>(null);
 
   const progress0 = useMotionValue(0);
@@ -205,12 +204,25 @@ function SideVideo() {
           const texts = textItemsRef.current;
           const itemSize = isMobile ? window.innerWidth : 400;
 
-          gsap.set(texts, {
-            position: "absolute",
-            x: isMobile ? (i) => i * itemSize : 0,
-            y: isDesktop ? (i) => i * itemSize : 0,
-            opacity: 1,
-          });
+          // --- COMMON SETUP ---
+          if (isDesktop) {
+            gsap.set(texts, {
+              position: "absolute",
+              x: 0,
+              y: (i) => i * itemSize,
+              opacity: 1,
+            });
+          } else {
+            // Mobile: Stack them normally
+            gsap.set(texts, {
+              position: "relative",
+              x: 0,
+              y: 0,
+              opacity: 1,
+              display: "block",
+              marginBottom: "2rem",
+            });
+          }
 
           if (svgPathRef.current) {
             gsap.set(svgPathRef.current, {
@@ -218,82 +230,112 @@ function SideVideo() {
             });
           }
 
-          const totalSections = statisticsData.length;
-          const scrollAmount = 600;
-          const textAnimationDelay = 0.5;
-          const textAnimationDuration = 0.5;
+          // --- ANIMATIONS ---
+          if (isDesktop) {
+            // DESKTOP: Full pin, scrub, and slide animation
+            const totalSections = statisticsData.length;
+            const scrollAmount = 600;
+            const textAnimationDelay = 0.5;
+            const textAnimationDuration = 0.5;
 
-          const timeline = gsap.timeline({
-            scrollTrigger: {
+            const timeline = gsap.timeline({
+              scrollTrigger: {
+                trigger: pinRef.current,
+                start: "top top",
+                end: `+=${(totalSections - 1) * scrollAmount}`,
+                pin: true,
+                scrub: 1,
+                invalidateOnRefresh: true,
+                onUpdate: (self) => {
+                  const rawProgress = self.progress;
+                  const totalScrollDistance = totalSections * scrollAmount;
+                  const currentScrollPosition =
+                    rawProgress * totalScrollDistance;
+
+                  statisticsData.forEach((_, index) => {
+                    let slideProgress = 0;
+                    const slideStart = index * scrollAmount;
+                    const animStartPoint =
+                      slideStart + scrollAmount * textAnimationDelay;
+                    const animEndPoint =
+                      animStartPoint + scrollAmount * textAnimationDuration;
+
+                    if (currentScrollPosition <= animStartPoint) {
+                      slideProgress = 0;
+                    } else if (
+                      currentScrollPosition >= animStartPoint &&
+                      currentScrollPosition <= animEndPoint
+                    ) {
+                      slideProgress =
+                        (currentScrollPosition - animStartPoint) /
+                        (scrollAmount * textAnimationDuration);
+                    } else if (currentScrollPosition > animEndPoint) {
+                      slideProgress = 1;
+                    }
+
+                    progressValues[index].set(slideProgress);
+                  });
+                },
+              },
+            });
+
+            statisticsData.forEach((_, index) => {
+              if (index > 0) {
+                const positionValue = `-=${itemSize}`;
+                const timelinePosition = (index - 1) * scrollAmount;
+
+                timeline.to(
+                  texts,
+                  {
+                    y: positionValue,
+                    duration: scrollAmount,
+                    ease: "power1.inOut",
+                  },
+                  timelinePosition
+                );
+
+                timeline.to(
+                  svgPathRef.current,
+                  {
+                    attr: { d: generateNotchPath(index, isMobile) },
+                    duration: scrollAmount,
+                    ease: "power1.inOut",
+                  },
+                  timelinePosition
+                );
+              }
+            });
+          } else {
+            // MOBILE: Simple fade-in on scroll for each statistic
+            texts.forEach((textEl, index) => {
+              if (!textEl) return;
+
+              // Animate text color based on scroll position
+              ScrollTrigger.create({
+                trigger: textEl,
+                start: "top 80%",
+                end: "bottom 20%",
+                scrub: 0.5,
+                onUpdate: (self) => {
+                  progressValues[index].set(self.progress);
+                },
+              });
+            });
+
+            // Animate the SVG notch on mobile
+            ScrollTrigger.create({
               trigger: pinRef.current,
               start: "top top",
-              end: `+=${(totalSections - 1) * scrollAmount}`,
-              pin: true,
-              scrub: 1,
-              invalidateOnRefresh: true,
+              end: "bottom bottom",
+              scrub: 0.5,
               onUpdate: (self) => {
-                const rawProgress = self.progress;
-                const totalScrollDistance = totalSections * scrollAmount;
-                const currentScrollPosition = rawProgress * totalScrollDistance;
-
-                statisticsData.forEach((_, index) => {
-                  let slideProgress = 0;
-                  const slideStart = index * scrollAmount;
-                  const animStartPoint =
-                    slideStart + scrollAmount * textAnimationDelay;
-                  const animEndPoint =
-                    animStartPoint + scrollAmount * textAnimationDuration;
-
-                  if (currentScrollPosition <= animStartPoint) {
-                    slideProgress = 0;
-                  } else if (
-                    currentScrollPosition >= animStartPoint &&
-                    currentScrollPosition <= animEndPoint
-                  ) {
-                    slideProgress =
-                      (currentScrollPosition - animStartPoint) /
-                      (scrollAmount * textAnimationDuration);
-                  } else if (currentScrollPosition > animEndPoint) {
-                    slideProgress = 1;
-                  }
-
-                  progressValues[index].set(slideProgress);
-                });
+                if (svgPathRef.current) {
+                  const path = generateNotchPath(self.progress, true);
+                  gsap.set(svgPathRef.current, { attr: { d: path } });
+                }
               },
-            },
-          });
-
-          statisticsData.forEach((_, index) => {
-            if (index > 0) {
-              const positionValue = `-=${itemSize}`;
-              const timelinePosition = (index - 1) * scrollAmount;
-
-              timeline.to(
-                texts,
-                {
-                  x: isMobile ? positionValue : 0,
-                  y: isDesktop ? positionValue : 0,
-                  duration: scrollAmount,
-                  ease: "power1.inOut",
-                },
-                timelinePosition
-              );
-
-              timeline.to(
-                svgPathRef.current,
-                {
-                  attr: { d: generateNotchPath(index, isMobile) },
-                  duration: scrollAmount,
-                  ease: "power1.inOut",
-                },
-                timelinePosition
-              );
-            }
-          });
-
-          // NOTE: no return / mm.revert() here — returning mm.revert() from
-          // inside mm.add causes infinite recursion (mm.revert → cleanup → mm.revert…)
-          // ctx.revert() in the outer cleanup handles full teardown correctly.
+            });
+          }
         }
       );
     }, pinRef);
@@ -326,23 +368,23 @@ function SideVideo() {
     >
       <div
         ref={pinRef}
-        className="flex !h-screen flex-col justify-center bg-white px-[20px] md:px-[30px] lg:px-[50px]"
+        className="flex !min-h-screen flex-col justify-center bg-white px-[20px] py-[50px] md:px-[30px] lg:px-[50px]"
       >
         <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center lg:flex-row">
           {/* LEFT: Statistics */}
           <div className="relative order-2 mt-10 flex h-full w-full items-center lg:order-1 lg:mt-0 lg:w-1/2">
-            <div className="flex w-full flex-row lg:pl-[50px] xl:pl-[100px] 2xl:pl-[200px]">
-              <div
-                ref={textContainerRef}
-                className="relative mb-[200px] w-full"
-              >
+            <div className="flex w-full flex-col lg:pl-[50px] xl:pl-[100px] 2xl:pl-[200px]">
+              <div ref={textContainerRef} className="relative w-full">
                 {statisticsData.map((item, index) => (
                   <div
                     key={item.id}
                     ref={(el) => {
                       textItemsRef.current[index] = el;
                     }}
-                    className="absolute top-0 left-0 w-full lg:max-w-[450px]"
+                    className="w-full lg:max-w-[450px]"
+                    style={{
+                      marginBottom: window.innerWidth < 768 ? "2rem" : 0,
+                    }}
                   >
                     <h2 className="mb-[8px] text-[36px] leading-tight font-[450] text-[#101717] md:text-[50px] lg:text-[60px] xl:text-[77px]">
                       <ScrollAnimatedText
@@ -365,7 +407,7 @@ function SideVideo() {
           </div>
 
           {/* RIGHT: Single Video */}
-          <div className="relative order-1 flex w-full items-center justify-center after:absolute after:top-1/2 after:right-full after:z-[999] after:h-full after:w-full after:bg-[repeating-linear-gradient(360deg,white,transparent)] after:content-[''] lg:order-2 lg:w-1/2">
+          <div className="relative order-1 flex w-full items-center justify-center lg:order-2 lg:w-1/2">
             <div className="relative aspect-[900/700] w-full overflow-hidden rounded-xl lg:w-[90%] xl:w-full">
               <video
                 className="pointer-events-none h-full w-full object-cover"
