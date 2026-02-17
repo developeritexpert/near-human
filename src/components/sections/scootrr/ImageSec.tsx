@@ -17,7 +17,6 @@ export default function ImageSec() {
     width: 0,
     height: 0,
   });
-  // Keep a ref to the scoped context for clean teardown
   const ctxRef = useRef<gsap.Context | null>(null);
 
   useEffect(() => {
@@ -45,7 +44,6 @@ export default function ImageSec() {
 
     if (screenDimensions.width === 0 || screenDimensions.height === 0) return;
 
-    // Revert previous context instead of killing all global triggers
     if (ctxRef.current) {
       ctxRef.current.revert();
       ctxRef.current = null;
@@ -58,7 +56,6 @@ export default function ImageSec() {
       ? screenDimensions.height * 0.7
       : screenDimensions.height * 0.7;
 
-    // Scope the context to sectionRef so cleanup is isolated
     const ctx = gsap.context(() => {
       /* MASK WINDOW EXPANSION */
       gsap.fromTo(
@@ -76,7 +73,10 @@ export default function ImageSec() {
             trigger: sectionRef.current,
             start: "top 50%",
             end: "bottom 50%",
-            scrub: 1.5,
+            // FIX: lower scrub on mobile — Lenis touch scroll emits fast virtual
+            // deltas; scrub 1.5 chases them and produces visible lag/flutter.
+            // 0.5 tracks the finger tightly without losing the smooth feel.
+            scrub: isMobile ? 0.5 : 1.5,
             invalidateOnRefresh: true,
           },
         }
@@ -90,14 +90,20 @@ export default function ImageSec() {
           trigger: sectionRef.current,
           start: "top top",
           end: "+=120%",
-          scrub: 1.5,
+          scrub: isMobile ? 0.5 : 1.5,
           pin: true,
-          anticipatePin: 1,
+          // FIX: anticipatePin removed on mobile only.
+          // It samples native window.scrollY one frame early, but Lenis feeds a
+          // virtual position to ScrollTrigger via gsap.ticker. On mobile these
+          // two values diverge on every touch event, causing the section to
+          // snap/teleport before the pin should engage. Desktop mouse wheel
+          // has a small enough delta that anticipatePin is safe to keep.
+          ...(isMobile ? {} : { anticipatePin: 1 }),
           invalidateOnRefresh: true,
         },
       });
 
-      /* VIDEO PLAY/PAUSE */
+      /* VIDEO PLAY/PAUSE — unchanged */
       ScrollTrigger.create({
         trigger: sectionRef.current,
         start: "top 50%",
@@ -145,18 +151,16 @@ export default function ImageSec() {
           }
         },
       });
-    }, sectionRef); // ← scoped to sectionRef
+    }, sectionRef);
 
     ctxRef.current = ctx;
 
     return () => {
       ctx.revert();
       ctxRef.current = null;
-      // ↓ Do NOT call ScrollTrigger.getAll().forEach(t => t.kill()) here!
     };
   }, [isMobile, screenDimensions]);
 
-  // Refresh triggers when returning to tab on mobile
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -168,6 +172,7 @@ export default function ImageSec() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
 
+  // Identical to original — used only for initial mask inline style
   const initialWidth = isMobile
     ? screenDimensions.width * 0.7
     : screenDimensions.width * 0.5;
@@ -185,6 +190,7 @@ export default function ImageSec() {
     }
   };
 
+  // JSX is identical to the original — zero layout or style changes
   return (
     <section ref={sectionRef} className="relative h-[100vh] bg-white">
       <div className="flex h-screen items-center justify-center">

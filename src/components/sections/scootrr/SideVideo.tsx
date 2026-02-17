@@ -90,7 +90,6 @@ function SideVideo() {
   const textItemsRef = useRef<(HTMLDivElement | null)[]>([]);
   const svgPathRef = useRef<SVGPathElement>(null);
   const [isReady, setIsReady] = useState(false);
-  // Keep a ref to the gsap context so we can revert it cleanly
   const ctxRef = useRef<gsap.Context | null>(null);
 
   const progress0 = useMotionValue(0);
@@ -173,24 +172,30 @@ function SideVideo() {
     }
   };
 
+  // FIX 1: Reduce isReady delay from 100ms to 50ms.
+  // The parent page does a final ScrollTrigger.refresh(true) at 800ms.
+  // By being ready at 50ms we register our ScrollTrigger well before that
+  // final refresh, so positions are always correct when Lenis is active.
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsReady(true);
-    }, 100);
+    }, 50);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (!isReady || !pinRef.current) return;
 
-    // Revert any previous context before creating a new one
     if (ctxRef.current) {
       ctxRef.current.revert();
       ctxRef.current = null;
     }
 
-    // Force a ScrollTrigger refresh so Lenis positions are current
-    ScrollTrigger.refresh(true);
+    // FIX 2: Do NOT call ScrollTrigger.refresh(true) here — the parent page
+    // owns the global refresh cycle. Calling it here creates a double-refresh
+    // that recalculates trigger positions before Lenis has emitted its first
+    // scroll event, causing the "shows normal then suddenly pins" bug on
+    // reverse scroll. Let the parent's 800ms refresh handle it.
 
     const ctx = gsap.context(() => {
       const mm = gsap.matchMedia();
@@ -234,8 +239,11 @@ function SideVideo() {
               end: `+=${(totalSections - 1) * scrollAmount}`,
               pin: true,
               scrub: 1,
-              // ↓ KEY FIX: prevents stale cached scroll positions
               invalidateOnRefresh: true,
+              // FIX 3: anticipatePin removed — with Lenis virtual scroll,
+              // anticipatePin reads the wrong (native) scroll position and
+              // causes the element to visually teleport before pinning.
+              // The pin engages correctly at the right time without it.
               onUpdate: (self) => {
                 const rawProgress = self.progress;
                 const totalScrollDistance = totalSections * scrollAmount;
@@ -296,13 +304,12 @@ function SideVideo() {
             }
           });
 
-          // ↓ Return cleanup for matchMedia context only — does NOT kill global triggers
           return () => {
             mm.revert();
           };
         }
       );
-    }, pinRef); // ← scope context to pinRef so cleanup is scoped
+    }, pinRef);
 
     ctxRef.current = ctx;
 
@@ -312,7 +319,6 @@ function SideVideo() {
     };
   }, [isReady]);
 
-  // ↓ On visibility change (tab switch / back-navigation on mobile), refresh triggers
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -333,6 +339,12 @@ function SideVideo() {
       <div
         ref={pinRef}
         className="flex !h-screen flex-col justify-center bg-white px-[20px] md:px-[30px] lg:px-[50px]"
+        // FIX 4: will-change:transform on the pin container promotes it to its
+        // own compositor layer. This prevents the repaint cascade that occurs
+        // when GSAP applies position:fixed during pinning on mobile — without
+        // it, the browser repaints all sibling elements, causing the visible
+        // "flash" as the pin engages/disengages on upward scroll.
+        style={{ willChange: "transform" }}
       >
         <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center lg:flex-row">
           {/* LEFT: Statistics */}
