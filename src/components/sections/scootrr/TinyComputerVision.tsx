@@ -90,7 +90,6 @@ function TinyComputerVision() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsReady(true);
-      ScrollTrigger.refresh();
     }, 500);
     return () => clearTimeout(timer);
   }, []);
@@ -102,8 +101,6 @@ function TinyComputerVision() {
       ctxRef.current.revert();
       ctxRef.current = null;
     }
-
-    ScrollTrigger.refresh(true);
 
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
@@ -293,12 +290,7 @@ function TinyComputerVision() {
 
     ctxRef.current = ctx;
 
-    const refreshTimer = setTimeout(() => {
-      ScrollTrigger.refresh();
-    }, 200);
-
     return () => {
-      clearTimeout(refreshTimer);
       ctx.revert();
       ctxRef.current = null;
     };

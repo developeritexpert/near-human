@@ -183,14 +183,10 @@ function SideVideo() {
   useEffect(() => {
     if (!isReady || !pinRef.current) return;
 
-    // Revert any previous context before creating a new one
     if (ctxRef.current) {
       ctxRef.current.revert();
       ctxRef.current = null;
     }
-
-    // Force a ScrollTrigger refresh so Lenis positions are current
-    ScrollTrigger.refresh(true);
 
     const ctx = gsap.context(() => {
       const mm = gsap.matchMedia();
