@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import Lenis from "@studio-freight/lenis";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -20,53 +20,49 @@ gsap.registerPlugin(ScrollTrigger);
 
 export default function ScootrPage() {
   const lenisRef = useRef<Lenis | null>(null);
-  const tickerFnRef = useRef<((time: number) => void) | null>(null);
+  const rafIdRef = useRef<number | null>(null);
 
   useEffect(() => {
+    // Kill all existing ScrollTriggers first
     ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     ScrollTrigger.clearMatchMedia();
 
+    // Reset scroll position
     window.scrollTo(0, 0);
 
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
+    // Small delay to ensure DOM is ready
     const initTimeout = setTimeout(() => {
-      if (!isMobile) {
-        // Desktop: original Lenis + gsap.ticker — unchanged, works perfectly
-        const lenis = new Lenis({
-          duration: 1.2,
-          easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-          orientation: "vertical",
-          gestureOrientation: "vertical",
-          smoothWheel: true,
-          wheelMultiplier: 1,
-          touchMultiplier: 2,
-          infinite: false,
-          autoResize: true,
-        });
+      const lenis = new Lenis({
+        duration: 1.2,
+        easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        orientation: "vertical",
+        gestureOrientation: "vertical",
+        smoothWheel: true,
+        wheelMultiplier: 1,
+        touchMultiplier: 2,
+        infinite: false,
+        autoResize: true,
+      });
 
-        lenisRef.current = lenis;
-        lenis.on("scroll", ScrollTrigger.update);
+      lenisRef.current = lenis;
 
-        const tickerFn = (time: number) => {
-          lenis.raf(time * 1000);
-        };
-        tickerFnRef.current = tickerFn;
-        gsap.ticker.add(tickerFn);
-        gsap.ticker.lagSmoothing(0);
-      }
+      // Connect Lenis to ScrollTrigger
+      lenis.on("scroll", ScrollTrigger.update);
 
-      // Single refresh after ALL children have registered their ScrollTriggers
-      // and inserted their pin spacers. 600ms > TinyComputerVision's 500ms timer.
-      // Both mobile and desktop use this same refresh — desktop also benefits
-      // from waiting for all pin spacers before calculating trigger offsets.
+      // Add Lenis to GSAP ticker
+      gsap.ticker.add((time) => {
+        lenis.raf(time * 1000);
+      });
+
+      gsap.ticker.lagSmoothing(0);
+
+      // Refresh ScrollTrigger after Lenis is ready
       const refreshTimeout = setTimeout(() => {
-        if (lenisRef.current) lenisRef.current.resize();
         ScrollTrigger.refresh(true);
-      }, 600);
+      }, 300);
 
       const handleResize = () => {
-        if (lenisRef.current) lenisRef.current.resize();
+        lenis.resize();
         ScrollTrigger.refresh();
       };
 
@@ -81,9 +77,8 @@ export default function ScootrPage() {
     return () => {
       clearTimeout(initTimeout);
 
-      if (tickerFnRef.current) {
-        gsap.ticker.remove(tickerFnRef.current);
-        tickerFnRef.current = null;
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
       }
 
       if (lenisRef.current) {
@@ -91,18 +86,21 @@ export default function ScootrPage() {
         lenisRef.current = null;
       }
 
+      // Clean up all ScrollTriggers on unmount
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+      gsap.ticker.remove(() => {});
     };
   }, []);
 
   return (
     <RouteLoaderWrapper>
       <Navbar />
-      <main className="md:overflow-x-hidden">
+      <main className="overflow-x-hidden">
         <ScootrrSec />
         <ImageSec />
         <SideVideo />
         <TinyComputerVision />
+
         <OurPartners />
         <DropMessage />
       </main>

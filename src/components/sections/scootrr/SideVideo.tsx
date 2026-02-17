@@ -16,6 +16,7 @@ const THEME = {
   mutedText: "#10171740",
 };
 
+// Animated text component that uses a motion value
 function ScrollAnimatedText({
   text,
   fromColor = "#10171730",
@@ -69,7 +70,10 @@ function ScrollAnimatedText({
             return (
               <motion.span
                 key={i}
-                style={{ color, textShadow }}
+                style={{
+                  color,
+                  textShadow,
+                }}
                 className="inline-block"
               >
                 {char}
@@ -90,8 +94,8 @@ function SideVideo() {
   const textItemsRef = useRef<(HTMLDivElement | null)[]>([]);
   const svgPathRef = useRef<SVGPathElement>(null);
   const [isReady, setIsReady] = useState(false);
-  const ctxRef = useRef<gsap.Context | null>(null);
 
+  // Motion values for each slide's text animation progress
   const progress0 = useMotionValue(0);
   const progress1 = useMotionValue(0);
   const progress2 = useMotionValue(0);
@@ -117,6 +121,7 @@ function SideVideo() {
     },
   ];
 
+  // Single video
   const videoSrc = "/Videos/scootr/Vid1.mp4";
 
   const generateNotchPath = (progress: number, isMobile: boolean = false) => {
@@ -131,7 +136,11 @@ function SideVideo() {
       const notchDepth = 30;
 
       return `
-        M 0 0 H 900 V 700 H 0 Z
+        M 0 0
+        H 900
+        V 700
+        H 0
+        Z
         M ${cornerRadius + offset} ${cornerRadius + offset}
         Q ${offset} ${cornerRadius + offset} ${offset} ${cornerRadius * 2 + offset}
         V ${700 - notchDepth - cornerRadius - offset}
@@ -154,7 +163,11 @@ function SideVideo() {
       const notchDepth = 30;
 
       return `
-        M 0 0 H 900 V 700 H 0 Z
+        M 0 0
+        H 900
+        V 700
+        H 0
+        Z
         M ${notchDepth + offset} ${notchY}
         L ${notchDepth + 20 + offset} ${notchY + 40}
         V ${notchY + notchHeight - 40}
@@ -182,150 +195,134 @@ function SideVideo() {
   useEffect(() => {
     if (!isReady || !pinRef.current) return;
 
-    if (ctxRef.current) {
-      ctxRef.current.revert();
-      ctxRef.current = null;
-    }
+    const mm = gsap.matchMedia();
 
-    const ctx = gsap.context(() => {
-      const mm = gsap.matchMedia();
+    mm.add(
+      {
+        isMobile: "(max-width: 767px)",
+        isDesktop: "(min-width: 768px)",
+      },
+      (context) => {
+        const { isMobile, isDesktop } = context.conditions as {
+          isMobile: boolean;
+          isDesktop: boolean;
+        };
 
-      mm.add(
-        {
-          isMobile: "(max-width: 767px)",
-          isDesktop: "(min-width: 768px)",
-        },
-        (context) => {
-          const { isMobile, isDesktop } = context.conditions as {
-            isMobile: boolean;
-            isDesktop: boolean;
-          };
+        const texts = textItemsRef.current;
+        const itemSize = isMobile ? window.innerWidth : 400;
 
-          const texts = textItemsRef.current;
-          const itemSize = isMobile ? window.innerWidth : 400;
+        // Initial setup
+        gsap.set(texts, {
+          position: "absolute",
+          x: isMobile ? (i) => i * itemSize : 0,
+          y: isDesktop ? (i) => i * itemSize : 0,
+          opacity: 1,
+        });
 
-          gsap.set(texts, {
-            position: "absolute",
-            x: isMobile ? (i) => i * itemSize : 0,
-            y: isDesktop ? (i) => i * itemSize : 0,
-            opacity: 1,
-          });
-
-          if (svgPathRef.current) {
-            gsap.set(svgPathRef.current, {
-              attr: { d: generateNotchPath(0, isMobile) },
-            });
-          }
-
-          const totalSections = statisticsData.length;
-          const scrollAmount = 600;
-          const textAnimationDelay = 0.5;
-          const textAnimationDuration = 0.5;
-
-          const timeline = gsap.timeline({
-            scrollTrigger: {
-              trigger: pinRef.current,
-              start: "top top",
-              end: `+=${(totalSections - 1) * scrollAmount}`,
-              pin: true,
-              pinType: "transform", // Use transform for both mobile and desktop
-              scrub: 1,
-              invalidateOnRefresh: true,
-              onUpdate: (self) => {
-                const rawProgress = self.progress;
-                const totalScrollDistance = totalSections * scrollAmount;
-                const currentScrollPosition = rawProgress * totalScrollDistance;
-
-                statisticsData.forEach((_, index) => {
-                  let slideProgress = 0;
-                  const slideStart = index * scrollAmount;
-                  const animStartPoint =
-                    slideStart + scrollAmount * textAnimationDelay;
-                  const animEndPoint =
-                    animStartPoint + scrollAmount * textAnimationDuration;
-
-                  if (currentScrollPosition <= animStartPoint) {
-                    slideProgress = 0;
-                  } else if (
-                    currentScrollPosition >= animStartPoint &&
-                    currentScrollPosition <= animEndPoint
-                  ) {
-                    slideProgress =
-                      (currentScrollPosition - animStartPoint) /
-                      (scrollAmount * textAnimationDuration);
-                  } else if (currentScrollPosition > animEndPoint) {
-                    slideProgress = 1;
-                  }
-
-                  progressValues[index].set(slideProgress);
-                });
-              },
-            },
-          });
-
-          statisticsData.forEach((_, index) => {
-            if (index > 0) {
-              const positionValue = `-=${itemSize}`;
-              const timelinePosition = (index - 1) * scrollAmount;
-
-              timeline.to(
-                texts,
-                {
-                  x: isMobile ? positionValue : 0,
-                  y: isDesktop ? positionValue : 0,
-                  duration: scrollAmount,
-                  ease: "power1.inOut",
-                },
-                timelinePosition
-              );
-
-              timeline.to(
-                svgPathRef.current,
-                {
-                  attr: { d: generateNotchPath(index, isMobile) },
-                  duration: scrollAmount,
-                  ease: "power1.inOut",
-                },
-                timelinePosition
-              );
-            }
+        if (svgPathRef.current) {
+          gsap.set(svgPathRef.current, {
+            attr: { d: generateNotchPath(0, isMobile) },
           });
         }
-      );
-    }, pinRef);
 
-    ctxRef.current = ctx;
+        const totalSections = statisticsData.length;
+        const scrollAmount = 600; // Increased for smoother transitions
+        const textAnimationDelay = 0.5; // Text starts animating earlier
+        const textAnimationDuration = 0.5; // Longer animation duration
 
-    return () => {
-      ctx.revert();
-      ctxRef.current = null;
-    };
-  }, [isReady]);
+        const timeline = gsap.timeline({
+          scrollTrigger: {
+            trigger: pinRef.current,
+            start: "top top",
+            end: `+=${(totalSections - 1) * scrollAmount}`,
+            pin: true,
+            scrub: 1,
+            invalidateOnRefresh: true,
+            onUpdate: (self) => {
+              const rawProgress = self.progress;
+              const totalScrollDistance = totalSections * scrollAmount;
+              const currentScrollPosition = rawProgress * totalScrollDistance;
 
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        ScrollTrigger.refresh(true);
+              // Calculate which section is active
+              statisticsData.forEach((_, index) => {
+                let slideProgress = 0;
+
+                const slideStart = index * scrollAmount;
+                const slideEnd = slideStart + scrollAmount;
+                const animStartPoint =
+                  slideStart + scrollAmount * textAnimationDelay;
+                const animEndPoint =
+                  animStartPoint + scrollAmount * textAnimationDuration;
+
+                if (currentScrollPosition <= animStartPoint) {
+                  slideProgress = 0;
+                } else if (
+                  currentScrollPosition >= animStartPoint &&
+                  currentScrollPosition <= animEndPoint
+                ) {
+                  slideProgress =
+                    (currentScrollPosition - animStartPoint) /
+                    (scrollAmount * textAnimationDuration);
+                } else if (currentScrollPosition > animEndPoint) {
+                  slideProgress = 1;
+                }
+
+                progressValues[index].set(slideProgress);
+              });
+            },
+          },
+        });
+
+        // Build continuous timeline without pauses
+        statisticsData.forEach((_, index) => {
+          if (index > 0) {
+            const positionValue = `-=${itemSize}`;
+            const timelinePosition = (index - 1) * scrollAmount;
+
+            // Animate to next slide
+            timeline.to(
+              texts,
+              {
+                x: isMobile ? positionValue : 0,
+                y: isDesktop ? positionValue : 0,
+                duration: scrollAmount,
+                ease: "power1.inOut", // Smooth easing
+              },
+              timelinePosition
+            );
+
+            timeline.to(
+              svgPathRef.current,
+              {
+                attr: { d: generateNotchPath(index, isMobile) },
+                duration: scrollAmount,
+                ease: "power1.inOut", // Smooth easing
+              },
+              timelinePosition
+            );
+          }
+        });
+
+        return () => {
+          ScrollTrigger.getAll().forEach((t) => t.kill());
+        };
       }
-    };
+    );
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () =>
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
+    return () => mm.revert();
+  }, [isReady]);
 
   return (
     <section
       ref={sectionRef}
-      className="relative z-10 bg-white py-[50px] md:overflow-hidden"
+      className="relative z-10 overflow-hidden bg-white py-[50px]"
     >
       <div
         ref={pinRef}
         className="flex !h-screen flex-col justify-center bg-white px-[20px] md:px-[30px] lg:px-[50px]"
-        style={{ willChange: "transform" }}
       >
         <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center lg:flex-row">
-          {/* LEFT: Statistics */}
+          {/* LEFT: Statistics - Vertical Scroll */}
           <div className="relative order-2 mt-10 flex h-full w-full items-center lg:order-1 lg:mt-0 lg:w-1/2">
             <div className="flex w-full flex-row lg:pl-[50px] xl:pl-[100px] 2xl:pl-[200px]">
               <div
@@ -363,6 +360,7 @@ function SideVideo() {
           {/* RIGHT: Single Video */}
           <div className="relative order-1 flex w-full items-center justify-center after:absolute after:top-1/2 after:right-full after:z-[999] after:h-full after:w-full after:bg-[repeating-linear-gradient(360deg,white,transparent)] after:content-[''] lg:order-2 lg:w-1/2">
             <div className="relative aspect-[900/700] w-full overflow-hidden rounded-xl lg:w-[90%] xl:w-full">
+              {/* Single Video */}
               <video
                 className="pointer-events-none h-full w-full object-cover"
                 src={videoSrc}
@@ -372,6 +370,8 @@ function SideVideo() {
                 playsInline
                 preload="auto"
               />
+
+              {/* SVG OVERLAY */}
               <svg
                 className="pointer-events-none absolute inset-0 z-20 h-full w-full scale-[1.01]"
                 viewBox="0 0 900 700"
@@ -383,6 +383,8 @@ function SideVideo() {
                   fill="#ffffff"
                 />
               </svg>
+
+              {/* GLOW */}
               <div
                 className="pointer-events-none absolute z-0 rounded-full blur-3xl"
                 style={{
